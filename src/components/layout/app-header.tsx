@@ -40,11 +40,15 @@ export function AppHeader() {
       */}
       <div className="mx-auto grid h-[72px] max-w-[var(--container-wide)] grid-cols-[1fr_2fr_1fr] items-center gap-4 px-4 sm:px-6">
         <Link
-          href="/productos"
-          aria-label="Ir al catálogo"
+          href="/"
+          aria-label="Ir al inicio"
           className="flex shrink-0 items-center justify-self-start"
         >
-          <Logo variant="text" tone="white" height={32} priority />
+          {/* Lockup completo: isotipo (mark) + wordmark compuestos en render
+              (logo.tsx, variant "lockup") — cada parte se escala de su propio
+              asset, más nítido que el `compact` horneado. El mark es
+              decorativo (alt=""), el nombre lo aporta el wordmark. */}
+          <Logo variant="lockup" tone="white" height={32} priority />
         </Link>
 
         <ProductSearchBar className="w-full max-w-2xl justify-self-center" />
