@@ -12,12 +12,20 @@ export interface ProductoDestacado {
   nombre: string
   /** Nombre de la categoría a la que pertenece (para mostrar, no para filtrar). */
   categoria: string
+  /** Slug de la categoría — para la foto del modal en el listado. */
+  categoriaSlug: string
+  marca: string
   /** Precio de lista pública en CENTAVOS de COP (ver `src/lib/precios/types.ts`). */
   precioCentavos: number
   /** Unidad de venta tal como se compra: "Caja × 12", "Bulto 25 kg"… */
   unidadVenta: string
+  /** Presentación para el modal: "Caja", "Bulto"… */
+  presentacion: string
   /** Ruta de la foto del producto (public/photos/productos/…). */
   imagen: string
+  descripcionCorta: string
+  descripcionLarga: string
+  detallesEmpaque: string[]
   badge?: ProductoBadge
 }
 
