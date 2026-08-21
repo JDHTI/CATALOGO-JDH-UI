@@ -4,14 +4,22 @@ import Link from "next/link"
 
 import { JdhButton } from "@/components/common/jdh-button"
 import { ScrollReveal } from "@/components/motion/scroll-reveal"
-import { Stagger, StaggerItem } from "@/components/motion/stagger"
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 
 import type { ProductoDestacado } from "../types"
 import { ProductCard } from "./product-card"
 
 /**
- * Grid de productos destacados con precios de lista pública mockeados.
- * 2 columnas en móvil, 3 en desktop y 4 en pantallas grandes.
+ * Productos destacados en CARRUSEL con imágenes cuadradas agrandadas (2 por
+ * fila en móvil, 3 en desktop). Arrastre nativo (embla) en móvil; flechas en
+ * ≥sm a los costados. La card conserva categoría, nombre, unidad de venta y
+ * precio, con botones de favoritos y añadir al carrito (ver ProductCard).
  */
 export function FeaturedProducts({
   productos,
@@ -47,13 +55,22 @@ export function FeaturedProducts({
         </div>
       </ScrollReveal>
 
-      <Stagger className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
-        {productos.map((producto) => (
-          <StaggerItem key={producto.id} className="h-full">
-            <ProductCard producto={producto} />
-          </StaggerItem>
-        ))}
-      </Stagger>
+      <ScrollReveal y={24}>
+        <Carousel opts={{ align: "start" }}>
+          <CarouselContent>
+            {productos.map((producto) => (
+              <CarouselItem
+                key={producto.id}
+                className="basis-1/2 md:basis-1/3"
+              >
+                <ProductCard producto={producto} />
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="hidden sm:-left-6 sm:inline-flex" />
+          <CarouselNext className="hidden sm:-right-6 sm:inline-flex" />
+        </Carousel>
+      </ScrollReveal>
     </section>
   )
 }

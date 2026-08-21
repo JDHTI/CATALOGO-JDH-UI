@@ -24,8 +24,18 @@ export const searchCategoryOptions: CatalogoCategoryOption[] = [
   { value: "enlatados-y-conservas", label: "Enlatados y conservas" },
   { value: "snacks-y-confiteria", label: "Snacks y confitería" },
   { value: "limpieza-y-aseo", label: "Limpieza y aseo" },
+  { value: "frutas-y-verduras", label: "Frutas y verduras" },
+  { value: "congelados", label: "Congelados" },
 ]
 
 /** Subconjunto sin "todas", para los accesos rápidos de la barra de categorías. */
 export const featuredCategoryLinks: CatalogoCategoryOption[] =
   searchCategoryOptions.filter((option) => option.value !== "todas")
+
+/**
+ * Categorías que caben en la barra de navegación (MainNav) SIN scroll
+ * horizontal: 8 de las 10 — las que encajan en el ancho del contenedor. El
+ * resto queda accesible desde el mega menú y el buscador.
+ */
+export const navCategoryLinks: CatalogoCategoryOption[] =
+  featuredCategoryLinks.slice(0, 8)

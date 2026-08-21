@@ -10,10 +10,11 @@ import { WordReveal } from "@/components/motion/word-reveal"
 /**
  * Primer slide del homepage: la fotografía editorial llena el viewport
  * restante bajo el chrome (`100svh - --catalogo-chrome-height`) en
- * cualquier dispositivo. El copy y los CTAs van encima, anclados al
- * tercio izquierdo — que es el lado iluminado de la foto — en tokens
- * ink (negro de marca, no se invierte con el tema). Sin velo oscuro:
- * taparía el blanco de la foto y haría ilegible el texto negro.
+ * cualquier dispositivo. El copy y los CTAs van anclados al lado izquierdo
+ * (el lado iluminado de la foto) y CENTRADOS VERTICALMENTE respecto a la
+ * imagen — no centrados en pantalla —, en tokens ink (negro de marca, no se
+ * invierte con el tema). Sin velo oscuro: taparía el blanco de la foto y
+ * haría ilegible el texto negro.
  *
  * Único `h1` de la página. Animación de entrada con los primitivos motion
  * (passthrough bajo `prefers-reduced-motion`).
@@ -33,7 +34,7 @@ export function HeroSection() {
         className="object-cover object-center"
       />
 
-      <div className="relative mx-auto flex min-h-[calc(100svh-var(--catalogo-chrome-height))] w-full max-w-[var(--container-wide)] flex-col justify-end px-6 pb-16 sm:pb-24">
+      <div className="relative mx-auto flex min-h-[calc(100svh-var(--catalogo-chrome-height))] w-full max-w-[var(--container-wide)] flex-col justify-center px-6">
         <Stagger
           staggerDelay={0.08}
           className="flex max-w-[40ch] flex-col items-start gap-6 text-[var(--color-ink)]"
@@ -57,7 +58,10 @@ export function HeroSection() {
               de Colombia.
             </p>
           </StaggerItem>
-          <StaggerItem y={12} className="flex flex-wrap gap-3">
+          <StaggerItem
+            y={12}
+            className="flex flex-wrap items-center justify-start gap-3"
+          >
             <JdhButton asChild size="lg" variant="primary">
               <Link href="/productos">Explorar catálogo</Link>
             </JdhButton>

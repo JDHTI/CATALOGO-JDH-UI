@@ -6,8 +6,10 @@ import { motion, useReducedMotion } from "motion/react"
 const EASE = [0.2, 0, 0, 1] as const
 
 /**
- * Staggered container — animates its `StaggerItem` children in sequence on
- * mount. Use for card grids. Passthrough under reduced motion.
+ * Staggered container — animates its `StaggerItem` children in sequence WHEN
+ * SCROLLED INTO VIEW (`whileInView`, una sola vez). Works with Lenis (native
+ * scroll) and native scroll alike, so every homepage grid gets a fluid
+ * entrance on scroll. Passthrough under reduced motion.
  */
 export function Stagger({
   staggerDelay = 0.06,
@@ -25,7 +27,8 @@ export function Stagger({
     <motion.div
       className={className}
       initial="hidden"
-      animate="show"
+      whileInView="show"
+      viewport={{ once: true, amount: 0.15 }}
       variants={{
         hidden: {},
         show: { transition: { staggerChildren: staggerDelay } },

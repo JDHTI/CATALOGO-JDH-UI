@@ -1,29 +1,61 @@
 "use client"
 
-import { Package, ShoppingCart } from "lucide-react"
+import { useState } from "react"
+import Image from "next/image"
+import { Heart, ShoppingCart } from "lucide-react"
 import { toast } from "sonner"
 
 import { JdhButton } from "@/components/common/jdh-button"
 import { formatCentavos } from "@/lib/format"
+import { cn } from "@/lib/utils"
 
 import type { ProductoDestacado } from "../types"
 
 /**
- * Card de producto destacado SIN imagen (placeholder con icono `Package` en
- * superficie subtle), badge opcional, precio público formateado y botón
- * "Añadir" mockeado (toast, sin lógica de carrito). Interactiva con hover
- * según DESIGN.md §4.6.
+ * Card de producto destacado con foto CUADRADA (aspect-square) más grande,
+ * badge opcional, botón de favoritos (corazón sobre la imagen — estado local
+ * + toast, sin lógica real) y botón "Añadir" al carrito que prevalece
+ * (mockeado con toast). Categoría, nombre, número por empaque y precio se
+ * conservan. Interactiva con hover según DESIGN.md §4.6.
  */
 export function ProductCard({ producto }: { producto: ProductoDestacado }) {
+  const [favorito, setFavorito] = useState(false)
+
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-[var(--color-border-strong)]">
-      <div className="relative flex aspect-[4/3] items-center justify-center bg-[var(--color-surface-subtle)] text-muted-foreground">
-        <Package className="size-10" aria-hidden="true" />
+      <div className="relative aspect-square overflow-hidden bg-[var(--color-surface-subtle)]">
+        <Image
+          src={producto.imagen}
+          alt={producto.nombre}
+          fill
+          sizes="(min-width: 768px) 33vw, 50vw"
+          className="object-cover transition-transform duration-[var(--duration-slow)] group-hover:scale-105"
+        />
         {producto.badge ? (
           <span className="absolute top-3 left-3 inline-flex h-6 items-center rounded-full border border-transparent bg-primary px-2.5 text-xs font-medium whitespace-nowrap text-primary-foreground">
             {producto.badge}
           </span>
         ) : null}
+        <button
+          type="button"
+          aria-label={favorito ? "Quitar de favoritos" : "Agregar a favoritos"}
+          aria-pressed={favorito}
+          onClick={() => {
+            setFavorito((v) => !v)
+            toast(
+              favorito ? "Eliminado de favoritos" : "Agregado a favoritos",
+              {
+                description: producto.nombre,
+              }
+            )
+          }}
+          className="absolute top-3 right-3 flex size-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-foreground transition-colors duration-[var(--duration-fast)] hover:bg-[var(--color-surface-subtle)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+        >
+          <Heart
+            aria-hidden="true"
+            className={cn("size-4", favorito && "fill-foreground")}
+          />
+        </button>
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-4">

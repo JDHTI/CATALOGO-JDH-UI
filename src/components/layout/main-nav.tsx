@@ -4,7 +4,7 @@ import type { Route } from "next"
 import Link from "next/link"
 import { Tag } from "lucide-react"
 
-import { featuredCategoryLinks } from "@/config/search.config"
+import { navCategoryLinks } from "@/config/search.config"
 import { cn } from "@/lib/utils"
 
 import { MegaMenu } from "./mega-menu"
@@ -41,8 +41,9 @@ export function MainNav({ className }: { className?: string }) {
       >
         <MegaMenu />
 
-        <div className="flex min-w-0 items-center gap-1 overflow-x-auto justify-self-center">
-          {featuredCategoryLinks.map((category) => (
+        {/* Categorías que caben sin scroll (8) — ver search.config.ts. */}
+        <div className="flex min-w-0 items-center gap-1 justify-self-center">
+          {navCategoryLinks.map((category) => (
             <Link
               key={category.value}
               href={`/productos?categoria=${category.value}` as Route}
