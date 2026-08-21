@@ -1,0 +1,520 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ==========================================================================
+   Centrale Sans — tipografía oficial JDH (DESIGN.md §2.4)
+   Generados desde docs/brand/fonts/*.otf con scripts/generate-font-assets.py.
+   Solo los cuatro pesos autorizados por el manual (Light/Regular/Medium/Bold).
+   Las itálicas se declaran para que, si aparecen, rendericen en la fuente de
+   marca en vez de sintetizarse: el navegador solo descarga las que se usan.
+   ========================================================================== */
+@font-face {
+  font-family: "Centrale Sans";
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/centrale-sans-light.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Centrale Sans";
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+  src: url("/fonts/centrale-sans-light-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Centrale Sans";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/centrale-sans-regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Centrale Sans";
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  src: url("/fonts/centrale-sans-regular-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Centrale Sans";
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/centrale-sans-medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Centrale Sans";
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+  src: url("/fonts/centrale-sans-medium-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Centrale Sans";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/centrale-sans-bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Centrale Sans";
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+  src: url("/fonts/centrale-sans-bold-italic.woff2") format("woff2");
+}
+
+/* ==========================================================================
+   JDH Design System — primitives (source of truth: .claude/DESIGN.md)
+   Primitive -> semantic -> component, per DESIGN.md §2.
+   ========================================================================== */
+:root {
+  /* Neutrales cálidos oficiales JDH — capa primitiva */
+  --neutral-0: #ffffff; /* Blanco JDH */
+  --neutral-100: #f2f2f2;
+  --neutral-200: #d9d9d9;
+  --neutral-300: #c8c8c4;
+  --neutral-500: #919189;
+  --neutral-700: #343430;
+  --neutral-900: #1d1d1b; /* Negro JDH — nunca #000 puro */
+
+  /* Overlays para superficies negras/blancas */
+  --overlay-on-dark-04: rgba(255, 255, 255, 0.04);
+  --overlay-on-dark-08: rgba(255, 255, 255, 0.08);
+  --overlay-on-dark-12: rgba(255, 255, 255, 0.12);
+  --overlay-on-dark-16: rgba(255, 255, 255, 0.16);
+  --overlay-on-dark-64: rgba(255, 255, 255, 0.64);
+  --overlay-on-light-04: rgba(29, 29, 27, 0.04);
+  --overlay-on-light-08: rgba(29, 29, 27, 0.08);
+
+  /* Tipografía — Centrale Sans se carga en los @font-face de arriba; el resto
+     de la pila queda como fallback mientras los .woff2 hacen swap. */
+  --font-sans:
+    "Centrale Sans", "Montserrat", system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+
+  --fw-light: 300;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-bold: 700;
+
+  --fs-caption: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-body: 1rem;
+  --fs-lead: 1.125rem;
+  --fs-h6: 1.25rem;
+  --fs-h5: 1.5rem;
+  --fs-h4: 1.875rem;
+  --fs-h3: 2.25rem;
+  --fs-h2: 3rem;
+  --fs-h1: 3.75rem;
+  --fs-display: 4.5rem;
+
+  --lh-tight: 1.1;
+  --lh-snug: 1.25;
+  --lh-normal: 1.5;
+  --lh-relaxed: 1.65;
+
+  --ls-tight: -0.02em;
+  --ls-normal: 0;
+  --ls-wide: 0.08em;
+
+  /* Espacio — base 4px */
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+  --space-32: 8rem;
+
+  /* Radio de borde (JDH primitivo — usar para markup/CSS propio.
+     shadcn deriva su propia escala de --radius, ver más abajo) */
+  --jdh-radius-none: 0;
+  --jdh-radius-sm: 4px;
+  --jdh-radius-md: 8px;
+  --jdh-radius-lg: 12px;
+  --jdh-radius-full: 9999px;
+
+  --border-width: 1px;
+  --border-width-strong: 2px;
+
+  --shadow-none: none;
+  --shadow-sm: 0 1px 2px rgba(29, 29, 27, 0.06);
+  --shadow-md: 0 4px 12px rgba(29, 29, 27, 0.08);
+  --shadow-lg: 0 12px 32px rgba(29, 29, 27, 0.12);
+
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+  --container-max: 1200px;
+  --container-wide: 1440px;
+  --gutter: var(--space-6);
+  --grid-columns: 12;
+
+  /* Altura apilada del chrome del catálogo en el tope (ContactBar h-9 +
+     AppHeader 72px + MainNav h-14). El primer slide del homepage llena el
+     resto del viewport: `calc(100svh - var(--catalogo-chrome-height))`. */
+  --catalogo-chrome-height: 10.25rem;
+
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-overlay: 1200;
+  --z-modal: 1300;
+  --z-popover: 1400;
+  --z-toast: 1500;
+
+  /* Capa semántica — color (tema claro, DESIGN.md §2.2) */
+  --color-bg: var(--neutral-0);
+  --color-bg-subtle: var(--neutral-100);
+  --color-surface: var(--neutral-0);
+  --color-surface-subtle: var(--neutral-100);
+
+  --color-border: var(--neutral-200);
+  --color-border-strong: var(--neutral-300);
+
+  --color-text: var(--neutral-900);
+  --color-text-secondary: var(--neutral-700);
+  --color-text-tertiary: var(--neutral-500);
+  --color-text-disabled: var(--neutral-300);
+
+  /* Chrome negro — fijo, no cambia con el tema */
+  --color-ink: var(--neutral-900);
+  --color-ink-hover: var(--neutral-700);
+  --color-on-ink: var(--neutral-0);
+  --color-on-ink-muted: var(--overlay-on-dark-64);
+  --color-ink-border: var(--overlay-on-dark-12);
+
+  /* Chrome papel — fijo, no cambia con el tema (simétrico al chrome negro).
+     Superficies que deben quedarse blancas en ambos temas: la nav principal
+     y el footer en oscuro. Los valores replican los semánticos del tema claro
+     para que en claro el render sea idéntico. */
+  --color-paper: var(--neutral-0);
+  --color-paper-hover: var(--neutral-100);
+  --color-on-paper: var(--neutral-900);
+  --color-on-paper-muted: var(--neutral-500);
+  --color-on-paper-disabled: var(--neutral-300);
+  --color-paper-border: var(--neutral-200);
+
+  --color-focus: var(--neutral-900);
+  --color-focus-on-ink: var(--neutral-0);
+  --color-focus-on-paper: var(--neutral-900);
+  --color-selection: var(--overlay-on-light-08);
+
+  /* Tinte semántico para alertas (tema claro). Ampliación consciente de la
+     excepción de color de DESIGN.md — solo para feedback (JdhAlert); siempre
+     acompañado de icono + texto, nunca color solo. Ver ARCHITECTURE.md. */
+  --color-success: #15803d;
+  --color-success-subtle: #f0fdf4;
+  --color-warning: #b45309;
+  --color-warning-subtle: #fffbeb;
+  --color-info: #1d4ed8;
+  --color-info-subtle: #eff6ff;
+  --color-error: #b91c1c;
+  --color-error-subtle: #fef2f2;
+}
+
+/* Tema oscuro — mismo sistema invertido (DESIGN.md §2.3).
+   El proyecto usa la clase `.dark` (convención next-themes/shadcn) como
+   mecanismo de activación en vez de [data-theme], sobre el mismo árbol de
+   variables — un solo interruptor, un solo set de tokens. */
+.dark {
+  --color-bg: var(--neutral-900);
+  --color-bg-subtle: var(--neutral-700);
+  --color-surface: var(--neutral-900);
+  --color-surface-subtle: var(--neutral-700);
+  --color-border: var(--overlay-on-dark-12);
+  /* NOTA: DESIGN.md §2.3 define border-strong (08) con menos opacidad que
+     border (12) en oscuro — se replica literal; parece una inversión
+     involuntaria en la fuente. Señalar si se ratifica el documento. */
+  --color-border-strong: var(--overlay-on-dark-08);
+  --color-text: var(--neutral-0);
+  --color-text-secondary: var(--neutral-300);
+  --color-text-tertiary: var(--neutral-500);
+  --color-text-disabled: var(--neutral-700);
+  --color-focus: var(--neutral-0);
+  --color-selection: var(--overlay-on-dark-08);
+  /* --color-ink / --color-on-ink se mantienen fijos (chrome negro en ambos
+     temas). Solo el SEPARADOR sube de opacidad para que header/footer/hero
+     ink no se fundan con el fondo oscuro (el color del chrome no cambia). */
+  --color-ink-border: var(--overlay-on-dark-16);
+
+  /* Tinte semántico para alertas (tema oscuro) — ver nota en :root. */
+  --color-success: #4ade80;
+  --color-success-subtle: rgba(34, 197, 94, 0.12);
+  --color-warning: #fbbf24;
+  --color-warning-subtle: rgba(245, 158, 11, 0.12);
+  --color-info: #60a5fa;
+  --color-info-subtle: rgba(59, 130, 246, 0.12);
+  --color-error: #f87171;
+  --color-error-subtle: rgba(239, 68, 68, 0.14);
+}
+
+/* ==========================================================================
+   shadcn/ui theme wiring — semantic tokens map onto the JDH system above,
+   so every shadcn primitive (Button, Card, Input, ...) inherits the JDH
+   monochrome look with zero per-component overrides.
+   ========================================================================== */
+@theme inline {
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-text);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: var(--color-bg);
+  --foreground: var(--color-text);
+  --card: var(--color-surface);
+  --card-foreground: var(--color-text);
+  --popover: var(--color-surface);
+  --popover-foreground: var(--color-text);
+  --primary: var(--color-ink);
+  --primary-foreground: var(--color-on-ink);
+  --secondary: var(--color-bg-subtle);
+  --secondary-foreground: var(--color-text);
+  --muted: var(--color-bg-subtle);
+  --muted-foreground: var(--color-text-tertiary);
+  --accent: var(--color-bg-subtle);
+  --accent-foreground: var(--color-text);
+  /* Fuera del alcance monocromo de DESIGN.md: destructive es la única
+     excepción de color deliberada, reservada a confirmaciones de borrado.
+     Si se exige monocromo estricto, sustituir por borde fuerte + icono. */
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: var(--color-border);
+  --input: var(--color-border);
+  --ring: var(--color-focus);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  /* Base 4px: alinea el control por defecto (botones/inputs, rounded-lg)
+     con --jdh-radius-sm. Cards/dialogs (rounded-xl) resultan en ~5.6px. */
+  --radius: 0.25rem;
+
+  /* Sidebar = chrome negro, igual que header/footer (DESIGN.md §4.1/4.2) */
+  --sidebar: var(--color-ink);
+  --sidebar-foreground: var(--color-on-ink);
+  --sidebar-primary: var(--color-on-ink);
+  --sidebar-primary-foreground: var(--color-ink);
+  --sidebar-accent: var(--overlay-on-dark-08);
+  --sidebar-accent-foreground: var(--color-on-ink);
+  --sidebar-border: var(--color-ink-border);
+  --sidebar-ring: var(--color-focus-on-ink);
+}
+
+.dark {
+  --background: var(--color-bg);
+  --foreground: var(--color-text);
+  --card: var(--color-surface);
+  --card-foreground: var(--color-text);
+  --popover: var(--color-surface);
+  --popover-foreground: var(--color-text);
+  --primary: var(--color-ink);
+  --primary-foreground: var(--color-on-ink);
+  --secondary: var(--color-bg-subtle);
+  --secondary-foreground: var(--color-text);
+  --muted: var(--color-bg-subtle);
+  --muted-foreground: var(--color-text-tertiary);
+  --accent: var(--color-bg-subtle);
+  --accent-foreground: var(--color-text);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: var(--color-border);
+  --input: var(--color-border);
+  --ring: var(--color-focus);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+
+  --sidebar: var(--color-ink);
+  --sidebar-foreground: var(--color-on-ink);
+  --sidebar-primary: var(--color-on-ink);
+  --sidebar-primary-foreground: var(--color-ink);
+  --sidebar-accent: var(--overlay-on-dark-08);
+  --sidebar-accent-foreground: var(--color-on-ink);
+  --sidebar-border: var(--color-ink-border);
+  --sidebar-ring: var(--color-focus-on-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   ContactBar — gradiente simétrico NEGRO → BLANCO → NEGRO.
+   Utility propia (en vez de clases arbitrarias de Tailwind) para garantizar
+   el render y controlar los stops. La barra permanece NEGRO SÓLIDO mientras
+   cubre el clúster de contacto (teléfono/email, ~30% del ancho) — el
+   gradiente "empieza donde terminan las letras" —, sube al blanco del tema
+   exactamente en el centro (50%) y regresa a negro sólido antes del clúster
+   derecho (redes + tema). Ambos textos (blanco, `--color-on-ink`) viven
+   sobre el negro de los extremos.
+   ========================================================================== */
+@utility contact-bar-gradient {
+  background-image: linear-gradient(
+    to right,
+    var(--color-ink) 0%,
+    var(--color-ink) 30%,
+    var(--color-on-ink) 50%,
+    var(--color-ink) 70%,
+    var(--color-ink) 100%
+  );
+}
+
+/* View Transitions — barrido circular del cambio de tema (ThemeSwitcher).
+   Se anula el cross-fade por defecto para que la única animación sea el
+   clip-path que anima `use-theme-transition` por WAAPI sobre el snapshot
+   nuevo. El selector `*` de la media query de arriba no alcanza estos
+   pseudos, por eso el hook lleva su propia guarda de reduced-motion. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* Ningún componente (tablas anchas con su propio overflow-x-auto, un
+       popover posicionado de más, etc.) debe poder generar scroll horizontal
+       a nivel de documento — solo el componente que lo declara explícitamente
+       (p. ej. DataTable) puede desplazarse en X. Esto también evita el salto
+       visual al abrir un Select en mobile: si el documento nunca llega a
+       desbordar en X, no hay `scrollLeft` que un recálculo de layout pueda
+       resetear a 0.
+
+       VA EN `body`, NO EN `html` — a propósito, no lo muevas. El overflow del
+       body se propaga al viewport SOLO si el del elemento raíz es `visible`
+       (CSS Overflow §3.3), y en esa propagación el used value del body queda
+       en `visible`, así que el body nunca se vuelve contenedor de scroll.
+       Declararlo en `html` rompe la propagación: el scroll-lock de Radix
+       (`body[data-scroll-locked] { overflow: hidden !important }`, vía
+       react-remove-scroll) pasa a aplicarse al body mismo, que se vuelve el
+       scrollport más cercano con scrollTop 0 — y el chrome `sticky top-0` de
+       `(catalogo)/layout.tsx` se recoloca en el tope del documento,
+       desapareciendo de la vista al abrir cualquier dropdown/select/modal. */
+    overflow-x: hidden;
+  }
+  html {
+    @apply font-sans;
+    /* Scroll funcional pero barra oculta a nivel del documento (solicitud del
+       usuario). Las ScrollArea internas conservan su barra fina de radix. */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  html::-webkit-scrollbar {
+    display: none;
+  }
+  ::selection {
+    background: var(--color-selection);
+  }
+}
+
+/* ==========================================================================
+   Z-index de portales — los componentes de shadcn/ui portalizan a <body> con
+   la utilidad `z-50`, que queda por DEBAJO del chrome sticky (--z-sticky:1100).
+   Se corrige por data-slot (sin editar ui/), respetando la escala nombrada de
+   tokens. `!important` es necesario porque `z-50` es una utilidad de Tailwind
+   (capa utilities) que gana a la capa components; aquí sobreescribimos a
+   propósito un default del vendor que no podemos editar.
+   Stack: contenido 0 → sticky 1100 → overlays 1200 → modales 1300 →
+   popovers/dropdowns 1400 → sonner 1500.
+   ========================================================================== */
+@layer components {
+  [data-slot="popover-content"],
+  [data-slot="dropdown-menu-content"],
+  [data-slot="dropdown-menu-sub-content"],
+  [data-slot="select-content"],
+  [data-slot="tooltip-content"] {
+    z-index: var(--z-popover) !important;
+  }
+  [data-slot="dialog-overlay"],
+  [data-slot="sheet-overlay"],
+  [data-slot="alert-dialog-overlay"] {
+    z-index: var(--z-overlay) !important;
+  }
+  [data-slot="dialog-content"],
+  [data-slot="sheet-content"],
+  [data-slot="alert-dialog-content"] {
+    z-index: var(--z-modal) !important;
+  }
+}
+
+/* Lenis smooth scroll (recommended styles). `[data-lenis-prevent]` opts a
+   scrollable region out of Lenis so its own scroll works (modals, ScrollArea). */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
