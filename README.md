@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Catálogo JDH
 
-## Getting Started
+Catálogo de productos de **Juan D. Hoyos Distribuciones**. Next.js 16 (App Router), TypeScript, Tailwind CSS v4, shadcn/ui.
 
-First, run the development server:
+Tiene tres frentes:
+
+| Frente               | Ruta              | Audiencia                          | Precios             |
+| -------------------- | ----------------- | ---------------------------------- | ------------------- |
+| Catálogo público     | `/`, `/productos` | cualquiera, sin sesión             | lista pública       |
+| Catálogo de clientes | las mismas        | cuentas de cliente (email + clave) | lista negociada     |
+| Administración       | `/admin/*`        | personal JDH (Entra ID)            | gestiona las listas |
+
+Los dos primeros comparten rutas, shell y componentes a propósito: lo único que varía es de dónde sale el precio. Esa costura vive en `src/lib/precios/`.
+
+## Requisitos
+
+- Node.js 20+
+- pnpm 11 (`packageManager` lo fija)
+
+## Arranque
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+cp .env.example .env.local   # y completar los valores
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> La infraestructura de datos aún no está definida: `DATABASE_URL` puede quedar como placeholder para desarrollar la UI. Las sesiones no funcionan hasta que exista Postgres y se corra `pnpm auth:migrate`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Comandos
 
-## Learn More
+```bash
+pnpm dev            # servidor de desarrollo (Turbopack)
+pnpm build          # build de producción
+pnpm start          # servir el build
+pnpm lint           # eslint
+pnpm typecheck      # tsc --noEmit
+pnpm format         # prettier --write .
+pnpm auth:migrate   # aplicar el esquema de Better Auth a Postgres
+```
 
-To learn more about Next.js, take a look at the following resources:
+No hay runner de pruebas configurado todavía.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Estructura
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+  app/            # solo enrutamiento — (catalogo) | (auth) | admin | api
+  modules/        # rebanadas verticales (catalogo/ es la de referencia)
+  components/     # ui/ = shadcn · el resto = catálogo JDH por dominio
+  config/         # sitio, permisos, registro de módulos, nav, footer
+  lib/            # auth, precios, query-client, utils, format
+  proxy.ts        # middleware (Next 16) — público-primero
+```
 
-## Deploy on Vercel
+Contrato de un módulo: `src/modules/README.md`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Documentación
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **`.claude/DESIGN.md`** — sistema de diseño JDH (monocromo corporativo, tokens, componentes, WCAG 2.2 AA). Fuente de verdad visual.
+- **`.claude/ARCHITECTURE.md`** — registro de decisiones arquitectónicas: por qué el proyecto está así.
+- **`.claude/CLAUDE.md`** — guía operativa para agentes de código.

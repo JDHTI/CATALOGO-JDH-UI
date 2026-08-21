@@ -1,3 +1,9 @@
 allowBuilds:
-  sharp: false
+  # Dependencias transitivas del CLI de Better Auth: no se usan en runtime,
+  # así que no necesitan compilar binarios nativos.
+  "@prisma/client": false
+  better-sqlite3: false
+  # Sí se construye: `scripts/generate-brand-assets.mjs` lo usa para generar
+  # los logos y los iconos PWA.
+  sharp: true
   unrs-resolver: false
