@@ -2,6 +2,10 @@
 
 import Link from "next/link"
 
+import {
+  ProductCard,
+  type ProductCardData,
+} from "@/components/cards/product-card"
 import { JdhButton } from "@/components/common/jdh-button"
 import { ScrollReveal } from "@/components/motion/scroll-reveal"
 import {
@@ -13,13 +17,30 @@ import {
 } from "@/components/ui/carousel"
 
 import type { ProductoDestacado } from "../types"
-import { ProductCard } from "./product-card"
+
+function aCardData(p: ProductoDestacado): ProductCardData {
+  return {
+    id: p.id,
+    nombre: p.nombre,
+    categoria: p.categoria,
+    marca: p.marca,
+    precioCentavos: p.precioCentavos,
+    unidadVenta: p.unidadVenta,
+    presentacion: p.presentacion,
+    descripcionCorta: p.descripcionCorta,
+    descripcionLarga: p.descripcionLarga,
+    detallesEmpaque: p.detallesEmpaque,
+    imagen: p.imagen,
+    badge: p.badge,
+    disponible: true,
+  }
+}
 
 /**
  * Productos destacados en CARRUSEL con imágenes cuadradas agrandadas (2 por
  * fila en móvil, 3 en desktop). Arrastre nativo (embla) en móvil; flechas en
- * ≥sm a los costados. La card conserva categoría, nombre, unidad de venta y
- * precio, con botones de favoritos y añadir al carrito (ver ProductCard).
+ * ≥sm a los costados. Usa la card de producto compartida (con modal de
+ * detalle): categoría, nombre, unidad de venta, precio, favoritos y añadir.
  */
 export function FeaturedProducts({
   productos,
@@ -63,7 +84,7 @@ export function FeaturedProducts({
                 key={producto.id}
                 className="basis-1/2 md:basis-1/3"
               >
-                <ProductCard producto={producto} />
+                <ProductCard producto={aCardData(producto)} variant="imagen" />
               </CarouselItem>
             ))}
           </CarouselContent>

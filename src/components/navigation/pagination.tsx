@@ -3,7 +3,12 @@
 import * as React from "react"
 import type { Route } from "next"
 import Link from "next/link"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react"
 
 import { JdhButton } from "@/components/common/jdh-button"
 import { cn } from "@/lib/utils"
@@ -92,6 +97,18 @@ export function Pagination({
     >
       <PageButton
         disabled={page <= 1}
+        href={hrefFor && page > 1 ? hrefFor(1) : undefined}
+        onClick={onPageChange ? () => goTo(1) : undefined}
+        variant="secondary"
+        size="icon-sm"
+        ariaLabel="Ir a la primera página"
+      >
+        <ChevronsLeft />
+        <span className="sr-only">Primera página</span>
+      </PageButton>
+
+      <PageButton
+        disabled={page <= 1}
         href={hrefFor && page > 1 ? hrefFor(page - 1) : undefined}
         onClick={onPageChange ? () => goTo(page - 1) : undefined}
         variant="secondary"
@@ -136,6 +153,18 @@ export function Pagination({
       >
         <span className="hidden sm:inline">Siguiente</span>
         <ChevronRight />
+      </PageButton>
+
+      <PageButton
+        disabled={page >= totalPages}
+        href={hrefFor && page < totalPages ? hrefFor(totalPages) : undefined}
+        onClick={onPageChange ? () => goTo(totalPages) : undefined}
+        variant="secondary"
+        size="icon-sm"
+        ariaLabel="Ir a la última página"
+      >
+        <ChevronsRight />
+        <span className="sr-only">Última página</span>
       </PageButton>
     </nav>
   )

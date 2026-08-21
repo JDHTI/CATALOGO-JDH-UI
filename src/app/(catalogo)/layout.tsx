@@ -1,6 +1,6 @@
-import { AppFooter } from "@/components/layout/app-footer"
 import { CatalogoChrome } from "@/components/layout/catalogo-chrome"
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav"
+import { SiteFooter } from "@/components/layout/site-footer"
 
 /**
  * Shell del catálogo (DESIGN.md): chrome sticky (`CatalogoChrome` — barra de
@@ -37,7 +37,8 @@ export default function CatalogoLayout({
 
       <main className="w-full flex-1">{children}</main>
 
-      <AppFooter />
+      {/* Footer oculto en /productos (ver SiteFooter). */}
+      <SiteFooter />
       <MobileBottomNav />
     </div>
   )
