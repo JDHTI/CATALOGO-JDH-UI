@@ -4,9 +4,19 @@ import { headers } from "next/headers"
 
 import { auth } from "@/lib/auth/server"
 
-function requireEnv(name: string): string {
+/**
+ * Bypass temporal para despliegues de solo maqueta — ver `src/lib/auth/tenant.ts`.
+ * Este módulo no se usa todavía en ninguna ruta, pero el mismo patrón evita
+ * que empiece a usarse y tumbe el build por falta de `BACKEND_API_URL`.
+ */
+function requireEnv(name: string, fallback: string): string {
   const value = process.env[name]
-  if (!value) throw new Error(`Falta la variable de entorno ${name}`)
+  if (!value) {
+    console.warn(
+      `[backend-fetch] Falta la variable de entorno ${name} — usando placeholder (solo para visualizar la UI).`
+    )
+    return fallback
+  }
   return value
 }
 
@@ -32,7 +42,7 @@ export async function backendFetch(
   const result = await auth.api.getSession({ headers: await headers() })
   if (!result) throw new BackendUnauthenticatedError()
 
-  const baseUrl = requireEnv("BACKEND_API_URL")
+  const baseUrl = requireEnv("BACKEND_API_URL", "http://localhost:0")
   return fetch(`${baseUrl}${path}`, {
     ...init,
     headers: {
