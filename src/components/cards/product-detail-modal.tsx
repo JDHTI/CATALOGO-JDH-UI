@@ -23,7 +23,18 @@ import type { ProductCardData } from "./product-card"
  * padding hacia el marco del modal y borde redondeado, como una pieza
  * enmarcada. Incluye descripción larga, detalles de empaque detallados,
  * cantidad + añadir al carrito + favorito en la MISMA fila (todo mockeado
- * con toast). Radix Dialog con scroll interno en móvil.
+ * con toast).
+ *
+ * El límite de altura (`max-h-[85dvh]`) vive en `DialogContent` mismo, NO en
+ * un div anidado — mismo patrón que `DetailModal` (`flex flex-col` +
+ * cuerpo `flex-1 overflow-y-auto`). Ponerlo en un div interno mientras
+ * `DialogContent` queda sin altura propia deja que Radix centre el modal
+ * (`top-1/2 -translate-y-1/2`) contra una caja cuyo tamaño real solo se
+ * resuelve después de ese primer layout, y en la práctica se ve
+ * desincronizado/mal ubicado un frame. `dvh` (no `vh`) evita el salto por la
+ * barra de direcciones del navegador móvil. `data-lenis-prevent` en el
+ * cuerpo es obligatorio: sin él, Lenis (scroll suave global) secuestra el
+ * gesto táctil dentro del modal y el contenido parece congelado.
  */
 export function ProductDetailModal({
   producto,
@@ -42,13 +53,16 @@ export function ProductDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-5xl">
-        <div className="grid max-h-[85vh] overflow-y-auto sm:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-          {/* Imagen VERTICAL (retrato 3/4): más alta que ancha, ocupa el
-              alto de la columna y deja la foto enmarcada con padding sobre
-              fondo BLANCO (sin superficie gris). */}
+      <DialogContent className="flex max-h-[85dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl">
+        <div
+          data-lenis-prevent
+          className="grid flex-1 overflow-y-auto sm:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]"
+        >
+          {/* Imagen: retrato 3/4 desde `sm` (ocupa el alto de la columna);
+              en móvil 4/3 para no monopolizar el viewport y dejar el resto
+              del contenido visible sin scrollear tanto. */}
           <div className="p-4 sm:p-6">
-            <div className="relative aspect-[3/4] w-full overflow-hidden rounded-[var(--jdh-radius-md)] bg-[var(--color-surface)]">
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[var(--jdh-radius-md)] bg-[var(--color-surface)] sm:aspect-[3/4]">
               {foto ? (
                 <Image
                   src={foto}
@@ -74,7 +88,7 @@ export function ProductDetailModal({
           </div>
 
           {/* Contenido (derecha en desktop). */}
-          <div className="flex flex-col gap-5 p-6 sm:p-8">
+          <div className="flex flex-col gap-5 p-4 sm:p-8">
             <DialogTitle className="text-base leading-none font-medium">
               <span className="sr-only">{producto.nombre}</span>
             </DialogTitle>
@@ -107,8 +121,12 @@ export function ProductDetailModal({
               {producto.unidadVenta}
             </p>
 
-            {/* Acciones en la MISMA fila: cantidad + añadir + favorito. */}
-            <div className="flex items-center gap-3">
+            {/* Acciones en la MISMA fila desde `sm`: cantidad + añadir +
+                favorito. En móvil el botón de añadir es angosto (columna de
+                contenido ~90vw) — `flex-wrap` + `basis-full` en el botón le
+                da su propio renglón en vez de comprimirse hasta solaparse
+                con la cantidad y el favorito. */}
+            <div className="flex flex-wrap items-center gap-3">
               <div className="flex h-11 shrink-0 items-center rounded-[var(--jdh-radius-sm)] border border-[var(--color-border)]">
                 <button
                   type="button"
@@ -136,7 +154,7 @@ export function ProductDetailModal({
               </div>
               <JdhButton
                 size="lg"
-                className="min-h-11 flex-1 whitespace-nowrap"
+                className="order-3 min-h-11 w-full flex-1 basis-full whitespace-nowrap sm:order-none sm:w-auto sm:basis-auto"
                 disabled={producto.disponible === false}
                 onClick={() =>
                   toast.success(`Añadido al carrito (×${cantidad})`, {

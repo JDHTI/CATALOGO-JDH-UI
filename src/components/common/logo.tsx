@@ -28,7 +28,7 @@ export type LogoVariant = keyof typeof RATIOS
 export type LogoTone = "white" | "black" | "auto" | "auto-inverse"
 
 /** Wordmark height and gap, as a fraction of the lockup's height. */
-const LOCKUP_TEXT_SCALE = 0.6
+const LOCKUP_TEXT_SCALE = 0.68
 const LOCKUP_GAP_SCALE = 0.3
 
 export interface LogoProps {
@@ -102,7 +102,16 @@ export function Logo({
   if (variant === "lockup") {
     return (
       <span
-        className={cn("inline-flex items-center", className)}
+        // `shrink-0 flex-nowrap` van FIJOS, nunca sobrescribibles por
+        // `className`: un caller que pase `hidden sm:block` (display) en vez
+        // de `sm:inline-flex` rompe el flex del wrapper y las dos <Image>
+        // pasan a ser inline y hacen wrap en dos renglones — regresión ya
+        // vista una vez. Cualquier variante de visibilidad externa debe
+        // preservar `display:flex/inline-flex`.
+        className={cn(
+          "inline-flex shrink-0 flex-nowrap items-center [&_img]:shrink-0",
+          className
+        )}
         // Gap proporcional a la altura: es layout estructural derivado de una
         // prop, no estilo — misma excepción documentada que `gridTemplate` en
         // DataTable.

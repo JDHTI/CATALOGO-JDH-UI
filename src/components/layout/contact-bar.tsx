@@ -1,6 +1,5 @@
 import { Mail, Phone } from "lucide-react"
 
-import { ThemeSwitcher } from "@/components/common/theme-switcher"
 import { InstagramIcon } from "@/components/icons/instagram-icon"
 import { WhatsappIcon } from "@/components/icons/whatsapp-icon"
 import { contactConfig } from "@/config/contact.config"
@@ -21,11 +20,14 @@ import { contactConfig } from "@/config/contact.config"
  * En móvil (<lg) se reduce a lo esencial — teléfono y WhatsApp — para no
  * apretar la fila ni forzar scroll horizontal; email e Instagram siguen
  * accesibles desde el footer.
+ *
+ * El selector de tema vive en `AppHeader` (segunda barra), no aquí: esta
+ * franja colapsa al hacer scroll y se llevaría el control de tema con ella.
  */
 export function ContactBar() {
   return (
     <div className="contact-bar-gradient">
-      <div className="mx-auto flex h-9 max-w-[var(--container-wide)] select-none items-center justify-between gap-4 px-4 text-sm sm:px-6">
+      <div className="mx-auto flex h-9 max-w-[var(--container-wide)] items-center justify-between gap-4 px-4 text-sm select-none sm:px-6">
         {/* Izquierda: contacto directo — blanco sobre el negro del extremo */}
         <div className="flex min-w-0 items-center gap-3 text-[var(--color-on-ink)]">
           <a
@@ -81,11 +83,6 @@ export function ContactBar() {
           >
             <InstagramIcon className="size-[18px]" />
           </a>
-          <span
-            aria-hidden
-            className="h-4 w-px bg-[var(--color-ink-border)]"
-          />
-          <ThemeSwitcher variant="on-ink" />
         </div>
       </div>
     </div>

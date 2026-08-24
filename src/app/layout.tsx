@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next"
 import "./globals.css"
 
 import { LenisProvider } from "@/components/providers/lenis-provider"
+import { PwaRegister } from "@/components/providers/pwa-register"
 import { QueryProvider } from "@/components/providers/query-provider"
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
@@ -53,6 +54,7 @@ export default function RootLayout({
             </QueryProvider>
           </LenisProvider>
         </ThemeProvider>
+        <PwaRegister />
       </body>
     </html>
   )
