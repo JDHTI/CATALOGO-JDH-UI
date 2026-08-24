@@ -3,11 +3,12 @@ import type { MetadataRoute } from "next"
 import { siteConfig } from "@/config/site"
 
 /**
- * PWA manifest (installable app). No service worker: a catalog with live
- * pricing gains little from offline caching, and a SW adds risk of a stale
- * cache serving outdated prices. Icons are generated from the isotype by
- * `scripts/generate-brand-assets.mjs`. Hex values are intentional here (the
- * manifest is JSON outside the CSS token pipeline).
+ * PWA manifest (installable app). Service worker en `/sw.js` (registrado por
+ * `PwaRegister` solo en producción): navegaciones network-first — un catálogo
+ * con precios vivos nunca sirve HTML stale — y estáticos cache-first. Icons
+ * son generados del isotipo por `scripts/generate-brand-assets.mjs`. Hex
+ * values son intencionales aquí (el manifest es JSON fuera del pipeline de
+ * tokens CSS).
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {

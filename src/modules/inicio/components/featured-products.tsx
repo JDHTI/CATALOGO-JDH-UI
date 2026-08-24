@@ -38,9 +38,12 @@ function aCardData(p: ProductoDestacado): ProductCardData {
 
 /**
  * Productos destacados en CARRUSEL con imágenes cuadradas agrandadas (2 por
- * fila en móvil, 3 en desktop). Arrastre nativo (embla) en móvil; flechas en
- * ≥sm a los costados. Usa la card de producto compartida (con modal de
- * detalle): categoría, nombre, unidad de venta, precio, favoritos y añadir.
+ * fila en móvil, 3 desde `md`, 4 desde `xl`). Arrastre nativo (embla) en
+ * móvil; flechas en ≥sm a los costados. `items-stretch` en `CarouselContent`
+ * es lo que hace que el `h-full` de cada `CarouselItem` funcione — sin él el
+ * track flex no estira las cards y quedan de alturas distintas. Usa la card
+ * de producto compartida (con modal de detalle): categoría, nombre, unidad
+ * de venta, precio, favoritos y añadir.
  */
 export function FeaturedProducts({
   productos,
@@ -78,11 +81,11 @@ export function FeaturedProducts({
 
       <ScrollReveal y={24}>
         <Carousel opts={{ align: "start" }}>
-          <CarouselContent>
+          <CarouselContent className="items-stretch">
             {productos.map((producto) => (
               <CarouselItem
                 key={producto.id}
-                className="basis-1/2 md:basis-1/3"
+                className="h-full basis-1/2 md:basis-1/3 xl:basis-1/4"
               >
                 <ProductCard producto={aCardData(producto)} variant="imagen" />
               </CarouselItem>

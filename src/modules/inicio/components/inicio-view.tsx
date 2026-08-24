@@ -34,14 +34,14 @@ export function InicioView() {
       <HeroSection />
       <ValueProps />
 
-      <div className="mx-auto flex w-full max-w-[var(--container-wide)] flex-col gap-[var(--space-16)] px-6 py-[var(--space-16)] pb-24 md:pb-[var(--space-32)] lg:gap-[var(--space-32)] lg:py-[var(--space-32)]">
+      <div className="mx-auto flex w-full max-w-[var(--container-wide)] flex-col gap-[var(--space-16)] px-6 py-[var(--space-16)] lg:gap-[var(--space-32)] lg:py-[var(--space-32)]">
         <CategoriesSection categorias={categoriasDestacadas} />
         <FeaturedProducts productos={productosDestacados} />
       </div>
 
       <ProviderMarquee proveedores={proveedores} />
 
-      <div className="mx-auto flex w-full max-w-[var(--container-wide)] flex-col gap-[var(--space-16)] px-6 py-[var(--space-16)] pb-24 md:pb-[var(--space-32)] lg:gap-[var(--space-32)] lg:py-[var(--space-32)]">
+      <div className="mx-auto flex w-full max-w-[var(--container-wide)] flex-col gap-[var(--space-16)] px-6 py-[var(--space-16)] lg:gap-[var(--space-32)] lg:py-[var(--space-32)]">
         <BrandsSection marcas={marcasDestacadas} />
         <CtaSection />
       </div>

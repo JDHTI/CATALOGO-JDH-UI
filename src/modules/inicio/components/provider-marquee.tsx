@@ -29,17 +29,17 @@ export function ProviderMarquee({ proveedores }: { proveedores: Proveedor[] }) {
   return (
     <section
       aria-label="Proveedores aliados"
-      className="overflow-hidden bg-[var(--color-ink)] text-[var(--color-on-ink)]"
+      className="overflow-hidden bg-[var(--color-invert)] text-[var(--color-on-invert)]"
     >
       <div className="mx-auto max-w-[var(--container-wide)] px-4 py-[var(--space-16)] sm:px-6 lg:py-[var(--space-24)]">
         <div className="flex flex-col gap-8">
           <div className="flex flex-col gap-2">
-            <p className="font-mono text-xs tracking-[0.08em] text-[var(--color-on-ink-muted)] uppercase">
+            <p className="font-mono text-xs tracking-[0.08em] text-[var(--color-on-invert-muted)] uppercase">
               Aliados de confianza
             </p>
             <h2
               id="proveedores-title"
-              className="text-2xl font-bold tracking-tight text-balance text-[var(--color-on-ink)] sm:text-3xl"
+              className="text-2xl font-bold tracking-tight text-balance text-[var(--color-on-invert)] sm:text-3xl"
             >
               Proveedores que respaldan cada pedido
             </h2>
@@ -72,19 +72,19 @@ export function ProviderMarquee({ proveedores }: { proveedores: Proveedor[] }) {
               {items.map((proveedor, index) => (
                 <div
                   key={`${proveedor.id}-${index}`}
-                  className="flex w-[22rem] shrink-0 items-center gap-4"
+                  className="flex w-[16rem] shrink-0 items-center gap-4 sm:w-[22rem]"
                 >
                   <span
                     aria-hidden="true"
-                    className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[var(--overlay-on-dark-08)] text-base font-bold text-[var(--color-on-ink)]"
+                    className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-invert-hover-bg)] text-base font-bold text-[var(--color-on-invert)] sm:size-12"
                   >
                     {iniciales(proveedor.nombre)}
                   </span>
                   <div className="flex min-w-0 flex-col gap-0.5">
-                    <h3 className="truncate text-base font-medium text-[var(--color-on-ink)]">
+                    <h3 className="truncate text-base font-medium text-[var(--color-on-invert)]">
                       {proveedor.nombre}
                     </h3>
-                    <p className="line-clamp-2 text-sm text-[var(--color-on-ink-muted)]">
+                    <p className="line-clamp-2 text-sm text-[var(--color-on-invert-muted)]">
                       {proveedor.descripcion}
                     </p>
                   </div>

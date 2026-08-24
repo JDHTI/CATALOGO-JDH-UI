@@ -167,8 +167,46 @@
 
   /* Altura apilada del chrome del catálogo en el tope (ContactBar h-9 +
      AppHeader 72px + MainNav h-14). El primer slide del homepage llena el
-     resto del viewport: `calc(100svh - var(--catalogo-chrome-height))`. */
+     resto del viewport: `calc(100svh - var(--catalogo-chrome-height))`.
+     Solo es el valor de ARRANQUE (SSR / antes de hidratar) — en cuanto monta,
+     `CatalogoChrome` mide el chrome real con `ResizeObserver` y sobreescribe
+     esta variable en `:root`, así que no hace falta mantenerlo exacto a mano
+     por breakpoint. */
   --catalogo-chrome-height: 10.25rem;
+
+  /* Alto del bottom nav fijo en móvil (ver `MobileBottomNav`) — el <main>
+     del layout de catálogo reserva este espacio para que el nav no tape
+     contenido. */
+  --mobile-nav-height: 3.5rem;
+
+  /* Superficies INVERSAS del homepage (secciones que en claro son negras y
+     en oscuro blancas — "cambian de color a blanco y viceversa"): el
+     contenido del homepage invierte con el tema, a diferencia del chrome
+     (--color-ink) que es negro fijo. */
+  --color-invert: var(--neutral-900);
+  --color-on-invert: var(--neutral-0);
+  --color-on-invert-muted: var(--overlay-on-dark-64);
+  --color-invert-border: var(--overlay-on-dark-12);
+  --color-invert-hover-bg: var(--overlay-on-dark-08);
+
+  /* Velo del hero en tema oscuro (la foto es high-key clara; el texto
+     blanco necesita un velo sutil para legibilidad AA). */
+  --color-hero-veil: rgba(29, 29, 27, 0.32);
+
+  /* Botón secundario del hero: blanco sólido + borde negro (el `secondary`
+     estándar de borde gris/outline transparente se pierde contra la foto). */
+  --color-hero-secondary-bg: var(--neutral-0);
+  --color-hero-secondary-fg: var(--neutral-900);
+  --color-hero-secondary-border: var(--neutral-900);
+  --color-hero-secondary-hover-bg: var(--neutral-100);
+
+  /* Hover del botón PRIMARIO del hero ("Explorar catálogo"): NO reutiliza
+     `--color-invert-hover-bg` (rgba blanco al 8%) — ese token está pensado
+     para superponerse sobre chrome sólido ya oscuro (ver `value-props.tsx`),
+     pero aquí `hover:bg-*` REEMPLAZA el fondo negro completo del botón, así
+     que ese 8% de blanco casi transparente deja ver la foto de fondo y el
+     botón se percibe blanco/translúcido en vez de gris. Gris sólido propio. */
+  --color-hero-primary-hover-bg: var(--neutral-700);
 
   --z-base: 0;
   --z-dropdown: 1000;
@@ -252,6 +290,25 @@
      temas). Solo el SEPARADOR sube de opacidad para que header/footer/hero
      ink no se fundan con el fondo oscuro (el color del chrome no cambia). */
   --color-ink-border: var(--overlay-on-dark-16);
+
+  /* Botón secundario del hero en oscuro: mismo tratamiento invertido — negro
+     sólido + borde blanco, igual que el primario invierte (--color-invert). */
+  --color-hero-secondary-bg: var(--neutral-900);
+  --color-hero-secondary-fg: var(--neutral-0);
+  --color-hero-secondary-border: var(--neutral-0);
+  --color-hero-secondary-hover-bg: var(--neutral-700);
+
+  /* Hover del botón PRIMARIO del hero en oscuro: el botón base es blanco
+     (--color-invert se invierte a neutral-0), así que el hover pasa a un
+     gris claro sólido — mismo motivo que en claro, ver el token arriba. */
+  --color-hero-primary-hover-bg: var(--neutral-300);
+
+  /* Superficies inversas del homepage en OSCURO: negras → blancas. */
+  --color-invert: var(--neutral-0);
+  --color-on-invert: var(--neutral-900);
+  --color-on-invert-muted: var(--neutral-500);
+  --color-invert-border: var(--neutral-200);
+  --color-invert-hover-bg: var(--overlay-on-light-08);
 
   /* Tinte semántico para alertas (tema oscuro) — ver nota en :root. */
   --color-success: #4ade80;
@@ -388,6 +445,15 @@
   --sidebar-accent-foreground: var(--color-on-ink);
   --sidebar-border: var(--color-ink-border);
   --sidebar-ring: var(--color-focus-on-ink);
+}
+
+@media (max-width: 1023px) {
+  /* En <lg el AppHeader pasa a 2 filas (logo+acciones / búsqueda) — el
+     chrome apilado crece. Igual que el valor base: solo es el fallback antes
+     de que `CatalogoChrome` mida el chrome real (ver ese componente). */
+  :root {
+    --catalogo-chrome-height: 13rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

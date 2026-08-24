@@ -62,7 +62,7 @@ export function ProductCard({
     <>
       <article
         className={cn(
-          "group flex h-full flex-col overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-[var(--color-border-strong)] focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+          "group flex h-full flex-col overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] transition-[border-color,transform] duration-200 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:-translate-y-0.5 hover:border-[var(--color-border-strong)]",
           conModal && "cursor-pointer"
         )}
       >
@@ -98,7 +98,7 @@ export function ProductCard({
               src={producto.imagen!}
               alt={producto.nombre}
               fill
-              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+              sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
               className="object-cover transition-transform duration-[var(--duration-slow)] group-hover:scale-105"
             />
           )}
@@ -145,29 +145,38 @@ export function ProductCard({
             <p className="text-xs text-muted-foreground">
               {producto.categoria}
             </p>
-            <h3 className="text-sm font-medium text-balance">
+            {/* line-clamp-2 SOLO recorta el exceso — un título de 1 renglón
+                no reserva la altura del segundo por sí solo. `min-h-10`
+                (2 × line-height de text-sm) fija esa altura mínima para que
+                todas las cards midan igual sin importar cuántos renglones
+                use cada título. */}
+            <h3 className="line-clamp-2 min-h-10 text-sm font-medium text-balance">
               {producto.nombre}
             </h3>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="line-clamp-1 text-xs text-muted-foreground">
             {producto.unidadVenta}
           </p>
 
           <div className="mt-auto flex items-center justify-between gap-2">
-            <p className="flex flex-col">
-              <span className="text-base font-bold">
+            <p className="flex min-w-0 flex-col">
+              <span className="truncate text-base font-bold">
                 {formatCentavos(producto.precioCentavos)}
               </span>
               {producto.precioAnteriorCentavos ? (
-                <span className="text-xs text-muted-foreground line-through">
+                <span className="truncate text-xs text-muted-foreground line-through">
                   {formatCentavos(producto.precioAnteriorCentavos)}
                 </span>
               ) : null}
             </p>
+            {/* Icono solo (sin la etiqueta "Añadir") en columnas angostas —
+                2 cards por fila en el carrusel móvil no dejan espacio para
+                icono + texto junto al precio sin que se solapen. */}
             <JdhButton
               variant="secondary"
               size="sm"
-              className="min-h-11 sm:min-h-8"
+              aria-label="Añadir al carrito"
+              className="min-h-11 w-11 shrink-0 justify-center px-0 sm:min-h-8 sm:w-auto sm:justify-start sm:px-3"
               disabled={producto.disponible === false}
               onClick={() =>
                 toast.success("Añadido al carrito", {
@@ -176,7 +185,7 @@ export function ProductCard({
               }
             >
               <ShoppingCart aria-hidden="true" />
-              Añadir
+              <span className="hidden sm:inline">Añadir</span>
             </JdhButton>
           </div>
         </div>
