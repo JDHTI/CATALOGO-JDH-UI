@@ -11,7 +11,9 @@ import { cn } from "@/lib/utils"
 /**
  * Mobile bottom navigation: the first four visible `main` modules as
  * icon+label tabs. Hidden from `md` up (the horizontal `MainNav` takes over
- * there).
+ * there). `z-[var(--z-dropdown)]` (below `MainNav`'s `--z-sticky`) so the
+ * mega menu panel — part of the sticky chrome's own stacking context — can
+ * always paint above this fixed bar instead of being covered by it.
  */
 export function MobileBottomNav() {
   const pathname = usePathname()
@@ -27,7 +29,10 @@ export function MobileBottomNav() {
   return (
     <nav
       aria-label="Navegación inferior"
-      className="fixed inset-x-0 bottom-0 z-[var(--z-sticky)] grid grid-cols-4 border-t border-border bg-background md:hidden"
+      style={{
+        gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`,
+      }}
+      className="fixed inset-x-0 bottom-0 z-[var(--z-dropdown)] grid border-t border-border bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       {items.map((mod) => {
         const Icon = mod.icon

@@ -172,8 +172,20 @@ export function CatalogFilters({
   presentaciones,
   scrollRef,
 }: CatalogFiltersProps) {
+  // En desktop el panel arranca ABIERTO; en móvil COLAPSADO para no tapar
+  // los resultados — se expande tocando la cabecera "Filtros". El SSR y el
+  // primer render van COLAPSADOS (coinciden con el HTML servido → sin
+  // hydration mismatch); al hidratar en lg+ se abre con el patrón de ajuste
+  // de estado durante el render (sin effect, sin setState en efectos).
+  const [abierto, setAbierto] = useState(false)
   const [draft, setDraft] = useState<FiltrosCatalogo>(filtros)
   const [verTodasMarcas, setVerTodasMarcas] = useState(false)
+
+  const [ajustadoCliente, setAjustadoCliente] = useState(false)
+  if (!ajustadoCliente && typeof window !== "undefined") {
+    setAjustadoCliente(true)
+    if (window.innerWidth >= 1024) setAbierto(true)
+  }
 
   // El parent solo cambia `filtros` al APLICAR o LIMPIAR: re-sincroniza el
   // borrador durante el render (patrón oficial de React, sin effect).
@@ -200,13 +212,19 @@ export function CatalogFilters({
 
   return (
     <div className="flex max-h-[60vh] flex-col overflow-hidden rounded-[var(--jdh-radius-md)] bg-[var(--color-ink)] lg:max-h-[calc(100vh-var(--catalogo-chrome-height)-2rem)]">
-      {/* HEADER inmutable (no es botón — el panel siempre está abierto). */}
-      <div className="flex h-12 shrink-0 items-center gap-2 px-4">
+      {/* HEADER: botón toggle (en mobile colapsa/expande el panel; en
+          desktop arranca abierto y también puede colapsarse). */}
+      <button
+        type="button"
+        aria-expanded={abierto}
+        onClick={() => setAbierto((v) => !v)}
+        className="flex h-12 w-full shrink-0 items-center gap-2 px-4 text-sm font-medium text-[var(--color-on-ink)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus-on-ink)] focus-visible:outline-none"
+      >
         <SlidersHorizontal
           className="size-4 shrink-0 text-[var(--color-on-ink-muted)]"
           aria-hidden="true"
         />
-        <span className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-on-ink)]">
+        <span className="inline-flex flex-1 items-center gap-2 text-left">
           Filtros
           {activosDraft > 0 ? (
             <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-on-ink)] px-1.5 text-[10px] font-medium text-[var(--color-ink)]">
@@ -214,178 +232,202 @@ export function CatalogFilters({
             </span>
           ) : null}
         </span>
-      </div>
+        <ChevronDown
+          aria-hidden="true"
+          className={cn(
+            "size-4 shrink-0 text-[var(--color-on-ink-muted)] transition-transform duration-[var(--duration-base)]",
+            abierto && "rotate-180"
+          )}
+        />
+      </button>
 
-      {/* CONTENIDO INTERNO EN BLANCO FIJO (no alterna con el tema): las
-          secciones de Categorías a Presentación viven en un panel blanco
-          SIN esquinas redondeadas — el redondeado inferior lo deja ver el
-          contenedor negro de la raíz (overflow-hidden + rounded-md). */}
-      <div className="min-h-0 flex-1 overflow-hidden bg-[var(--color-surface)]">
-        <div
-          ref={scrollRef}
-          className="h-full [scrollbar-gutter:stable] overflow-y-auto px-4 py-2"
-        >
-          <SeccionFiltro icono={LayoutGrid} titulo="Categorías">
-            <div className="flex flex-col gap-0.5">
-              {categorias.map((categoria) => (
-                <FilaCheckbox
-                  key={categoria.value}
-                  checked={draft.categorias.includes(categoria.value)}
-                  onChange={() =>
-                    set({
-                      categorias: toggle(draft.categorias, categoria.value),
-                    })
-                  }
-                  label={categoria.label}
-                  count={categoria.count}
-                />
-              ))}
-            </div>
-          </SeccionFiltro>
+      {abierto ? (
+        <>
+          {/* CONTENIDO INTERNO EN BLANCO FIJO (no alterna con el tema): las
+              secciones de Categorías a Presentación viven en un panel blanco
+              SIN esquinas redondeadas — el redondeado inferior lo deja ver el
+              contenedor negro de la raíz (overflow-hidden + rounded-md). */}
+          <div className="min-h-0 flex-1 overflow-hidden bg-[var(--color-surface)]">
+            <div
+              ref={scrollRef}
+              data-lenis-prevent
+              className="h-full [scrollbar-gutter:stable] overflow-y-auto px-4 py-2"
+            >
+              <SeccionFiltro icono={LayoutGrid} titulo="Categorías">
+                <div className="flex flex-col gap-0.5">
+                  {categorias.map((categoria) => (
+                    <FilaCheckbox
+                      key={categoria.value}
+                      checked={draft.categorias.includes(categoria.value)}
+                      onChange={() =>
+                        set({
+                          categorias: toggle(draft.categorias, categoria.value),
+                        })
+                      }
+                      label={categoria.label}
+                      count={categoria.count}
+                    />
+                  ))}
+                </div>
+              </SeccionFiltro>
 
-          <SeccionFiltro icono={Tags} titulo="Marcas" defaultAbierto={false}>
-            <div className="flex flex-col gap-0.5">
-              {marcasVisibles.map((marca) => (
-                <FilaCheckbox
-                  key={marca.value}
-                  checked={draft.marcas.includes(marca.value)}
-                  onChange={() =>
-                    set({ marcas: toggle(draft.marcas, marca.value) })
-                  }
-                  label={marca.label}
-                  count={marca.count}
-                />
-              ))}
-            </div>
-            {marcas.length > 6 ? (
-              <button
-                type="button"
-                onClick={() => setVerTodasMarcas((v) => !v)}
-                className="inline-flex h-8 items-center gap-1 self-start text-sm font-medium text-[var(--color-on-ink)] underline decoration-1 underline-offset-2 hover:decoration-2 focus-visible:ring-2 focus-visible:ring-[var(--color-focus-on-ink)] focus-visible:outline-none"
+              <SeccionFiltro
+                icono={Tags}
+                titulo="Marcas"
+                defaultAbierto={false}
               >
-                {verTodasMarcas ? "Ver menos" : `Ver todas (${marcas.length})`}
-                <ChevronDown
-                  aria-hidden="true"
-                  className={cn(
-                    "size-4 transition-transform",
-                    verTodasMarcas && "rotate-180"
-                  )}
-                />
-              </button>
-            ) : null}
-          </SeccionFiltro>
+                <div className="flex flex-col gap-0.5">
+                  {marcasVisibles.map((marca) => (
+                    <FilaCheckbox
+                      key={marca.value}
+                      checked={draft.marcas.includes(marca.value)}
+                      onChange={() =>
+                        set({ marcas: toggle(draft.marcas, marca.value) })
+                      }
+                      label={marca.label}
+                      count={marca.count}
+                    />
+                  ))}
+                </div>
+                {marcas.length > 6 ? (
+                  <button
+                    type="button"
+                    onClick={() => setVerTodasMarcas((v) => !v)}
+                    className="inline-flex h-8 items-center gap-1 self-start text-sm font-medium text-[var(--color-on-ink)] underline decoration-1 underline-offset-2 hover:decoration-2 focus-visible:ring-2 focus-visible:ring-[var(--color-focus-on-ink)] focus-visible:outline-none"
+                  >
+                    {verTodasMarcas
+                      ? "Ver menos"
+                      : `Ver todas (${marcas.length})`}
+                    <ChevronDown
+                      aria-hidden="true"
+                      className={cn(
+                        "size-4 transition-transform",
+                        verTodasMarcas && "rotate-180"
+                      )}
+                    />
+                  </button>
+                ) : null}
+              </SeccionFiltro>
 
-          <SeccionFiltro
-            icono={DollarSign}
-            titulo="Rango de precios"
-            defaultAbierto={false}
-          >
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min={0}
-                  inputMode="numeric"
-                  placeholder="Mín"
-                  value={draft.precioMin != null ? String(draft.precioMin) : ""}
-                  onChange={(e) => {
-                    const v = e.target.value
-                    set({ precioMin: v === "" ? null : Number(v) })
-                  }}
-                  aria-label="Precio mínimo en pesos"
-                  className="h-9"
-                />
-                <span className="text-muted-foreground" aria-hidden="true">
-                  –
-                </span>
-                <Input
-                  type="number"
-                  min={0}
-                  inputMode="numeric"
-                  placeholder="Máx"
-                  value={draft.precioMax != null ? String(draft.precioMax) : ""}
-                  onChange={(e) => {
-                    const v = e.target.value
-                    set({ precioMax: v === "" ? null : Number(v) })
-                  }}
-                  aria-label="Precio máximo en pesos"
-                  className="h-9"
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Valores en pesos COP. Se aplican con el botón Aplicar.
-              </p>
-            </div>
-          </SeccionFiltro>
+              <SeccionFiltro
+                icono={DollarSign}
+                titulo="Rango de precios"
+                defaultAbierto={false}
+              >
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      placeholder="Mín"
+                      value={
+                        draft.precioMin != null ? String(draft.precioMin) : ""
+                      }
+                      onChange={(e) => {
+                        const v = e.target.value
+                        set({ precioMin: v === "" ? null : Number(v) })
+                      }}
+                      aria-label="Precio mínimo en pesos"
+                      className="h-9"
+                    />
+                    <span className="text-muted-foreground" aria-hidden="true">
+                      –
+                    </span>
+                    <Input
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      placeholder="Máx"
+                      value={
+                        draft.precioMax != null ? String(draft.precioMax) : ""
+                      }
+                      onChange={(e) => {
+                        const v = e.target.value
+                        set({ precioMax: v === "" ? null : Number(v) })
+                      }}
+                      aria-label="Precio máximo en pesos"
+                      className="h-9"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Valores en pesos COP. Se aplican con el botón Aplicar.
+                  </p>
+                </div>
+              </SeccionFiltro>
 
-          <SeccionFiltro
-            icono={Percent}
-            titulo="Ofertas y disponibilidad"
-            defaultAbierto={false}
-          >
-            <div className="flex flex-col">
-              <FilaCheckboxSimple
-                label="Solo ofertas"
-                checked={draft.soloOfertas}
-                onChange={() => set({ soloOfertas: !draft.soloOfertas })}
-              />
-              <FilaCheckboxSimple
-                label="Solo disponibles"
-                description="Oculta los productos agotados"
-                checked={draft.soloDisponibles}
-                onChange={() =>
-                  set({ soloDisponibles: !draft.soloDisponibles })
-                }
-              />
-            </div>
-          </SeccionFiltro>
+              <SeccionFiltro
+                icono={Percent}
+                titulo="Ofertas y disponibilidad"
+                defaultAbierto={false}
+              >
+                <div className="flex flex-col">
+                  <FilaCheckboxSimple
+                    label="Solo ofertas"
+                    checked={draft.soloOfertas}
+                    onChange={() => set({ soloOfertas: !draft.soloOfertas })}
+                  />
+                  <FilaCheckboxSimple
+                    label="Solo disponibles"
+                    description="Oculta los productos agotados"
+                    checked={draft.soloDisponibles}
+                    onChange={() =>
+                      set({ soloDisponibles: !draft.soloDisponibles })
+                    }
+                  />
+                </div>
+              </SeccionFiltro>
 
-          <SeccionFiltro
-            icono={Package}
-            titulo="Presentación"
-            defaultAbierto={false}
-          >
-            <div className="flex flex-col gap-0.5">
-              {presentaciones.map((presentacion) => (
-                <FilaCheckbox
-                  key={presentacion.value}
-                  checked={draft.presentaciones.includes(presentacion.value)}
-                  onChange={() =>
-                    set({
-                      presentaciones: toggle(
-                        draft.presentaciones,
+              <SeccionFiltro
+                icono={Package}
+                titulo="Presentación"
+                defaultAbierto={false}
+              >
+                <div className="flex flex-col gap-0.5">
+                  {presentaciones.map((presentacion) => (
+                    <FilaCheckbox
+                      key={presentacion.value}
+                      checked={draft.presentaciones.includes(
                         presentacion.value
-                      ),
-                    })
-                  }
-                  label={presentacion.label}
-                  count={presentacion.count}
-                />
-              ))}
+                      )}
+                      onChange={() =>
+                        set({
+                          presentaciones: toggle(
+                            draft.presentaciones,
+                            presentacion.value
+                          ),
+                        })
+                      }
+                      label={presentacion.label}
+                      count={presentacion.count}
+                    />
+                  ))}
+                </div>
+              </SeccionFiltro>
             </div>
-          </SeccionFiltro>
-        </div>
-      </div>
+          </div>
 
-      {/* FOOTER inmutable: botones lockeados, sin divisor con el contenido. */}
-      <div className="flex shrink-0 flex-col gap-2 px-4 py-3">
-        <JdhButton
-          variant="primary-on-ink"
-          className="w-full"
-          onClick={aplicar}
-        >
-          Aplicar filtros
-        </JdhButton>
-        <JdhButton
-          variant="ghost"
-          size="sm"
-          className="h-9 w-full gap-1.5 text-[var(--color-on-ink)] hover:bg-[var(--overlay-on-dark-08)] hover:text-[var(--color-on-ink)]"
-          onClick={limpiar}
-        >
-          <RotateCcw className="size-3.5" aria-hidden="true" />
-          Limpiar
-        </JdhButton>
-      </div>
+          {/* FOOTER inmutable: botones lockeados, sin divisor con el contenido. */}
+          <div className="flex shrink-0 flex-col gap-2 px-4 py-3">
+            <JdhButton
+              variant="primary-on-ink"
+              className="w-full"
+              onClick={aplicar}
+            >
+              Aplicar filtros
+            </JdhButton>
+            <JdhButton
+              variant="ghost"
+              size="sm"
+              className="h-9 w-full gap-1.5 text-[var(--color-on-ink)] hover:bg-[var(--overlay-on-dark-08)] hover:text-[var(--color-on-ink)]"
+              onClick={limpiar}
+            >
+              <RotateCcw className="size-3.5" aria-hidden="true" />
+              Limpiar
+            </JdhButton>
+          </div>
+        </>
+      ) : null}
     </div>
   )
 }
