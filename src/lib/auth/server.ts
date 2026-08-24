@@ -14,9 +14,21 @@ import {
 
 import { assertJdhTenant, JDH_TENANT_ID } from "./tenant"
 
-function requireEnv(name: string): string {
+/**
+ * Bypass temporal para despliegues de solo maqueta — ver el mismo bypass y su
+ * justificación en `./tenant.ts`. Nada de esto conecta de verdad: `DATABASE_URL`
+ * placeholder nunca abre una conexión real (el `pool.on("error")` de abajo
+ * la absorbe) y `BETTER_AUTH_SECRET`/credenciales de Entra placeholder solo
+ * evitan que el import de este módulo tumbe rutas que no necesitan login real.
+ */
+function requireEnv(name: string, fallback: string): string {
   const value = process.env[name]
-  if (!value) throw new Error(`Falta la variable de entorno ${name}`)
+  if (!value) {
+    console.warn(
+      `[auth] Falta la variable de entorno ${name} — usando placeholder (solo para visualizar la UI, el login no funcionará).`
+    )
+    return fallback
+  }
   return value
 }
 
@@ -76,7 +88,12 @@ async function enrichFromEntra(
  * `plugins` inline dentro del mismo objeto que se está construyendo,
  * TypeScript no puede inferirlo (referencia circular).
  */
-const pool = new Pool({ connectionString: requireEnv("DATABASE_URL") })
+const pool = new Pool({
+  connectionString: requireEnv(
+    "DATABASE_URL",
+    "postgres://placeholder:placeholder@localhost:5432/jdh_catalogo"
+  ),
+})
 
 /**
  * `pg.Pool` es un `EventEmitter`: si un cliente inactivo del pool encuentra un
@@ -95,7 +112,10 @@ pool.on("error", (error) => {
 const options = {
   database: pool,
   baseURL: process.env.BETTER_AUTH_URL,
-  secret: requireEnv("BETTER_AUTH_SECRET"),
+  secret: requireEnv(
+    "BETTER_AUTH_SECRET",
+    "placeholder-mockup-secret-do-not-use-in-real-deploys"
+  ),
   user: {
     additionalFields: {
       /** Roles del usuario. Ver `src/config/permissions.ts`. */
@@ -139,8 +159,11 @@ const options = {
   /** Cuentas de PERSONAL JDH (asesores y administradores) vía Entra ID. */
   socialProviders: {
     microsoft: {
-      clientId: requireEnv("AUTH_MICROSOFT_ENTRA_ID_ID"),
-      clientSecret: requireEnv("AUTH_MICROSOFT_ENTRA_ID_SECRET"),
+      clientId: requireEnv("AUTH_MICROSOFT_ENTRA_ID_ID", "placeholder-client-id"),
+      clientSecret: requireEnv(
+        "AUTH_MICROSOFT_ENTRA_ID_SECRET",
+        "placeholder-client-secret"
+      ),
       tenantId: JDH_TENANT_ID,
       prompt: "select_account",
       disableProfilePhoto: true,

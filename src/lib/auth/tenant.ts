@@ -4,13 +4,29 @@ import "server-only"
 const PERSONAL_MICROSOFT_ACCOUNT_TENANT_ID =
   "9188040d-6c67-4c5b-b112-36a304b66dad"
 
-function requireEnv(name: string): string {
+/**
+ * Bypass temporal para despliegues de solo maqueta (Vercel sin infraestructura
+ * real todavía, ver ARCHITECTURE.md): en vez de tumbar el build/runtime
+ * cuando falta la env var, cae a un placeholder y avisa por consola. El login
+ * de Entra sigue sin funcionar de verdad (no hay tenant real detrás), pero
+ * deja de romper cualquier ruta que solo necesite IMPORTAR este módulo.
+ * Quitar este fallback en cuanto exista un tenant/infra real que configurar.
+ */
+function requireEnv(name: string, fallback: string): string {
   const value = process.env[name]
-  if (!value) throw new Error(`Falta la variable de entorno ${name}`)
+  if (!value) {
+    console.warn(
+      `[auth] Falta la variable de entorno ${name} — usando placeholder (solo para visualizar la UI, el login de Entra no funcionará).`
+    )
+    return fallback
+  }
   return value
 }
 
-export const JDH_TENANT_ID = requireEnv("AUTH_MICROSOFT_ENTRA_ID_TENANT_ID")
+export const JDH_TENANT_ID = requireEnv(
+  "AUTH_MICROSOFT_ENTRA_ID_TENANT_ID",
+  "00000000-0000-0000-0000-000000000000"
+)
 
 /**
  * Defensa en profundidad: Entra ya restringe el login a este tenant porque el
