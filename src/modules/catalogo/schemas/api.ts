@@ -15,6 +15,8 @@ const idSchema = z.coerce.string()
 export const proveedorDtoSchema = z.object({
   id: idSchema,
   nombre: z.string(),
+  // Solo lo envía GET /suppliers; embebido en producto no viaja.
+  totalProductos: z.number().nullish(),
 })
 
 const categoriaDtoSchema = z.object({
@@ -64,7 +66,11 @@ export type ProveedorDto = z.infer<typeof proveedorDtoSchema>
 /* ——— Mappers DTO → dominio ——— */
 
 export function aProveedor(dto: ProveedorDto): Proveedor {
-  return { id: dto.id, nombre: dto.nombre }
+  return {
+    id: dto.id,
+    nombre: dto.nombre,
+    ...(dto.totalProductos != null && { totalProductos: dto.totalProductos }),
+  }
 }
 
 export function aProducto(dto: ProductoDto): Producto {

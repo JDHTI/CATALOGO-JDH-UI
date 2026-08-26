@@ -353,7 +353,15 @@ export async function obtenerProductoMock(id: string): Promise<Producto> {
 
 export async function listarProveedoresMock(): Promise<Proveedor[]> {
   await espera()
-  return [...proveedoresMock].sort((a, b) =>
-    a.nombre.localeCompare(b.nombre, "es")
-  )
+  // Igual que GET /suppliers: incluye totalProductos y solo proveedores
+  // con al menos un producto, ordenados por nombre.
+  return proveedoresMock
+    .map((proveedor) => ({
+      ...proveedor,
+      totalProductos: productosDtoMock.filter(
+        (p) => p.proveedor.id === proveedor.id
+      ).length,
+    }))
+    .filter((p) => p.totalProductos > 0)
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))
 }

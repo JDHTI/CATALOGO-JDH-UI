@@ -13,6 +13,9 @@
 export interface Proveedor {
   id: string
   nombre: string
+  /** Solo en `GET /suppliers` (no embebido en producto) — conteo de
+   *  productos activos, para el panel de filtros. */
+  totalProductos?: number
 }
 
 /** Categoría / subcategoría (existen en el esquema, aún sin datos). */

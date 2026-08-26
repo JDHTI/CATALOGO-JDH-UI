@@ -98,6 +98,7 @@ export function CatalogProveedorFilter({
                 <FilaProveedor
                   key={proveedor.id}
                   label={proveedor.nombre}
+                  count={proveedor.totalProductos}
                   checked={seleccionado === proveedor.id}
                   onSelect={() => onSeleccionar(proveedor.id)}
                 />
@@ -127,10 +128,13 @@ export function CatalogProveedorFilter({
 /** Fila de radio — claro fijo (no alterna con el tema), aplica al instante. */
 function FilaProveedor({
   label,
+  count,
   checked,
   onSelect,
 }: {
   label: string
+  /** `totalProductos` de GET /suppliers — sin conteo en la fila "Todos". */
+  count?: number
   checked: boolean
   onSelect: () => void
 }) {
@@ -151,6 +155,11 @@ function FilaProveedor({
       >
         {label}
       </span>
+      {count != null ? (
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {count}
+        </span>
+      ) : null}
     </label>
   )
 }

@@ -9,6 +9,7 @@ import type {
 import {
   aPaginaProductos,
   aProducto,
+  aProveedor,
   apiErrorDtoSchema,
   paginaProductosDtoSchema,
   productoDtoSchema,
@@ -99,5 +100,5 @@ export async function obtenerProducto(id: string): Promise<Producto> {
 export async function listarProveedores(): Promise<Proveedor[]> {
   if (USAR_MOCK) return listarProveedoresMock()
   const dto = await apiGet("/suppliers", proveedoresDtoSchema)
-  return dto.map((p) => ({ id: p.id, nombre: p.nombre }))
+  return dto.map(aProveedor)
 }
