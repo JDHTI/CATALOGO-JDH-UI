@@ -12,6 +12,7 @@ import {
 
 import { JdhButton } from "@/components/common/jdh-button"
 import { Input } from "@/components/ui/input"
+import { useMontado } from "@/hooks/use-montado"
 import { formatNombreComercial } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
@@ -43,21 +44,13 @@ import type { Marca, Proveedor } from "../types"
 const MAX_VISIBLES = 50
 
 /**
- * Difiere el estado real de los ejes hasta después de montar.
- *
- * Sin esto, `next dev` lanza un error de hidratación en `/productos`: la
+ * El estado real de los ejes se difiere hasta después de montar (ver
+ * `useMontado`). Sin eso, `next dev` lanza un error de hidratación aquí: la
  * vista vive dentro del `<Suspense>` que exige `useSearchParams`, y React
  * hidrata ese subárbol DESPUÉS del layout. Para entonces `MainNav` —que
  * comparte la misma query de marcas— ya la resolvió, así que el cliente
  * pintaba "Sin datos" donde el HTML del servidor tenía el esqueleto.
- *
- * Forzando el estado de carga en el primer render del cliente, servidor y
- * cliente coinciden siempre. El coste es un fotograma extra de esqueleto;
- * en producción ni se nota, porque la ruta se sirve prerenderizada con el
- * fallback del propio `Suspense`.
  */
-const sinSuscripcion = () => () => {}
-
 const CONSULTA_ESCRITORIO = "(min-width: 1024px)"
 
 /**
@@ -77,19 +70,6 @@ function useEsEscritorio(): boolean {
       return () => consulta.removeEventListener("change", alCambiar)
     },
     () => window.matchMedia(CONSULTA_ESCRITORIO).matches,
-    () => false
-  )
-}
-
-function useMontado(): boolean {
-  // `useSyncExternalStore` es el mecanismo que React ofrece justo para esto:
-  // devuelve el snapshot del servidor (false) durante SSR y la hidratación, y
-  // el del cliente (true) después. Un `useEffect` con `setState` haría lo
-  // mismo, pero la regla `react-hooks/set-state-in-effect` lo prohíbe con
-  // razón (renders en cascada).
-  return useSyncExternalStore(
-    sinSuscripcion,
-    () => true,
     () => false
   )
 }
@@ -199,7 +179,12 @@ export function CatalogFilters({
           // `scrollbar-gutter` solo desde `lg`: en móvil la barra de scroll
           // se superpone al contenido, así que reservarle sitio solo roba
           // ancho a las filas.
-          className="max-h-[60vh] overflow-y-auto overscroll-contain px-4 py-2 lg:max-h-[calc(100vh-var(--catalogo-chrome-height)-7rem)] lg:[scrollbar-gutter:stable]"
+          // `overflow-x-hidden`: aquí solo se scrollea en vertical. Cualquier
+          // hijo que se pase un par de píxeles (un anillo de foco, la sombra
+          // de un input) creaba una barra horizontal en un panel donde no
+          // hay nada que ver a los lados; los nombres largos se recortan con
+          // `truncate`, que es lo que debe pasar.
+          className="max-h-[60vh] overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-2 lg:max-h-[calc(100vh-var(--catalogo-chrome-height)-7rem)] lg:[scrollbar-gutter:stable]"
         >
           <EjeFiltro
             grupo="proveedor"
@@ -307,6 +292,7 @@ function EjeFiltro({
   nota?: string
 }) {
   const [filtro, setFiltro] = useState("")
+  const [desplegado, setDesplegado] = useState(true)
 
   const { visibles, ocultos, hayItems } = useMemo(() => {
     const lista = items ?? []
@@ -323,15 +309,30 @@ function EjeFiltro({
 
   return (
     <div className="flex flex-col border-b border-[var(--color-border)] py-2 last:border-b-0">
-      <p className="flex h-9 items-center gap-2 text-sm font-medium text-foreground">
+      {/* Cada eje se pliega por su cuenta: con dos listas largas, poder
+          cerrar una para ver la otra entera es la diferencia entre buscar y
+          rebuscar. */}
+      <button
+        type="button"
+        aria-expanded={desplegado}
+        onClick={() => setDesplegado((v) => !v)}
+        className="flex h-9 w-full items-center gap-2 text-left text-sm font-medium text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      >
         <Icono
           className="size-4 shrink-0 text-muted-foreground"
           aria-hidden="true"
         />
-        {titulo}
-      </p>
+        <span className="flex-1 truncate">{titulo}</span>
+        <ChevronDown
+          aria-hidden="true"
+          className={cn(
+            "size-4 shrink-0 text-muted-foreground transition-transform duration-[var(--duration-base)]",
+            desplegado && "rotate-180"
+          )}
+        />
+      </button>
 
-      {isPending ? (
+      {!desplegado ? null : isPending ? (
         <div className="flex animate-pulse flex-col gap-3 py-2" aria-hidden>
           {Array.from({ length: 6 }, (_, i) => (
             <div
@@ -365,7 +366,7 @@ function EjeFiltro({
           {(items ?? []).length > 12 ? (
             <div className="relative">
               <Search
-                className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
                 aria-hidden="true"
               />
               <Input
@@ -374,12 +375,19 @@ function EjeFiltro({
                 onChange={(event) => setFiltro(event.target.value)}
                 placeholder={placeholderBusqueda}
                 aria-label={`Buscar dentro de ${titulo.toLowerCase()}`}
-                className="h-9 pl-8 text-sm [&::-webkit-search-cancel-button]:appearance-none"
+                // `pl-10` deja aire entre el icono y el texto: con `pl-8` el
+                // placeholder arrancaba pegado al icono.
+                className="h-9 w-full pl-10 text-sm [&::-webkit-search-cancel-button]:appearance-none"
               />
             </div>
           ) : null}
 
-          <fieldset className="flex flex-col gap-0.5">
+          {/* `min-w-0` en el fieldset NO es decorativo: el navegador le
+              aplica `min-inline-size: min-content`, así que crecía hasta el
+              nombre de proveedor más largo, ignoraba el ancho del panel y
+              provocaba el scroll horizontal. Con el ancho ya limitado, el
+              `truncate` de cada fila por fin recorta. */}
+          <fieldset className="flex min-w-0 flex-col gap-0.5">
             <legend className="sr-only">Filtrar por {titulo}</legend>
             {/* "Todos" solo tiene sentido sin búsqueda activa. */}
             {filtro.trim() === "" ? (
