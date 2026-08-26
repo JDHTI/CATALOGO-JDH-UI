@@ -13,7 +13,9 @@ import {
 import { SECTION_EMPTY_COPY, SectionNota } from "./section-empty"
 
 /** Tope de proveedores en la cinta: con cientos, el bucle se vuelve eterno. */
-const MAX_EN_CINTA = 20
+const MAX_EN_CINTA = 12
+/** Cada tarjeta mide 22rem; a 4 s por tarjeta la cinta avanza ~88 px/s. */
+const SEGUNDOS_POR_PROVEEDOR = 4
 
 /**
  * Cinta INFINITA de proveedores ("marquee") con desplazamiento FLUIDO y
@@ -39,20 +41,28 @@ const MAX_EN_CINTA = 20
  */
 export function ProviderMarquee() {
   const reduce = useReducedMotion()
-  const { data, isPending, isError } = useProveedores()
+  const { data, isError } = useProveedores()
 
   const proveedores = (data ?? [])
     .slice()
     .sort((a, b) => (b.totalProductos ?? 0) - (a.totalProductos ?? 0))
     .slice(0, MAX_EN_CINTA)
 
-  const sinCinta = !isPending && proveedores.length === 0
+  // La cinta se monta SOLO con datos, y esto no es cosmética: cuando los
+  // proveedores llegaban asíncronos, el primer render la montaba con la lista
+  // vacía y por tanto con `duration: 0`. Motion daba la animación por
+  // terminada al instante —dejando el transform clavado en el keyframe
+  // final— y no volvía a arrancarla al llegar los datos, porque las props de
+  // `animate` no cambiaban. Resultado: cinta inmóvil.
+  const hayCinta = proveedores.length > 0
 
   // Se duplica la lista para que el bucle sea seamless: al llegar al final de
   // la primera copia, la segunda ocupa exactamente el mismo lugar.
   const items = [...proveedores, ...proveedores]
-  // Segundos por vuelta completa de UNA copia — la velocidad se siente fluida.
-  const duration = proveedores.length * 6
+  // Velocidad CONSTANTE en vez de tiempo fijo por vuelta: si la duración no
+  // crece con la lista, más proveedores = cinta más rápida. Así un logo tarda
+  // siempre lo mismo en cruzar, haya 8 o 20.
+  const duration = proveedores.length * SEGUNDOS_POR_PROVEEDOR
 
   return (
     <section
@@ -73,7 +83,7 @@ export function ProviderMarquee() {
             </h2>
           </div>
 
-          {isError || sinCinta ? (
+          {isError || !hayCinta ? (
             // Cinta fantasma: misma fila de logos + texto, sin animar (no se
             // puede hacer un bucle de cero elementos). Mantiene la franja
             // negra con cuerpo en vez de dejar un bloque vacío.
@@ -117,6 +127,9 @@ export function ProviderMarquee() {
               }}
             >
               <motion.div
+                // Reinicia la animación si cambia el número de tarjetas: el
+                // recorrido del bucle depende del ancho total.
+                key={proveedores.length}
                 className="flex w-max items-stretch gap-6"
                 animate={reduce ? undefined : { x: ["0%", `-50%`] }}
                 transition={
