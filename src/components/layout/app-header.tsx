@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Heart, ShoppingCart } from "lucide-react"
 
 import { Logo } from "@/components/common/logo"
+import { ThemeSwitcher } from "@/components/common/theme-switcher"
 
 import { AuthActions } from "./auth-actions"
 import { IconNavLink } from "./icon-nav-link"
@@ -18,10 +19,11 @@ import { ProductSearchBar } from "./product-search-bar"
  * justo debajo) en vez de estirarse borde a borde — el fondo negro sí llega
  * al borde, solo la fila de contenido queda acotada y centrada.
  *
- * Los datos de contacto (teléfono, email, WhatsApp, Instagram) y el selector
- * de tema viven en la PRIMERA barra (`ContactBar`), también negra — las tres
- * franjas son el mismo chrome, separadas por líneas hairline. El mega menú y
- * las categorías destacadas viven en la TERCERA barra (`MainNav`).
+ * Los datos de contacto (teléfono, email, WhatsApp, Instagram) viven en la
+ * PRIMERA barra (`ContactBar`), también negra — las tres franjas son el
+ * mismo chrome, separadas por líneas hairline. El selector de tema
+ * (`ThemeSwitcher`) vive aquí, junto a "Mi cuenta". El mega menú y las
+ * categorías destacadas viven en la TERCERA barra (`MainNav`).
  *
  * En móvil favoritos/carrito/cuenta pierden el texto y quedan como íconos
  * (además de existir `MobileBottomNav`); la búsqueda nunca se oculta.
@@ -73,6 +75,7 @@ export function AppHeader() {
             aria-hidden
             className="mx-1 h-6 w-px bg-[var(--color-ink-border)]"
           />
+          <ThemeSwitcher variant="on-ink" />
           <AuthActions />
         </div>
       </div>
