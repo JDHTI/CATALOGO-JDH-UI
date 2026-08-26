@@ -1,16 +1,15 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import type { Route } from "next"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { PackageSearch, RotateCcw, Search, X } from "lucide-react"
+import { PackageSearch, RotateCcw } from "lucide-react"
 
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs"
 import { JdhButton } from "@/components/common/jdh-button"
 import { EmptyState } from "@/components/common/empty-state"
 import { Pagination } from "@/components/navigation/pagination"
 import { Stagger, StaggerItem } from "@/components/motion/stagger"
-import { Input } from "@/components/ui/input"
 import { formatNumero } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
@@ -20,7 +19,6 @@ import { CatalogFilters } from "./catalog-filters"
 import { ProductoCard, ProductoCardSkeleton } from "./producto-card"
 
 const PAGE_SIZE = 12
-const DEBOUNCE_MS = 400
 
 /**
  * Fallback de Suspense para la ruta: `CatalogoView` usa `useSearchParams`,
@@ -44,10 +42,13 @@ export function CatalogoViewFallback() {
  * Listado de productos REALES del API (jdh-catalogo-api) — referencia visual
  * sin venta ni precio. Búsqueda, los dos ejes de clasificación y la página
  * viven en la URL (`?q=&proveedor=&marca=&pagina=`): el estado es
- * compartible, el botón atrás funciona, y el buscador del header (que navega
- * a `/productos?q=…`) cae en el mismo mecanismo. La data llega vía TanStack
- * Query con `keepPreviousData` (grid atenuado mientras carga la página
- * siguiente, sin flash de skeleton).
+ * compartible y el botón atrás funciona. La data llega vía TanStack Query
+ * con `keepPreviousData` (grid atenuado mientras carga la página siguiente,
+ * sin flash de skeleton).
+ *
+ * Esta vista NO tiene campo de búsqueda: el término lo escribe el buscador
+ * del header (`ProductSearchBar`) en `?q=`, y aquí solo se lee. Tener dos
+ * buscadores a la vez obligaba a adivinar cuál manda.
  */
 export function CatalogoView() {
   const router = useRouter()
@@ -74,25 +75,6 @@ export function CatalogoView() {
     [router, pathname, searchParams]
   )
 
-  // Input controlado + debounce hacia la URL. Se re-sincroniza durante el
-  // render si `q` cambia desde fuera (buscador del header) — patrón oficial
-  // de React, sin effect.
-  const [busqueda, setBusqueda] = useState(q)
-  const [prevQ, setPrevQ] = useState(q)
-  if (q !== prevQ) {
-    setPrevQ(q)
-    setBusqueda(q)
-  }
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (busqueda.trim() !== q) {
-        actualizarParams({ q: busqueda.trim() || null, pagina: null })
-      }
-    }, DEBOUNCE_MS)
-    return () => clearTimeout(timer)
-  }, [busqueda, q, actualizarParams])
-
   const productos = useProductos({
     page: pagina,
     limit: PAGE_SIZE,
@@ -117,10 +99,8 @@ export function CatalogoView() {
   const limpiarFiltros = () =>
     actualizarParams({ proveedor: null, marca: null, pagina: null })
 
-  const limpiarTodo = () => {
-    setBusqueda("")
+  const limpiarTodo = () =>
     actualizarParams({ q: null, proveedor: null, marca: null, pagina: null })
-  }
 
   /**
    * WHEEL-HIJACK del área de filtros (UX) — con listener NATIVO no-pasivo:
@@ -232,33 +212,11 @@ export function CatalogoView() {
           {/* Banner de imágenes de producto, al tamaño de la lista. */}
           <CatalogBannerCarousel />
 
-          {/* Barra de resultados: búsqueda + recuento. */}
+          {/* Barra de resultados. Aquí NO hay campo de búsqueda: el único
+              buscador de la app es el del header, que escribe `?q=` en esta
+              misma URL. Dos cajas de búsqueda en pantalla obligaban a
+              adivinar cuál manda. */}
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="relative w-full max-w-sm">
-              <Search
-                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                aria-hidden="true"
-              />
-              <Input
-                type="search"
-                value={busqueda}
-                onChange={(event) => setBusqueda(event.target.value)}
-                placeholder="Buscar por nombre, código o marca…"
-                aria-label="Buscar productos por nombre, código o marca"
-                className="h-10 pl-9 [&::-webkit-search-cancel-button]:appearance-none"
-              />
-              {busqueda ? (
-                <button
-                  type="button"
-                  aria-label="Limpiar búsqueda"
-                  onClick={() => setBusqueda("")}
-                  className="absolute top-1/2 right-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-[var(--color-surface-subtle)] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                >
-                  <X className="size-3.5" aria-hidden="true" />
-                </button>
-              ) : null}
-            </div>
-
             {/* Con 0 resultados no se anuncia el rango: lo dice el estado
                 vacío de abajo, y "Mostrando 0–0 de 0" es puro ruido. */}
             <p className="text-sm text-muted-foreground" aria-live="polite">
