@@ -25,7 +25,7 @@ import { contactConfig } from "@/config/contact.config"
 export function ContactBar() {
   return (
     <div className="contact-bar-gradient">
-      <div className="mx-auto flex h-9 max-w-[var(--container-wide)] select-none items-center justify-between gap-4 px-4 text-sm sm:px-6">
+      <div className="mx-auto flex h-9 max-w-[var(--container-wide)] items-center justify-between gap-4 px-4 text-sm select-none sm:px-6">
         {/* Izquierda: contacto directo — blanco sobre el negro del extremo */}
         <div className="flex min-w-0 items-center gap-3 text-[var(--color-on-ink)]">
           <a
@@ -81,10 +81,7 @@ export function ContactBar() {
           >
             <InstagramIcon className="size-[18px]" />
           </a>
-          <span
-            aria-hidden
-            className="h-4 w-px bg-[var(--color-ink-border)]"
-          />
+          <span aria-hidden className="h-4 w-px bg-[var(--color-ink-border)]" />
           <ThemeSwitcher variant="on-ink" />
         </div>
       </div>
