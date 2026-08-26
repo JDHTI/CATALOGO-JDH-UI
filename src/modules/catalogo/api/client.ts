@@ -1,16 +1,20 @@
 import type { z } from "zod"
 
 import type {
+  Marca,
+  MarcasQueryParams,
   Paginado,
   Producto,
   ProductosQueryParams,
   Proveedor,
 } from "../types"
 import {
+  aMarca,
   aPaginaProductos,
   aProducto,
   aProveedor,
   apiErrorDtoSchema,
+  marcasDtoSchema,
   paginaProductosDtoSchema,
   productoDtoSchema,
   proveedoresDtoSchema,
@@ -75,6 +79,7 @@ export async function listarProductos(
     limit: params.limit,
     search: params.search,
     supplierId: params.supplierId,
+    brandId: params.brandId,
   })
   return aPaginaProductos(dto)
 }
@@ -92,4 +97,17 @@ export async function obtenerProducto(id: string): Promise<Producto> {
 export async function listarProveedores(): Promise<Proveedor[]> {
   const dto = await apiGet("/suppliers", proveedoresDtoSchema)
   return dto.map(aProveedor)
+}
+
+/**
+ * `GET /brands` — lista completa de marcas, opcionalmente acotada a un
+ * proveedor. Segundo eje de clasificación del catálogo, junto al proveedor.
+ */
+export async function listarMarcas(
+  params: MarcasQueryParams = {}
+): Promise<Marca[]> {
+  const dto = await apiGet("/brands", marcasDtoSchema, {
+    supplierId: params.supplierId,
+  })
+  return dto.map(aMarca)
 }

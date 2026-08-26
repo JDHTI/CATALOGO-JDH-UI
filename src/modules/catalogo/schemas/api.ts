@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import type { Paginado, Producto, Proveedor } from "../types"
+import type { Marca, Paginado, Producto, Proveedor } from "../types"
 
 /**
  * DTOs de jdh-catalogo-api (NestJS) — contrato PROVISIONAL validado con zod
@@ -16,6 +16,13 @@ export const proveedorDtoSchema = z.object({
   id: idSchema,
   nombre: z.string(),
   // Solo lo envía GET /suppliers; embebido en producto no viaja.
+  totalProductos: z.number().nullish(),
+})
+
+/** `GET /brands` → marcas con id propio (tabla normalizada en el backend). */
+export const marcaDtoSchema = z.object({
+  id: idSchema,
+  nombre: z.string(),
   totalProductos: z.number().nullish(),
 })
 
@@ -50,8 +57,11 @@ export const paginaProductosDtoSchema = z.object({
   meta: paginacionMetaDtoSchema,
 })
 
-/** `GET /suppliers` → lista completa, sin meta (conjunto pequeño). */
+/** `GET /suppliers` → lista completa, sin meta. */
 export const proveedoresDtoSchema = z.array(proveedorDtoSchema)
+
+/** `GET /brands` → lista completa, sin meta. */
+export const marcasDtoSchema = z.array(marcaDtoSchema)
 
 /** Error estándar de NestJS. */
 export const apiErrorDtoSchema = z.object({
@@ -62,10 +72,19 @@ export const apiErrorDtoSchema = z.object({
 
 export type ProductoDto = z.infer<typeof productoDtoSchema>
 export type ProveedorDto = z.infer<typeof proveedorDtoSchema>
+export type MarcaDto = z.infer<typeof marcaDtoSchema>
 
 /* ——— Mappers DTO → dominio ——— */
 
 export function aProveedor(dto: ProveedorDto): Proveedor {
+  return {
+    id: dto.id,
+    nombre: dto.nombre,
+    ...(dto.totalProductos != null && { totalProductos: dto.totalProductos }),
+  }
+}
+
+export function aMarca(dto: MarcaDto): Marca {
   return {
     id: dto.id,
     nombre: dto.nombre,

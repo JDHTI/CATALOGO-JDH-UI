@@ -18,6 +18,19 @@ export interface Proveedor {
   totalProductos?: number
 }
 
+/**
+ * Marca de `GET /brands` — tabla propia en el backend, así que el filtro va
+ * por `id`. Ojo: dentro de un `Producto`, `marca` es el NOMBRE en texto
+ * plano (no este objeto); los dos ejes de clasificación del catálogo son
+ * proveedor y marca.
+ */
+export interface Marca {
+  id: string
+  nombre: string
+  /** Conteo de productos activos, para el panel de filtros. */
+  totalProductos?: number
+}
+
 /** Categoría / subcategoría (existen en el esquema, aún sin datos). */
 export interface CategoriaProducto {
   id: string
@@ -54,10 +67,19 @@ export interface Paginado<T> {
 }
 
 /** Parámetros que acepta `GET /products` (la UI solo los transporta;
- *  la semántica de `search` — nombre, sku y marca — la decide el backend). */
+ *  la semántica de `search` — nombre, sku y marca — la decide el backend).
+ *  `page`/`limit` son opcionales: sin ellos el backend devuelve su primera
+ *  página por defecto. */
 export interface ProductosQueryParams {
   page?: number
   limit?: number
   search?: string
+  supplierId?: string
+  /** Filtro por marca — va por id, no por nombre. */
+  brandId?: string
+}
+
+/** Parámetros de `GET /brands`: acota las marcas a un proveedor. */
+export interface MarcasQueryParams {
   supplierId?: string
 }
