@@ -5,6 +5,7 @@ import type { Route } from "next"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Search, X } from "lucide-react"
 
+import { useMontado } from "@/hooks/use-montado"
 import { cn } from "@/lib/utils"
 
 const RUTA_CATALOGO = "/productos"
@@ -71,6 +72,7 @@ function BuscadorConectado({ className }: { className?: string }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const montado = useMontado()
 
   const enCatalogo = pathname === RUTA_CATALOGO
   const termino = enCatalogo ? (searchParams.get("q") ?? "") : ""
@@ -101,14 +103,18 @@ function BuscadorConectado({ className }: { className?: string }) {
   return (
     <FormularioBusqueda
       className={className}
-      valor={valor}
+      // Hasta montar se pinta vacío, igual que el HTML del servidor y que el
+      // fallback del Suspense. Si aquí se volcara el término de la URL, el
+      // `value` del input diferiría del servido y React tiraría el árbol con
+      // un error de hidratación.
+      valor={montado ? valor : ""}
       onValor={setValor}
       onEnviar={() => navegar(valor.trim())}
       // Solo cuando hay una búsqueda APLICADA: limpiar devuelve el catálogo
       // completo, así que es una acción sobre los resultados, no sobre el
       // texto que estás tecleando.
       onLimpiar={
-        termino
+        montado && termino
           ? () => {
               setValor("")
               navegar("")
