@@ -22,6 +22,7 @@ export function CatalogProveedorFilter({
   onRetry,
   seleccionado,
   onSeleccionar,
+  scrollRef,
 }: {
   proveedores: Proveedor[] | undefined
   isPending: boolean
@@ -30,6 +31,8 @@ export function CatalogProveedorFilter({
   /** `supplierId` activo — null = todos los proveedores. */
   seleccionado: string | null
   onSeleccionar: (supplierId: string | null) => void
+  /** Ref al contenedor scrolleable (para el wheel-hijack del aside). */
+  scrollRef?: React.Ref<HTMLDivElement>
 }) {
   return (
     <div className="flex max-h-[60vh] flex-col overflow-hidden rounded-[var(--jdh-radius-md)] bg-[var(--color-ink)] lg:max-h-[calc(100vh-var(--catalogo-chrome-height)-2rem)]">
@@ -51,7 +54,10 @@ export function CatalogProveedorFilter({
 
       {/* CONTENIDO en blanco fijo, scrolleable. */}
       <div className="min-h-0 flex-1 overflow-hidden bg-[var(--color-surface)]">
-        <div className="h-full [scrollbar-gutter:stable] overflow-y-auto px-4 py-3">
+        <div
+          ref={scrollRef}
+          className="h-full [scrollbar-gutter:stable] overflow-y-auto px-4 py-3"
+        >
           <p className="flex h-9 items-center gap-2 text-sm font-medium text-foreground">
             <Store
               className="size-4 shrink-0 text-muted-foreground"
