@@ -113,3 +113,28 @@ El RBAC añade un rol `anonimo` que **no** viene de ningún proveedor de identid
 - `next.config.ts` permite imágenes remotas de cualquier host HTTPS de forma temporal; hay que restringirlo al dominio real del bucket S3 cuando exista.
 - El detalle de producto se resuelve en cliente: el `<title>` de `/productos/[id]` es genérico. Si el catálogo necesita SEO real por producto, habrá que mover esa lectura a servidor (con `generateMetadata`) — merecerá su propia entrada.
 - Apagar el mock es poner `NEXT_PUBLIC_CATALOGO_MOCK=0` (o quitarla); es una variable de build, no de runtime.
+
+> **Superada el 2026-08-26 por la entrada siguiente:** el mock y su variable de entorno se eliminaron por completo, y la clasificación por categorías se reemplazó por proveedor + marca.
+
+## 2026-08-26 — Eliminar todo dato de producto inventado y clasificar solo por proveedor y marca
+
+**Contexto:** el catálogo arrastraba tres generaciones de datos falsos: el mock del módulo `catalogo` (recién añadido, con su switch por env), un dataset de marketing en `modules/inicio` con productos que tenían **precio y botón de carrito**, y una lista de 10 **categorías inventadas** en `src/config/search.config.ts` que alimentaba el buscador del header, la barra de navegación, los banners del listado y la grilla del homepage. Ninguna categoría existía en los datos reales: el backend tiene las columnas pero sin datos, y `/productos?categoria=…` nunca fue un filtro real — todos esos enlaces eran destinos muertos. El backend confirmó además la escala real (~9.000 productos, hasta 645 proveedores) y que los ids son enteros.
+
+**Decisión:** los únicos ejes de clasificación son **proveedor** (`supplierId`) y **marca** (`brandId`, tabla propia en el backend, `GET /brands?supplierId=`); las categorías desaparecen de la UI hasta que existan datos. Se borraron `mock/productos.mock.ts`, `mock/inicio.mock.ts`, `search.config.ts`, `category-dropdown.tsx`, `categories-section.tsx`, `modules/inicio/types.ts` y las cards de marketing `components/cards/product-card.tsx` + `product-detail-modal.tsx` (eran el único sitio con precio y "Añadir al carrito"). El API es ahora la única fuente de productos: sin `NEXT_PUBLIC_CATALOGO_MOCK`, sin datos de relleno. Consecuencias por superficie:
+
+- **Panel de filtros** (`catalog-filters.tsx`): dos ejes, selección única cada uno (el API acepta un id por eje), con **búsqueda local** y tope de 50 filas renderizadas — una lista de 645 radios no es usable ni barata en DOM. Las marcas se acotan al proveedor elegido, y cambiar de proveedor limpia la marca (puede no existir en el nuevo).
+- **Buscador del header**: perdió el segmento de categoría; solo transporta el término a `/productos?q=`.
+- **Barra de navegación inferior**: se alimenta de `GET /brands` (las 6 marcas con más referencias). Se eligió marca sobre proveedor porque es el eje con el que un comprador reconoce el portafolio de un vistazo.
+- **Banners del listado**: se quedaron como pieza visual y perdieron su CTA, en vez de inventarles un destino.
+- **Homepage**: las cuatro secciones que dependían del mock ahora piden sus datos al API **desde el cliente**, lo que mantiene `/` estática y sin depender de que el API esté arriba en build.
+
+**Sobre los estados vacíos** — el error que corrigió esta entrada: la primera versión OCULTABA cada sección de la homepage sin datos. Con el backend en base vacía eso borró todo el cuerpo de la página y se leyó, correctamente, como una página averiada. Ahora cada sección **conserva su encabezado** y muestra un `SectionEmpty` con altura parecida a la grilla que sustituye, distinguiendo "aún no hay datos publicados" de "no pudimos cargar" (`section-empty.tsx`). La regla general: en la homepage, la ausencia de datos es un estado que se comunica, no una sección que desaparece; en `/productos`, donde el usuario fue a buscar productos, el error es explícito y con reintento.
+
+**Consecuencias:**
+
+- Sin backend arriba no hay catálogo que mostrar, a propósito. Es el comportamiento pedido: antes que un dato inventado, un estado vacío honesto.
+- El eje marca degrada solo: si `/brands` responde 404, `useMarcas` lo marca `noImplementado`, la UI oculta ese eje y **nunca envía `brandId`** — así un backend sin ese filtro no recibe un param que podría rechazar con 400.
+- `logoDeMarca` en `brands-section.tsx` mapea el nombre real de la marca a los logos de `public/photos/marcas/` por slug; si no hay asset, la celda es tipográfica. Los logos son assets, no datos: la sección nunca depende de que exista el archivo.
+- **Verificado contra el servicio vivo** (base vacía): la UI emite `?page=1&limit=12&search=…&supplierId=…&brandId=…` tal cual, y el detalle resuelve el 404 tanto de un id inexistente como de uno malformado. `pnpm build` deja `/` y `/productos` estáticas.
+- Queda un **warning de hidratación solo en `next dev`** en `/productos`: `MainNav` y el panel comparten la query de marcas, y la hidratación diferida del `Suspense` ocurre cuando esa query ya resolvió, así que el cliente pinta el estado con datos donde el SSR puso el skeleton. En producción no ocurre (la ruta se sirve prerenderizada con el fallback del `Suspense`) y se verificó con cero errores de consola. No se parcheó con un estado `mounted` porque eso añadiría un render extra y un parpadeo de skeleton en producción para silenciar ruido de desarrollo.
+- Rate limit del API: 100 req/60s por IP. Cada carga de `/productos` hace 4 llamadas (productos, proveedores, marcas globales del nav y marcas del proveedor); los ejes se cachean 5 minutos en TanStack Query para no repetirlas.
