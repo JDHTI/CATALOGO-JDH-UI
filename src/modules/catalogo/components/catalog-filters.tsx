@@ -1,7 +1,14 @@
 "use client"
 
 import { useMemo, useState, useSyncExternalStore } from "react"
-import { RotateCcw, Search, SlidersHorizontal, Store, Tags } from "lucide-react"
+import {
+  ChevronDown,
+  RotateCcw,
+  Search,
+  SlidersHorizontal,
+  Store,
+  Tags,
+} from "lucide-react"
 
 import { JdhButton } from "@/components/common/jdh-button"
 import { Input } from "@/components/ui/input"
@@ -21,9 +28,16 @@ import type { Marca, Proveedor } from "../types"
  * los primeros `MAX_VISIBLES` resultados, para no meter cientos de nodos en
  * el DOM. Las marcas se acotan al proveedor seleccionado.
  *
- * Mantiene el lenguaje visual del panel original: bloque NEGRO fijo con el
- * contenido en blanco fijo (no alterna con el tema), header y footer
- * inmutables y scroll solo en el centro.
+ * Mantiene el lenguaje visual del panel original: bloque NEGRO con el
+ * contenido en blanco fijo (no alterna con el tema) y scroll solo en el
+ * centro.
+ *
+ * ES COLAPSABLE, y ahí está la diferencia entre escritorio y móvil: en
+ * pantallas anchas nace abierto (hay sitio de sobra en la columna lateral) y
+ * en móvil nace cerrado, porque desplegado empujaría la lista de productos
+ * fuera de la pantalla y el usuario llegó a ver productos, no filtros. El
+ * encabezado es el disparador y muestra cuántos filtros hay puestos, así que
+ * incluso cerrado se sabe si la lista está acotada.
  */
 
 const MAX_VISIBLES = 50
@@ -43,6 +57,29 @@ const MAX_VISIBLES = 50
  * fallback del propio `Suspense`.
  */
 const sinSuscripcion = () => () => {}
+
+const CONSULTA_ESCRITORIO = "(min-width: 1024px)"
+
+/**
+ * ¿Estamos en un viewport de escritorio? Decide si el panel nace abierto.
+ *
+ * Va por `useSyncExternalStore` y no por un `useEffect`: el snapshot del
+ * servidor es `false` (asume móvil, el caso más restrictivo), así que el
+ * HTML llega con el panel cerrado y React lo abre al hidratar si hay ancho.
+ * Es el mecanismo que React ofrece para leer una fuente externa como
+ * `matchMedia` sin romper la hidratación, y además reacciona al redimensionar.
+ */
+function useEsEscritorio(): boolean {
+  return useSyncExternalStore(
+    (alCambiar) => {
+      const consulta = window.matchMedia(CONSULTA_ESCRITORIO)
+      consulta.addEventListener("change", alCambiar)
+      return () => consulta.removeEventListener("change", alCambiar)
+    },
+    () => window.matchMedia(CONSULTA_ESCRITORIO).matches,
+    () => false
+  )
+}
 
 function useMontado(): boolean {
   // `useSyncExternalStore` es el mecanismo que React ofrece justo para esto:
@@ -99,17 +136,35 @@ export function CatalogFilters({
   scrollRef,
 }: CatalogFiltersProps) {
   const montado = useMontado()
+  const esEscritorio = useEsEscritorio()
+  // `null` = nadie ha tocado el disclosure, así que manda el viewport.
+  const [forzado, setForzado] = useState<boolean | null>(null)
+  const abierto = forzado ?? esEscritorio
   const activos = (proveedorId ? 1 : 0) + (marcaId ? 1 : 0)
 
   return (
-    <div className="flex max-h-[60vh] flex-col overflow-hidden rounded-[var(--jdh-radius-md)] bg-[var(--color-ink)] lg:max-h-[calc(100vh-var(--catalogo-chrome-height)-2rem)]">
-      {/* HEADER inmutable (el panel siempre está abierto). */}
-      <div className="flex h-12 shrink-0 items-center gap-2 px-4">
+    <div
+      className={cn(
+        "flex flex-col overflow-hidden rounded-[var(--jdh-radius-md)] bg-[var(--color-ink)]",
+        // La altura solo se limita cuando hay algo desplegado; cerrado, el
+        // panel es una barra y no debe reservar 60vh de nada.
+        abierto &&
+          "max-h-[70vh] lg:max-h-[calc(100vh-var(--catalogo-chrome-height)-2rem)]"
+      )}
+    >
+      {/* ENCABEZADO = disparador del disclosure. */}
+      <button
+        type="button"
+        aria-expanded={abierto}
+        aria-controls="panel-filtros"
+        onClick={() => setForzado(!abierto)}
+        className="flex h-12 w-full shrink-0 items-center gap-2 px-4 text-left transition-colors hover:bg-[var(--overlay-on-dark-08)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus-on-ink)] focus-visible:-outline-offset-2 focus-visible:outline-none"
+      >
         <SlidersHorizontal
           className="size-4 shrink-0 text-[var(--color-on-ink-muted)]"
           aria-hidden="true"
         />
-        <span className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-on-ink)]">
+        <span className="inline-flex flex-1 items-center gap-2 text-sm font-medium text-[var(--color-on-ink)]">
           Filtros
           {activos > 0 ? (
             <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-on-ink)] px-1.5 text-[10px] font-medium text-[var(--color-ink)]">
@@ -117,13 +172,34 @@ export function CatalogFilters({
             </span>
           ) : null}
         </span>
-      </div>
+        <ChevronDown
+          aria-hidden="true"
+          className={cn(
+            "size-4 shrink-0 text-[var(--color-on-ink-muted)] transition-transform duration-[var(--duration-base)]",
+            abierto && "rotate-180"
+          )}
+        />
+      </button>
 
       {/* CONTENIDO en blanco fijo, scrolleable. */}
-      <div className="min-h-0 flex-1 overflow-hidden bg-[var(--color-surface)]">
+      <div
+        id="panel-filtros"
+        className={cn(
+          "min-h-0 flex-1 overflow-hidden bg-[var(--color-surface)]",
+          // Clase de Tailwind y no el atributo `hidden`: cualquier `display`
+          // explícito del elemento ganaría sobre `[hidden] { display: none }`.
+          !abierto && "hidden"
+        )}
+      >
         <div
           ref={scrollRef}
-          className="h-full [scrollbar-gutter:stable] overflow-y-auto px-4 py-2"
+          // `overscroll-contain`: al llegar al tope de la lista el scroll se
+          // queda aquí en vez de arrastrar la página, que es lo que hacía
+          // sentir el panel como no desplazable.
+          // `scrollbar-gutter` solo desde `lg`: en móvil la barra de scroll
+          // se superpone al contenido, así que reservarle sitio solo roba
+          // ancho a las filas.
+          className="max-h-[60vh] overflow-y-auto overscroll-contain px-4 py-2 lg:max-h-[calc(100vh-var(--catalogo-chrome-height)-7rem)] lg:[scrollbar-gutter:stable]"
         >
           <EjeFiltro
             grupo="proveedor"
@@ -167,8 +243,13 @@ export function CatalogFilters({
         </div>
       </div>
 
-      {/* FOOTER inmutable. */}
-      <div className="flex shrink-0 flex-col px-4 py-3">
+      {/* PIE: se va con el contenido cuando el panel está cerrado. */}
+      <div
+        className={cn(
+          "shrink-0 flex-col px-4 py-3",
+          abierto ? "flex" : "hidden"
+        )}
+      >
         <JdhButton
           variant="ghost"
           size="sm"
