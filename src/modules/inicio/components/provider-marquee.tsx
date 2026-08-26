@@ -1,30 +1,68 @@
 "use client"
 
-import * as React from "react"
 import { motion, useReducedMotion } from "motion/react"
 
-import type { Proveedor } from "../types"
-import { iniciales } from "./iniciales"
+import { formatNombreComercial, formatNumero } from "@/lib/format"
+import { useProveedores } from "@/modules/catalogo/hooks/use-productos"
+
+import {
+  LogoComercial,
+  LogoComercialVacio,
+} from "@/modules/catalogo/components/logo-comercial"
+
+import { SECTION_EMPTY_COPY, SectionNota } from "./section-empty"
+
+/** Tope de proveedores en la cinta: con cientos, el bucle se vuelve eterno. */
+const MAX_EN_CINTA = 12
+/** Cada tarjeta mide 22rem; a 4 s por tarjeta la cinta avanza ~88 px/s. */
+const SEGUNDOS_POR_PROVEEDOR = 4
 
 /**
  * Cinta INFINITA de proveedores ("marquee") con desplazamiento FLUIDO y
  * continuo: el contenido se duplica una vez y se traduce con una animación
- * CSS/JS de bucle sin saltos (loop seamless), pausando al hover. Cada
- * proveedor = logo (monograma) + nombre y descripción AL FRENTE (en fila,
- * no columna). Sección NEGRA full-width (abarca todo el ancho de la
- * pantalla) y SIN divisor entre el título de la sección y el carrusel —
- * ambos viven en la misma franja negra.
+ * de bucle sin saltos (loop seamless), pausando con `prefers-reduced-motion`.
+ * Cada proveedor = slot de LOGO (`LogoComercial`, hoy monograma hasta que el
+ * backend envíe `logoUrl`) + nombre y su conteo de referencias AL FRENTE (en
+ * fila, no columna). Sección NEGRA full-width y SIN divisor entre el título
+ * y el carrusel — ambos viven en la misma franja negra.
+ *
+ * Los proveedores son REALES (`GET /suppliers`). Antes venían de un mock con
+ * un `slogan` y una `descripcion` inventados por proveedor; el API solo da
+ * nombre y conteo, así que la línea de apoyo es el conteo — un dato
+ * verdadero en vez de una frase de relleno.
  *
  * La traducción usa el propio contenido (2 copias) para un bucle perfecto;
  * con `useReducedMotion` se detiene en la primera copia.
+ *
+ * Sin proveedores la FRANJA SE MANTIENE (es el ritmo visual de la página: un
+ * bloque negro full-width entre dos bloques claros) y dibuja una fila
+ * fantasma con los mismos slots de logo. Solo la animación desaparece — no
+ * se puede animar un bucle de cero elementos.
  */
-export function ProviderMarquee({ proveedores }: { proveedores: Proveedor[] }) {
+export function ProviderMarquee() {
   const reduce = useReducedMotion()
+  const { data, isError } = useProveedores()
+
+  const proveedores = (data ?? [])
+    .slice()
+    .sort((a, b) => (b.totalProductos ?? 0) - (a.totalProductos ?? 0))
+    .slice(0, MAX_EN_CINTA)
+
+  // La cinta se monta SOLO con datos, y esto no es cosmética: cuando los
+  // proveedores llegaban asíncronos, el primer render la montaba con la lista
+  // vacía y por tanto con `duration: 0`. Motion daba la animación por
+  // terminada al instante —dejando el transform clavado en el keyframe
+  // final— y no volvía a arrancarla al llegar los datos, porque las props de
+  // `animate` no cambiaban. Resultado: cinta inmóvil.
+  const hayCinta = proveedores.length > 0
+
   // Se duplica la lista para que el bucle sea seamless: al llegar al final de
   // la primera copia, la segunda ocupa exactamente el mismo lugar.
   const items = [...proveedores, ...proveedores]
-  // Segundos por vuelta completa de UNA copia — la velocidad se siente fluida.
-  const duration = proveedores.length * 6
+  // Velocidad CONSTANTE en vez de tiempo fijo por vuelta: si la duración no
+  // crece con la lista, más proveedores = cinta más rápida. Así un logo tarda
+  // siempre lo mismo en cruzar, haya 8 o 20.
+  const duration = proveedores.length * SEGUNDOS_POR_PROVEEDOR
 
   return (
     <section
@@ -45,53 +83,97 @@ export function ProviderMarquee({ proveedores }: { proveedores: Proveedor[] }) {
             </h2>
           </div>
 
-          <div
-            className="relative overflow-hidden"
-            // Máscara de desvanecimiento en los bordes para que la cinta
-            // "entre y salga" de la sección (pureza del bucle infinito).
-            style={{
-              maskImage:
-                "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
-              WebkitMaskImage:
-                "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
-            }}
-          >
-            <motion.div
-              className="flex w-max items-stretch gap-6"
-              animate={reduce ? undefined : { x: ["0%", `-50%`] }}
-              transition={
-                reduce
-                  ? undefined
-                  : {
-                      duration,
-                      ease: "linear",
-                      repeat: Infinity,
-                    }
-              }
-            >
-              {items.map((proveedor, index) => (
-                <div
-                  key={`${proveedor.id}-${index}`}
-                  className="flex w-[22rem] shrink-0 items-center gap-4"
-                >
-                  <span
-                    aria-hidden="true"
-                    className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[var(--overlay-on-dark-08)] text-base font-bold text-[var(--color-on-ink)]"
+          {isError || !hayCinta ? (
+            // Cinta fantasma: misma fila de logos + texto, sin animar (no se
+            // puede hacer un bucle de cero elementos). Mantiene la franja
+            // negra con cuerpo en vez de dejar un bloque vacío.
+            <div className="flex flex-col gap-6">
+              <div className="flex gap-6 overflow-hidden" aria-hidden="true">
+                {Array.from({ length: 6 }, (_, i) => (
+                  <div
+                    key={i}
+                    className="flex w-[22rem] shrink-0 items-center gap-4"
                   >
-                    {iniciales(proveedor.nombre)}
-                  </span>
-                  <div className="flex min-w-0 flex-col gap-0.5">
-                    <h3 className="truncate text-base font-medium text-[var(--color-on-ink)]">
-                      {proveedor.nombre}
-                    </h3>
-                    <p className="line-clamp-2 text-sm text-[var(--color-on-ink-muted)]">
-                      {proveedor.descripcion}
-                    </p>
+                    <LogoComercialVacio
+                      className="size-12 rounded-full"
+                      onInk
+                    />
+                    <div className="flex min-w-0 flex-1 flex-col gap-2">
+                      <span className="h-4 w-2/3 rounded bg-[var(--overlay-on-dark-08)]" />
+                      <span className="h-3 w-1/3 rounded bg-[var(--overlay-on-dark-08)]" />
+                    </div>
                   </div>
-                </div>
-              ))}
-            </motion.div>
-          </div>
+                ))}
+              </div>
+              <SectionNota
+                mensaje={
+                  isError
+                    ? SECTION_EMPTY_COPY.error
+                    : SECTION_EMPTY_COPY.sinDatos("proveedores")
+                }
+                onInk
+              />
+            </div>
+          ) : (
+            <div
+              className="relative overflow-hidden"
+              // Máscara de desvanecimiento en los bordes para que la cinta
+              // "entre y salga" de la sección (pureza del bucle infinito).
+              style={{
+                maskImage:
+                  "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
+                WebkitMaskImage:
+                  "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
+              }}
+            >
+              <motion.div
+                // Reinicia la animación si cambia el número de tarjetas: el
+                // recorrido del bucle depende del ancho total.
+                key={proveedores.length}
+                className="flex w-max items-stretch gap-6"
+                animate={reduce ? undefined : { x: ["0%", `-50%`] }}
+                transition={
+                  reduce
+                    ? undefined
+                    : {
+                        duration,
+                        ease: "linear",
+                        repeat: Infinity,
+                      }
+                }
+              >
+                {items.map((proveedor, index) => (
+                  <div
+                    key={`${proveedor.id}-${index}`}
+                    className="flex w-[22rem] shrink-0 items-center gap-4"
+                  >
+                    {/* Mismo slot que la grilla: cuando el backend envíe
+                        `logoUrl`, la cinta muestra logos sin más cambios. */}
+                    <LogoComercial
+                      nombre={proveedor.nombre}
+                      logoUrl={proveedor.logoUrl}
+                      sizes="48px"
+                      onInk
+                      className="size-12 rounded-full"
+                    />
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <h3 className="truncate text-base font-medium text-[var(--color-on-ink)]">
+                        {formatNombreComercial(proveedor.nombre)}
+                      </h3>
+                      {proveedor.totalProductos != null ? (
+                        <p className="text-sm text-[var(--color-on-ink-muted)]">
+                          {formatNumero(proveedor.totalProductos)}{" "}
+                          {proveedor.totalProductos === 1
+                            ? "referencia"
+                            : "referencias"}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </motion.div>
+            </div>
+          )}
         </div>
       </div>
     </section>

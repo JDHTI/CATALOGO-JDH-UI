@@ -28,3 +28,68 @@ const numberFormatter = new Intl.NumberFormat(siteConfig.locale)
 export function formatNumero(value: number): string {
   return numberFormatter.format(value)
 }
+
+/**
+ * Siglas y formas jurídicas que se quedan en mayúsculas al presentar un
+ * nombre comercial. Se comparan sin puntos ("S.A." y "SA" son la misma).
+ */
+const SIGLAS = new Set([
+  "SA",
+  "SAS",
+  "SAA",
+  "LTDA",
+  "EU",
+  "CIA",
+  "INC",
+  "BV",
+  "CI",
+])
+
+/** Partículas que van en minúscula salvo al inicio del nombre. */
+const PARTICULAS = new Set(["de", "del", "la", "las", "los", "y", "e", "en"])
+
+/**
+ * Presenta un nombre comercial (proveedor, marca, fabricante) que llega del
+ * ERP EN MAYÚSCULAS SOSTENIDAS y con forma jurídica: "LOCERIA COLOMBIANA
+ * S.A." → "Loceria Colombiana S.A.". El backend guarda el texto crudo del
+ * datawarehouse a propósito (solo `trim`), así que la normalización es
+ * responsabilidad de la capa de presentación.
+ *
+ * Es SOLO para mostrar: el valor crudo se conserva en el dominio, porque es
+ * lo que se compara contra los assets de logos y lo que el backend espera en
+ * una búsqueda. Y solo interviene si el texto viene mayormente en
+ * mayúsculas — un nombre ya bien escrito ("Alpina") se devuelve intacto, sin
+ * arriesgar a estropear una capitalización deliberada ("iSelect", "3M").
+ *
+ * No corrige tildes ausentes: el origen no las trae ("LOCERIA") y añadirlas
+ * exigiría un diccionario que inventaría nombres.
+ */
+export function formatNombreComercial(nombre: string): string {
+  const texto = nombre.trim()
+  if (!texto) return texto
+
+  const letras = texto.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g, "")
+  if (!letras) return texto
+  // Mayúsculas sostenidas = casi todas las letras en alta. Con menos, se
+  // asume capitalización intencional y no se toca.
+  const enAlta = letras.replace(/[^A-ZÁÉÍÓÚÜÑ]/g, "").length / letras.length
+  if (enAlta < 0.8) return texto
+
+  return texto
+    .toLowerCase()
+    .split(/(\s+)/)
+    .map((token, indice) => {
+      if (/^\s+$/.test(token)) return token
+      const desnudo = token.replace(/[.\-,]/g, "").toUpperCase()
+      if (SIGLAS.has(desnudo)) return token.toUpperCase()
+      if (indice > 0 && PARTICULAS.has(token)) return token
+      // Capitaliza la primera LETRA del token —,no la primera posición— para
+      // no estropear nombres que empiezan por dígito ("3M", no "3m"), y
+      // también la que sigue a un guion interno ("COCA-COLA" → "Coca-Cola").
+      return token.replace(
+        /(^[^\p{L}]*|[-/])(\p{Ll})/gu,
+        (_, separador: string, letra: string) => separador + letra.toUpperCase()
+      )
+    })
+    .join("")
+}

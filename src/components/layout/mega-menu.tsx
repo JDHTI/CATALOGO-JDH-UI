@@ -14,9 +14,9 @@ import { cn } from "@/lib/utils"
 /**
  * Trigger "Menú" + panel disclosure de la segunda barra (negra, igual que la
  * franja superior). Panel controlado (no Popover): `absolute top-full`
- * anclado al propio trigger, no un Popover de Radix — mismo patrón artesanal
- * que `CategoryDropdown`, a mayor escala. Se cierra con Escape (devuelve
- * foco), pointer-down fuera, y al navegar.
+ * anclado al propio trigger, no un Popover de Radix, por el patrón artesanal
+ * de disclosure controlado. Se cierra con Escape (devuelve foco),
+ * pointer-down fuera, y al navegar.
  *
  * El panel abarca el ANCHO COMPLETO de la barra (`absolute inset-x-0 top-full`
  * dentro del contenedor `relative` de `MainNav`) y cae sobre el contenido —

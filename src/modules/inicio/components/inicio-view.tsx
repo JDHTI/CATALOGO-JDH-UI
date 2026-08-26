@@ -1,32 +1,31 @@
-import {
-  categoriasDestacadas,
-  marcasDestacadas,
-  productosDestacados,
-  proveedores,
-} from "../mock/inicio.mock"
 import { BrandsSection } from "./brands-section"
-import { CategoriesSection } from "./categories-section"
 import { CtaSection } from "./cta-section"
 import { FeaturedProducts } from "./featured-products"
 import { HeroSection } from "./hero-section"
+import { ProveedoresSection } from "./proveedores-section"
 import { ProviderMarquee } from "./provider-marquee"
 import { ValueProps } from "./value-props"
 
 /**
  * Vista del homepage (Server Component): el primer slide es full-bleed
- * (imagen de fondo a viewport); le sigue la sección de cobertura/precios de
- * lista FULL-BLEED NEGRA (`ValueProps`) pegada al hero — el espacio entre
- * ambos es el propio negro de la página.
+ * (imagen de fondo a viewport); le sigue la sección de cobertura FULL-BLEED
+ * NEGRA (`ValueProps`) pegada al hero — el espacio entre ambos es el propio
+ * negro de la página.
  *
- * Orden: hero → cobertura negra → categorías (icono + descripción) →
- * productos destacados (carrusel) → cinta INFINITA de proveedores (franja
- * negra full-width — ProviderMarquee) → marcas (banner grande de logos) →
- * CTA final.
+ * Orden: hero → cobertura negra → proveedores (grilla) → muestra del catálogo
+ * (carrusel) → cinta INFINITA de proveedores (franja negra full-width) →
+ * marcas (grilla de logos) → CTA final.
  *
- * Los datos salen del mock propio del módulo y viajan serializables hacia las
- * secciones cliente. No lee sesión ni PriceContext: el homepage es
- * compartido por anónimos y clientes, y solo muestra precios de lista
- * pública de ejemplo.
+ * Esta vista ya NO pasa datos: las secciones que dependen del catálogo
+ * (`ProveedoresSection`, `FeaturedProducts`, `ProviderMarquee`,
+ * `BrandsSection`) los piden ellas mismas al API desde el cliente y se
+ * OCULTAN si no hay datos. Antes recibían cuatro colecciones mockeadas —
+ * productos con precio inventado incluidos.
+ *
+ * Que el fetch sea en cliente mantiene `/` como ruta estática: la homepage
+ * se prerenderiza sin depender de que el API esté arriba en build, y las
+ * secciones aparecen al hidratar. El contenido institucional (hero,
+ * cobertura, CTA) es texto propio y siempre está presente.
  */
 export function InicioView() {
   return (
@@ -35,14 +34,14 @@ export function InicioView() {
       <ValueProps />
 
       <div className="mx-auto flex w-full max-w-[var(--container-wide)] flex-col gap-[var(--space-16)] px-6 py-[var(--space-16)] pb-24 md:pb-[var(--space-32)] lg:gap-[var(--space-32)] lg:py-[var(--space-32)]">
-        <CategoriesSection categorias={categoriasDestacadas} />
-        <FeaturedProducts productos={productosDestacados} />
+        <ProveedoresSection />
+        <FeaturedProducts />
       </div>
 
-      <ProviderMarquee proveedores={proveedores} />
+      <ProviderMarquee />
 
       <div className="mx-auto flex w-full max-w-[var(--container-wide)] flex-col gap-[var(--space-16)] px-6 py-[var(--space-16)] pb-24 md:pb-[var(--space-32)] lg:gap-[var(--space-32)] lg:py-[var(--space-32)]">
-        <BrandsSection marcas={marcasDestacadas} />
+        <BrandsSection />
         <CtaSection />
       </div>
     </div>

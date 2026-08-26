@@ -30,15 +30,22 @@ export function AppHeader() {
   return (
     <header className="border-b border-[var(--color-ink-border)] bg-[var(--color-ink)] text-[var(--color-on-ink)]">
       {/*
-        Grid de 3 columnas SIMÉTRICAS (1fr_2fr_1fr): a diferencia de
-        `auto_1fr_auto`, las columnas laterales son iguales, así que la
+        DESDE `lg`, grid de 3 columnas SIMÉTRICAS (1fr_2fr_1fr): a diferencia
+        de `auto_1fr_auto`, las columnas laterales son iguales, así que la
         columna central —y con ella la barra de búsqueda— queda centrada
         respecto al ANCHO TOTAL del header, no respecto al hueco libre entre
         logo y acciones. Como el clúster de acciones es más ancho que el
         logo, el resultado visual es más aire entre logo y buscador que entre
         buscador y acciones: el buscador se lee como el elemento central.
+
+        POR DEBAJO de `lg` esa simetría no cabe: cada columna lateral recibe
+        un cuarto del ancho, pero el clúster de cuenta necesita casi el doble
+        y no encoge (`shrink-0`), así que el header estiraba el documento y
+        TODA la app se desplazaba en horizontal. En móvil pasa a dos filas —
+        logo y acciones arriba, buscador a lo ancho debajo—, que además es
+        donde el buscador se usa mejor con el pulgar.
       */}
-      <div className="mx-auto grid h-[72px] max-w-[var(--container-wide)] grid-cols-[1fr_2fr_1fr] items-center gap-4 px-4 sm:px-6">
+      <div className="mx-auto grid max-w-[var(--container-wide)] grid-cols-[auto_1fr] items-center gap-x-4 gap-y-3 px-4 py-3 sm:px-6 lg:h-[72px] lg:grid-cols-[1fr_2fr_1fr] lg:py-0">
         <Link
           href="/"
           aria-label="Ir al inicio"
@@ -51,7 +58,9 @@ export function AppHeader() {
           <Logo variant="lockup" tone="white" height={32} priority />
         </Link>
 
-        <ProductSearchBar className="w-full max-w-2xl justify-self-center" />
+        {/* `order-last` lo baja a la segunda fila en móvil (el grid coloca
+            logo y acciones primero); en `lg` vuelve a su sitio central. */}
+        <ProductSearchBar className="order-last col-span-2 w-full lg:order-none lg:col-span-1 lg:max-w-2xl lg:justify-self-center" />
 
         <div className="flex shrink-0 items-center gap-1 justify-self-end">
           <IconNavLink href="/favoritos" icon={Heart} label="Favoritos" />

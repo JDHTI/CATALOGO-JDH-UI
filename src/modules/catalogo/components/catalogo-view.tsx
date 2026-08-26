@@ -1,126 +1,106 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
-import { PackageSearch } from "lucide-react"
+import { useCallback, useEffect, useRef } from "react"
+import type { Route } from "next"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { PackageSearch, RotateCcw } from "lucide-react"
 
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs"
-import {
-  ProductCard,
-  type ProductCardData,
-} from "@/components/cards/product-card"
 import { JdhButton } from "@/components/common/jdh-button"
 import { EmptyState } from "@/components/common/empty-state"
 import { Pagination } from "@/components/navigation/pagination"
 import { Stagger, StaggerItem } from "@/components/motion/stagger"
 import { formatNumero } from "@/lib/format"
+import { cn } from "@/lib/utils"
 
-import { productosCatalogo } from "../mock/catalogo.mock"
-import {
-  filtrosIniciales,
-  type FiltrosCatalogo,
-  type OrdenCatalogo,
-} from "../types"
+import { useMarcas, useProductos, useProveedores } from "../hooks/use-productos"
 import { CatalogBannerCarousel } from "./catalog-banner-carousel"
-import { CatalogFilters, type FiltroOpcion } from "./catalog-filters"
-import { OrdenDropdown } from "./orden-dropdown"
+import { CatalogFilters } from "./catalog-filters"
+import { ProductoCard, ProductoCardSkeleton } from "./producto-card"
 
 const PAGE_SIZE = 12
 
-/** Producto del catálogo → datos de la card compartida. El listado va SIN
- *  foto en la card y SIN modal (el modal solo aplica en la homepage). */
-function aCardData(p: (typeof productosCatalogo)[number]): ProductCardData {
-  return {
-    id: p.id,
-    nombre: p.nombre,
-    categoria: p.categoria,
-    marca: p.marca,
-    precioCentavos: p.precioCentavos,
-    precioAnteriorCentavos: p.precioAnteriorCentavos,
-    unidadVenta: p.unidadVenta,
-    presentacion: p.presentacion,
-    descripcionCorta: p.descripcionCorta,
-    descripcionLarga: p.descripcionLarga,
-    detallesEmpaque: p.detallesEmpaque,
-    badge: p.badge,
-    disponible: p.disponible,
-  }
+/**
+ * Fallback de Suspense para la ruta: `CatalogoView` usa `useSearchParams`,
+ * así que el prerender estático de `/productos` sirve esto hasta hidratar.
+ * Misma silueta que la carga inicial del grid para que no haya salto.
+ */
+export function CatalogoViewFallback() {
+  return (
+    <div
+      className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4"
+      aria-hidden="true"
+    >
+      {Array.from({ length: 8 }, (_, i) => (
+        <ProductoCardSkeleton key={i} />
+      ))}
+    </div>
+  )
 }
 
-/** Conteo de resultados por opción de filtro (para el sidebar). */
-function contarPor(
-  campo: "categoriaSlug" | "marca" | "presentacion"
-): FiltroOpcion[] {
-  const mapa = new Map<string, number>()
-  for (const p of productosCatalogo) {
-    const valor = p[campo]
-    mapa.set(valor, (mapa.get(valor) ?? 0) + 1)
-  }
-  return Array.from(mapa, ([value, count]) => ({
-    value,
-    label: value,
-    count,
-  })).sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, "es"))
-}
-
+/**
+ * Listado de productos REALES del API (jdh-catalogo-api) — referencia visual
+ * sin venta ni precio. Búsqueda, los dos ejes de clasificación y la página
+ * viven en la URL (`?q=&proveedor=&marca=&pagina=`): el estado es
+ * compartible y el botón atrás funciona. La data llega vía TanStack Query
+ * con `keepPreviousData` (grid atenuado mientras carga la página siguiente,
+ * sin flash de skeleton).
+ *
+ * Esta vista NO tiene campo de búsqueda: el término lo escribe el buscador
+ * del header (`ProductSearchBar`) en `?q=`, y aquí solo se lee. Tener dos
+ * buscadores a la vez obligaba a adivinar cuál manda.
+ */
 export function CatalogoView() {
-  const [filtros, setFiltros] = useState<FiltrosCatalogo>(filtrosIniciales)
-  const [orden, setOrden] = useState<OrdenCatalogo>("relevancia")
-  const [pagina, setPagina] = useState(1)
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  const q = searchParams.get("q")?.trim() ?? ""
+  const proveedorId = searchParams.get("proveedor")
+  const marcaId = searchParams.get("marca")
+  const pagina = Math.max(1, Number(searchParams.get("pagina")) || 1)
+
+  const actualizarParams = useCallback(
+    (cambios: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams)
+      for (const [clave, valor] of Object.entries(cambios)) {
+        if (valor === null || valor === "") params.delete(clave)
+        else params.set(clave, valor)
+      }
+      const query = params.toString()
+      router.replace(`${pathname}${query ? `?${query}` : ""}` as Route, {
+        scroll: false,
+      })
+    },
+    [router, pathname, searchParams]
+  )
+
+  const productos = useProductos({
+    page: pagina,
+    limit: PAGE_SIZE,
+    search: q || undefined,
+    supplierId: proveedorId ?? undefined,
+    brandId: marcaId ?? undefined,
+  })
+  const proveedores = useProveedores()
+  // Las marcas se acotan al proveedor elegido: con miles de productos, la
+  // lista global de marcas no ayuda a refinar dentro de un proveedor.
+  const marcas = useMarcas(proveedorId ? { supplierId: proveedorId } : {})
+
   const gridRef = useRef<HTMLDivElement>(null)
   const asideRef = useRef<HTMLElement>(null)
   const filtrosScrollRef = useRef<HTMLDivElement>(null)
 
-  const opciones = useMemo(
-    () => ({
-      categorias: contarPor("categoriaSlug"),
-      marcas: contarPor("marca"),
-      presentaciones: contarPor("presentacion"),
-    }),
-    []
-  )
-
-  // Los filtros son SOLO VISUALES (data mockeada): se seleccionan en el
-  // panel pero NO filtran el grid — siempre se muestran todos los productos,
-  // solo cambia el ORDEN. `filtros` se conserva para el estado del panel.
-  const resultados = useMemo(() => {
-    const lista = [...productosCatalogo]
-    switch (orden) {
-      case "precio-asc":
-        return lista.sort((a, b) => a.precioCentavos - b.precioCentavos)
-      case "precio-desc":
-        return lista.sort((a, b) => b.precioCentavos - a.precioCentavos)
-      case "nombre":
-        return lista.sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))
-      default:
-        return lista
-    }
-  }, [orden])
-
-  const totalPaginas = Math.max(1, Math.ceil(resultados.length / PAGE_SIZE))
-  const paginaSegura = Math.min(pagina, totalPaginas)
-  const visibles = resultados.slice(
-    (paginaSegura - 1) * PAGE_SIZE,
-    paginaSegura * PAGE_SIZE
-  )
-  const inicio =
-    resultados.length === 0 ? 0 : (paginaSegura - 1) * PAGE_SIZE + 1
-  const fin = Math.min(paginaSegura * PAGE_SIZE, resultados.length)
-
-  /** Aplica la selección del panel (solo visual — no filtra el grid). */
-  const aplicarFiltros = (nuevos: FiltrosCatalogo) => {
-    setFiltros(nuevos)
-    setPagina(1)
-  }
-
-  const cambiarOrden = (nuevoOrden: OrdenCatalogo) => {
-    setOrden(nuevoOrden)
-    setPagina(1)
-  }
-
   const irAPagina = (target: number) => {
-    setPagina(target)
+    actualizarParams({ pagina: target > 1 ? String(target) : null })
     gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
+
+  const limpiarFiltros = () =>
+    actualizarParams({ proveedor: null, marca: null, pagina: null })
+
+  const limpiarTodo = () =>
+    actualizarParams({ q: null, proveedor: null, marca: null, pagina: null })
 
   /**
    * WHEEL-HIJACK del área de filtros (UX) — con listener NATIVO no-pasivo:
@@ -166,14 +146,11 @@ export function CatalogoView() {
     return () => grid.removeEventListener("wheel", onWheel)
   }, [])
 
-  const filtrosProps = {
-    filtros,
-    onChange: aplicarFiltros,
-    categorias: opciones.categorias,
-    marcas: opciones.marcas,
-    presentaciones: opciones.presentaciones,
-    scrollRef: filtrosScrollRef,
-  }
+  const meta = productos.data?.meta
+  const visibles = productos.data?.data ?? []
+  const hayFiltrosActivos = Boolean(q || proveedorId || marcaId)
+  const inicio = meta && meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0
+  const fin = meta ? Math.min(meta.page * meta.limit, meta.total) : 0
 
   return (
     <div className="flex flex-col gap-6">
@@ -190,8 +167,8 @@ export function CatalogoView() {
           Todos los productos
         </h1>
         <p className="max-w-2xl text-sm text-muted-foreground">
-          Portafolio completo JDH: alimentos, bebidas, aseo y más para
-          operaciones institucionales, con precios de lista pública.
+          Portafolio completo JDH para operaciones institucionales: consulta
+          referencias por proveedor, marca o código de producto.
         </p>
       </header>
 
@@ -200,73 +177,138 @@ export function CatalogoView() {
         ref={gridRef}
         className="grid scroll-mt-[calc(var(--catalogo-chrome-height)+1rem)] grid-cols-1 gap-8 lg:grid-cols-[280px_minmax(0,1fr)]"
       >
-        {/* Filtros: panel NEGRO fijo (header/contenido/footer inmutables) con
-            scroll interno que responde a la rueda en toda la zona izquierda. */}
+        {/* Filtros: panel NEGRO fijo con scroll interno que responde a la
+            rueda en toda la zona izquierda. */}
         <aside
           ref={asideRef}
           className="lg:sticky lg:top-[calc(var(--catalogo-chrome-height)+1rem)] lg:self-start"
         >
-          <CatalogFilters {...filtrosProps} />
+          <CatalogFilters
+            proveedores={proveedores.data}
+            proveedoresPending={proveedores.isPending}
+            proveedoresError={proveedores.isError}
+            onRetryProveedores={() => proveedores.refetch()}
+            proveedorId={proveedorId}
+            // Cambiar de proveedor invalida la marca elegida: puede no
+            // existir en el proveedor nuevo.
+            onProveedorChange={(id) =>
+              actualizarParams({ proveedor: id, marca: null, pagina: null })
+            }
+            marcas={marcas.data}
+            marcasPending={marcas.isPending}
+            marcasError={marcas.isError}
+            marcasNoImplementado={marcas.noImplementado}
+            onRetryMarcas={() => marcas.refetch()}
+            marcaId={marcaId}
+            onMarcaChange={(id) =>
+              actualizarParams({ marca: id, pagina: null })
+            }
+            onLimpiar={limpiarFiltros}
+            scrollRef={filtrosScrollRef}
+          />
         </aside>
 
         <div className="flex min-w-0 flex-col gap-5">
           {/* Banner de imágenes de producto, al tamaño de la lista. */}
           <CatalogBannerCarousel />
 
-          {/* Barra de resultados: recuento + orden. */}
+          {/* Barra de resultados. Aquí NO hay campo de búsqueda: el único
+              buscador de la app es el del header, que escribe `?q=` en esta
+              misma URL. Dos cajas de búsqueda en pantalla obligaban a
+              adivinar cuál manda. */}
           <div className="flex flex-wrap items-center justify-between gap-3">
+            {/* Con 0 resultados no se anuncia el rango: lo dice el estado
+                vacío de abajo, y "Mostrando 0–0 de 0" es puro ruido. */}
             <p className="text-sm text-muted-foreground" aria-live="polite">
-              Mostrando{" "}
-              <span className="font-medium text-foreground">
-                {formatNumero(inicio)}–{formatNumero(fin)}
-              </span>{" "}
-              de{" "}
-              <span className="font-medium text-foreground">
-                {formatNumero(resultados.length)}
-              </span>{" "}
-              productos
+              {productos.isPending ? (
+                "Cargando productos…"
+              ) : meta && meta.total > 0 ? (
+                <>
+                  Mostrando{" "}
+                  <span className="font-medium text-foreground">
+                    {formatNumero(inicio)}–{formatNumero(fin)}
+                  </span>{" "}
+                  de{" "}
+                  <span className="font-medium text-foreground">
+                    {formatNumero(meta.total)}
+                  </span>{" "}
+                  productos
+                </>
+              ) : null}
             </p>
-            <OrdenDropdown value={orden} onChange={cambiarOrden} />
           </div>
 
-          {/* Grid de resultados (sin modal — solo homepage). */}
-          {resultados.length === 0 ? (
+          {/* Grid de resultados: skeleton en la carga inicial, grid atenuado
+              en las siguientes (keepPreviousData), vacío y error con salida. */}
+          {productos.isPending ? (
+            <div
+              className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4"
+              aria-hidden="true"
+            >
+              {Array.from({ length: 8 }, (_, i) => (
+                <ProductoCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : productos.isError ? (
             <EmptyState
               icon={PackageSearch}
-              title="Sin resultados"
-              description="El catálogo está vacío en este momento."
+              title="No pudimos cargar el catálogo"
+              description="Hubo un problema consultando los productos. Verifica tu conexión e inténtalo de nuevo."
             >
               <JdhButton
                 variant="secondary"
                 size="sm"
-                onClick={() => setFiltros(filtrosIniciales)}
+                onClick={() => productos.refetch()}
               >
-                Limpiar filtros
+                <RotateCcw aria-hidden="true" />
+                Reintentar
               </JdhButton>
             </EmptyState>
-          ) : (
-            <Stagger
-              staggerDelay={0.04}
-              className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4"
+          ) : visibles.length === 0 ? (
+            <EmptyState
+              icon={PackageSearch}
+              title="Sin resultados"
+              description={
+                hayFiltrosActivos
+                  ? "Ningún producto coincide con la búsqueda o los filtros seleccionados."
+                  : "El catálogo está vacío en este momento."
+              }
             >
-              {visibles.map((producto) => (
-                <StaggerItem key={producto.id} className="h-full">
-                  <ProductCard
-                    producto={aCardData(producto)}
-                    variant="placeholder"
-                    conModal={false}
-                  />
-                </StaggerItem>
-              ))}
-            </Stagger>
+              {hayFiltrosActivos ? (
+                <JdhButton variant="secondary" size="sm" onClick={limpiarTodo}>
+                  Limpiar búsqueda y filtros
+                </JdhButton>
+              ) : null}
+            </EmptyState>
+          ) : (
+            <div
+              aria-busy={productos.isPlaceholderData}
+              className={cn(
+                "transition-opacity duration-[var(--duration-base)]",
+                productos.isPlaceholderData && "pointer-events-none opacity-50"
+              )}
+            >
+              <Stagger
+                staggerDelay={0.04}
+                className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4"
+              >
+                {visibles.map((producto) => (
+                  <StaggerItem key={producto.id} className="h-full">
+                    <ProductoCard producto={producto} />
+                  </StaggerItem>
+                ))}
+              </Stagger>
+            </div>
           )}
 
-          <Pagination
-            page={paginaSegura}
-            totalPages={totalPaginas}
-            onPageChange={irAPagina}
-            className="mt-2"
-          />
+          {meta ? (
+            <Pagination
+              page={meta.page}
+              totalPages={meta.totalPages}
+              onPageChange={irAPagina}
+              className="mt-2"
+            />
+          ) : null}
         </div>
       </div>
     </div>
