@@ -3,7 +3,7 @@
 import type { Route } from "next"
 import Link from "next/link"
 
-import { useProveedores } from "@/modules/catalogo/hooks/use-productos"
+import { useMarcas } from "@/modules/catalogo/hooks/use-productos"
 import { cn } from "@/lib/utils"
 
 import { MegaMenu } from "./mega-menu"
@@ -15,17 +15,18 @@ const MAX_ACCESOS = 6
  * Barra del menú — mismo chrome negro que `ContactBar` y `AppHeader` (ver
  * ahí: "las tres franjas son el mismo chrome"), separada de la barra
  * principal por una línea hairline `--color-ink-border`. Solo navegación:
- * el trigger "Menú" del mega menú + accesos directos a los PROVEEDORES con
- * más catálogo, a texto plano sin iconos — el icono queda reservado al
+ * el trigger "Menú" del mega menú + accesos directos a las MARCAS con más
+ * referencias, a texto plano sin iconos — el icono queda reservado al
  * trigger "Menú".
  *
  * Los accesos salían de una lista de 10 categorías inventadas en
  * `search.config.ts` que enlazaban a `/productos?categoria=…`, un filtro que
- * no existe en los datos reales. Ahora salen del API (`GET /suppliers`): el
- * proveedor es el eje de clasificación principal del catálogo. La lista se
- * cachea 5 minutos y el nav reserva su altura, así que no hay salto de
- * layout; si el API no responde, la columna central queda vacía en lugar de
- * mostrar destinos falsos.
+ * no existe en los datos reales. Ahora salen del API (`GET /brands`): la
+ * marca es el eje con el que un comprador reconoce el portafolio de un
+ * vistazo (el otro eje, proveedor, vive en la grilla del homepage y en el
+ * panel de filtros). La lista se cachea 5 minutos y el nav mantiene su
+ * altura fija, así que no hay salto de layout; si el API no responde, la
+ * columna central queda vacía en lugar de mostrar destinos falsos.
  *
  * `relative` porque el panel del mega menú (`MegaMenu`) se ancla aquí con
  * `absolute inset-x-0 top-full`.
@@ -35,11 +36,11 @@ const MAX_ACCESOS = 6
  * todo el catálogo lockeado a la derecha.
  */
 export function MainNav({ className }: { className?: string }) {
-  const { data: proveedores } = useProveedores()
+  const { data: marcas } = useMarcas()
 
-  // Los de mayor catálogo primero: con cientos de proveedores, el orden
+  // Las de mayor catálogo primero: con cientos de marcas, el orden
   // alfabético del API no dice nada en una barra de 6 accesos.
-  const destacados = (proveedores ?? [])
+  const destacados = (marcas ?? [])
     .slice()
     .sort((a, b) => (b.totalProductos ?? 0) - (a.totalProductos ?? 0))
     .slice(0, MAX_ACCESOS)
@@ -57,15 +58,15 @@ export function MainNav({ className }: { className?: string }) {
       >
         <MegaMenu />
 
-        {/* Proveedores con más catálogo — vacío mientras carga o si falla. */}
+        {/* Marcas con más referencias — vacío mientras carga o si falla. */}
         <div className="flex min-w-0 items-center gap-1 justify-self-center">
-          {destacados.map((proveedor) => (
+          {destacados.map((marca) => (
             <Link
-              key={proveedor.id}
-              href={`/productos?proveedor=${proveedor.id}` as Route}
+              key={marca.id}
+              href={`/productos?marca=${marca.id}` as Route}
               className="inline-flex h-9 max-w-[12rem] shrink-0 items-center truncate rounded-lg px-3 text-sm font-medium text-[var(--color-on-ink-muted)] transition-colors hover:bg-[var(--overlay-on-dark-08)] hover:text-[var(--color-on-ink)]"
             >
-              {proveedor.nombre}
+              {marca.nombre}
             </Link>
           ))}
         </div>
