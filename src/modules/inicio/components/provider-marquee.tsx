@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "motion/react"
 
-import { formatNumero } from "@/lib/format"
+import { formatNombreComercial, formatNumero } from "@/lib/format"
 import { useProveedores } from "@/modules/catalogo/hooks/use-productos"
 
 import { iniciales } from "./iniciales"
@@ -113,7 +113,7 @@ export function ProviderMarquee() {
                     </span>
                     <div className="flex min-w-0 flex-col gap-0.5">
                       <h3 className="truncate text-base font-medium text-[var(--color-on-ink)]">
-                        {proveedor.nombre}
+                        {formatNombreComercial(proveedor.nombre)}
                       </h3>
                       {proveedor.totalProductos != null ? (
                         <p className="text-sm text-[var(--color-on-ink-muted)]">

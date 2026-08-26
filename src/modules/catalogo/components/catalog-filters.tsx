@@ -5,6 +5,7 @@ import { RotateCcw, Search, SlidersHorizontal, Store, Tags } from "lucide-react"
 
 import { JdhButton } from "@/components/common/jdh-button"
 import { Input } from "@/components/ui/input"
+import { formatNombreComercial } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 import type { Marca, Proveedor } from "../types"
@@ -276,7 +277,9 @@ function EjeFiltro({
               <FilaEje
                 key={item.id}
                 grupo={grupo}
-                label={item.nombre}
+                // Se muestra formateado, pero la búsqueda de arriba corre
+                // sobre el nombre crudo del ERP, que es el dato real.
+                label={formatNombreComercial(item.nombre)}
                 count={item.totalProductos}
                 checked={seleccionado === item.id}
                 onSelect={() => onSeleccionar(item.id)}

@@ -7,7 +7,7 @@ import { Store } from "lucide-react"
 import { JdhButton } from "@/components/common/jdh-button"
 import { ScrollReveal } from "@/components/motion/scroll-reveal"
 import { Stagger, StaggerItem } from "@/components/motion/stagger"
-import { formatNumero } from "@/lib/format"
+import { formatNombreComercial, formatNumero } from "@/lib/format"
 import { useProveedores } from "@/modules/catalogo/hooks/use-productos"
 
 import { SECTION_EMPTY_COPY, SectionEmpty } from "./section-empty"
@@ -101,7 +101,7 @@ export function ProveedoresSection() {
                 </span>
                 <span className="flex flex-col gap-1">
                   <span className="text-sm font-medium">
-                    {proveedor.nombre}
+                    {formatNombreComercial(proveedor.nombre)}
                   </span>
                   {proveedor.totalProductos != null ? (
                     <span className="text-xs text-muted-foreground">

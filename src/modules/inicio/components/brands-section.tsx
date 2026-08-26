@@ -6,7 +6,7 @@ import type { Route } from "next"
 
 import { ScrollReveal } from "@/components/motion/scroll-reveal"
 import { Stagger, StaggerItem } from "@/components/motion/stagger"
-import { formatNumero } from "@/lib/format"
+import { formatNombreComercial, formatNumero } from "@/lib/format"
 import { useMarcas } from "@/modules/catalogo/hooks/use-productos"
 
 import { SECTION_EMPTY_COPY, SectionEmpty } from "./section-empty"
@@ -132,7 +132,10 @@ export function BrandsSection() {
           className="grid grid-cols-2 gap-px overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-border)] sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
         >
           {marcas.map((marca) => {
+            // El logo se resuelve con el nombre CRUDO (así lo normaliza
+            // `logoDeMarca`); lo que se muestra va formateado.
             const logo = logoDeMarca(marca.nombre)
+            const nombre = formatNombreComercial(marca.nombre)
             return (
               <StaggerItem key={marca.id} className="h-full">
                 <Link
@@ -142,14 +145,14 @@ export function BrandsSection() {
                   {logo ? (
                     <Image
                       src={logo}
-                      alt={marca.nombre}
+                      alt={nombre}
                       width={96}
                       height={48}
                       className="h-10 w-auto max-w-full object-contain"
                     />
                   ) : (
                     <span className="line-clamp-2 text-sm font-medium">
-                      {marca.nombre}
+                      {nombre}
                     </span>
                   )}
                   {marca.totalProductos != null ? (

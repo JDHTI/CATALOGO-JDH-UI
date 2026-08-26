@@ -2,6 +2,8 @@ import Link from "next/link"
 import type { Route } from "next"
 import { Store } from "lucide-react"
 
+import { formatNombreComercial } from "@/lib/format"
+
 import type { Producto } from "../types"
 import { ProductoImagen } from "./producto-imagen"
 
@@ -28,9 +30,12 @@ export function ProductoCard({ producto }: { producto: Producto }) {
 
         <div className="flex flex-1 flex-col gap-2 p-4">
           <div className="flex flex-col gap-1">
+            {/* La marca va SIN `uppercase`: el nombre real del ERP ya viene
+                en mayúsculas y puede traer forma jurídica ("NESTLE DE
+                COLOMBIA S.A."); forzarlas otra vez lo hace ilegible. */}
             {producto.marca ? (
-              <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                {producto.marca}
+              <p className="truncate text-xs font-medium tracking-wide text-muted-foreground">
+                {formatNombreComercial(producto.marca)}
               </p>
             ) : null}
             <h3 className="text-sm font-medium text-balance">
@@ -47,7 +52,9 @@ export function ProductoCard({ producto }: { producto: Producto }) {
 
           <p className="mt-auto flex items-center gap-1.5 border-t border-[var(--color-border)] pt-3 text-xs text-muted-foreground">
             <Store className="size-3.5 shrink-0" aria-hidden="true" />
-            <span className="truncate">{producto.proveedor.nombre}</span>
+            <span className="truncate">
+              {formatNombreComercial(producto.proveedor.nombre)}
+            </span>
           </p>
         </div>
       </Link>

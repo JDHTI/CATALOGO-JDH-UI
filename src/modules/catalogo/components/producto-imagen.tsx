@@ -1,6 +1,7 @@
 import Image from "next/image"
 import { Package } from "lucide-react"
 
+import { formatNombreComercial } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 import type { Producto } from "../types"
@@ -50,8 +51,8 @@ export function ProductoImagen({
             aria-hidden="true"
           />
           {producto.marca ? (
-            <span className="max-w-full truncate px-4 text-xs font-medium tracking-wide uppercase">
-              {producto.marca}
+            <span className="max-w-full truncate px-4 text-xs font-medium tracking-wide">
+              {formatNombreComercial(producto.marca)}
             </span>
           ) : null}
           <span className="px-4 text-center text-[11px] text-muted-foreground/70">

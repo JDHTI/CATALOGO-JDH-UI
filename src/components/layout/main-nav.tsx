@@ -4,6 +4,7 @@ import type { Route } from "next"
 import Link from "next/link"
 
 import { useMarcas } from "@/modules/catalogo/hooks/use-productos"
+import { formatNombreComercial } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 import { MegaMenu } from "./mega-menu"
@@ -66,7 +67,7 @@ export function MainNav({ className }: { className?: string }) {
               href={`/productos?marca=${marca.id}` as Route}
               className="inline-flex h-9 max-w-[12rem] shrink-0 items-center truncate rounded-lg px-3 text-sm font-medium text-[var(--color-on-ink-muted)] transition-colors hover:bg-[var(--overlay-on-dark-08)] hover:text-[var(--color-on-ink)]"
             >
-              {marca.nombre}
+              {formatNombreComercial(marca.nombre)}
             </Link>
           ))}
         </div>

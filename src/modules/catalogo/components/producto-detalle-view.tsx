@@ -6,6 +6,7 @@ import { ArrowLeft, PackageX, RotateCcw } from "lucide-react"
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs"
 import { EmptyState } from "@/components/common/empty-state"
 import { JdhButton } from "@/components/common/jdh-button"
+import { formatNombreComercial } from "@/lib/format"
 
 import { CatalogoApiError } from "../api/errors"
 import { useProducto } from "../hooks/use-productos"
@@ -93,8 +94,8 @@ export function ProductoDetalleView({ id }: { id: string }) {
         <div className="flex flex-col gap-6">
           <header className="flex flex-col gap-2">
             {producto.marca ? (
-              <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                {producto.marca}
+              <p className="text-xs font-medium tracking-wide text-muted-foreground">
+                {formatNombreComercial(producto.marca)}
               </p>
             ) : null}
             <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">
@@ -133,10 +134,22 @@ export function ProductoDetalleView({ id }: { id: string }) {
 
 /** Ficha de identificación — pares término/valor en grid, monocromo. */
 function FichaTecnica({ producto }: { producto: Producto }) {
+  // Los nombres comerciales llegan del ERP en mayúsculas sostenidas.
   const filas: { termino: string; valor: string | null }[] = [
-    { termino: "Marca", valor: producto.marca || null },
-    { termino: "Fabricante", valor: producto.fabricante || null },
-    { termino: "Proveedor", valor: producto.proveedor.nombre },
+    {
+      termino: "Marca",
+      valor: producto.marca ? formatNombreComercial(producto.marca) : null,
+    },
+    {
+      termino: "Fabricante",
+      valor: producto.fabricante
+        ? formatNombreComercial(producto.fabricante)
+        : null,
+    },
+    {
+      termino: "Proveedor",
+      valor: formatNombreComercial(producto.proveedor.nombre),
+    },
     { termino: "Categoría", valor: producto.categoria?.nombre ?? null },
     { termino: "Subcategoría", valor: producto.subcategoria?.nombre ?? null },
   ].filter((f) => f.valor)
