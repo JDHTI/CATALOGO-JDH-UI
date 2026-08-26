@@ -47,10 +47,9 @@ export function CatalogoView() {
         else params.set(clave, valor)
       }
       const query = params.toString()
-      router.replace(
-        `${pathname}${query ? `?${query}` : ""}` as Route,
-        { scroll: false }
-      )
+      router.replace(`${pathname}${query ? `?${query}` : ""}` as Route, {
+        scroll: false,
+      })
     },
     [router, pathname, searchParams]
   )
