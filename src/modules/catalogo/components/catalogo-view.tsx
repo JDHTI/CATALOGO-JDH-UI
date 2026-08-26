@@ -14,9 +14,9 @@ import { Input } from "@/components/ui/input"
 import { formatNumero } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import { useProductos, useProveedores } from "../hooks/use-productos"
+import { useMarcas, useProductos, useProveedores } from "../hooks/use-productos"
 import { CatalogBannerCarousel } from "./catalog-banner-carousel"
-import { CatalogProveedorFilter } from "./catalog-proveedor-filter"
+import { CatalogFilters } from "./catalog-filters"
 import { ProductoCard, ProductoCardSkeleton } from "./producto-card"
 
 const PAGE_SIZE = 12
@@ -55,6 +55,7 @@ export function CatalogoView() {
 
   const q = searchParams.get("q")?.trim() ?? ""
   const proveedorId = searchParams.get("proveedor")
+  const marcaId = searchParams.get("marca")
   const pagina = Math.max(1, Number(searchParams.get("pagina")) || 1)
 
   const actualizarParams = useCallback(
@@ -96,8 +97,12 @@ export function CatalogoView() {
     limit: PAGE_SIZE,
     search: q || undefined,
     supplierId: proveedorId ?? undefined,
+    brandId: marcaId ?? undefined,
   })
   const proveedores = useProveedores()
+  // Las marcas se acotan al proveedor elegido: con miles de productos, la
+  // lista global de marcas no ayuda a refinar dentro de un proveedor.
+  const marcas = useMarcas(proveedorId ? { supplierId: proveedorId } : {})
 
   const gridRef = useRef<HTMLDivElement>(null)
   const asideRef = useRef<HTMLElement>(null)
@@ -108,9 +113,12 @@ export function CatalogoView() {
     gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
+  const limpiarFiltros = () =>
+    actualizarParams({ proveedor: null, marca: null, pagina: null })
+
   const limpiarTodo = () => {
     setBusqueda("")
-    actualizarParams({ q: null, proveedor: null, pagina: null })
+    actualizarParams({ q: null, proveedor: null, marca: null, pagina: null })
   }
 
   /**
@@ -159,7 +167,7 @@ export function CatalogoView() {
 
   const meta = productos.data?.meta
   const visibles = productos.data?.data ?? []
-  const hayFiltrosActivos = Boolean(q || proveedorId)
+  const hayFiltrosActivos = Boolean(q || proveedorId || marcaId)
   const inicio = meta && meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0
   const fin = meta ? Math.min(meta.page * meta.limit, meta.total) : 0
 
@@ -194,15 +202,27 @@ export function CatalogoView() {
           ref={asideRef}
           className="lg:sticky lg:top-[calc(var(--catalogo-chrome-height)+1rem)] lg:self-start"
         >
-          <CatalogProveedorFilter
+          <CatalogFilters
             proveedores={proveedores.data}
-            isPending={proveedores.isPending}
-            isError={proveedores.isError}
-            onRetry={() => proveedores.refetch()}
-            seleccionado={proveedorId}
-            onSeleccionar={(id) =>
-              actualizarParams({ proveedor: id, pagina: null })
+            proveedoresPending={proveedores.isPending}
+            proveedoresError={proveedores.isError}
+            onRetryProveedores={() => proveedores.refetch()}
+            proveedorId={proveedorId}
+            // Cambiar de proveedor invalida la marca elegida: puede no
+            // existir en el proveedor nuevo.
+            onProveedorChange={(id) =>
+              actualizarParams({ proveedor: id, marca: null, pagina: null })
             }
+            marcas={marcas.data}
+            marcasPending={marcas.isPending}
+            marcasError={marcas.isError}
+            marcasNoImplementado={marcas.noImplementado}
+            onRetryMarcas={() => marcas.refetch()}
+            marcaId={marcaId}
+            onMarcaChange={(id) =>
+              actualizarParams({ marca: id, pagina: null })
+            }
+            onLimpiar={limpiarFiltros}
             scrollRef={filtrosScrollRef}
           />
         </aside>
@@ -289,7 +309,7 @@ export function CatalogoView() {
               title="Sin resultados"
               description={
                 hayFiltrosActivos
-                  ? "Ningún producto coincide con la búsqueda o el proveedor seleccionado."
+                  ? "Ningún producto coincide con la búsqueda o los filtros seleccionados."
                   : "El catálogo está vacío en este momento."
               }
             >
