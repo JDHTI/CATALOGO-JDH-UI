@@ -10,6 +10,8 @@ import { Stagger, StaggerItem } from "@/components/motion/stagger"
 import { formatNumero } from "@/lib/format"
 import { useProveedores } from "@/modules/catalogo/hooks/use-productos"
 
+import { SECTION_EMPTY_COPY, SectionEmpty } from "./section-empty"
+
 /** Proveedores que caben en la grilla sin empujar la página. */
 const MAX_VISIBLES = 10
 
@@ -22,8 +24,8 @@ const MAX_VISIBLES = 10
  *
  * Se muestran los de mayor catálogo (el API los devuelve alfabéticos, que en
  * cientos de proveedores no prioriza nada) con su conteo de referencias, y se
- * enlaza al listado ya filtrado. Se oculta si el API no responde — ver
- * `FeaturedProducts` para el porqué.
+ * enlaza al listado ya filtrado. Sin datos la sección NO desaparece: mantiene
+ * su encabezado y muestra un `SectionEmpty` — ver ese archivo.
  */
 export function ProveedoresSection() {
   const { data, isPending, isError } = useProveedores()
@@ -32,8 +34,6 @@ export function ProveedoresSection() {
     .slice()
     .sort((a, b) => (b.totalProductos ?? 0) - (a.totalProductos ?? 0))
     .slice(0, MAX_VISIBLES)
-
-  if (isError || (!isPending && destacados.length === 0)) return null
 
   const hayMas = (data?.length ?? 0) > destacados.length
 
@@ -79,6 +79,12 @@ export function ProveedoresSection() {
             />
           ))}
         </div>
+      ) : isError ? (
+        <SectionEmpty mensaje={SECTION_EMPTY_COPY.error} />
+      ) : destacados.length === 0 ? (
+        <SectionEmpty
+          mensaje={SECTION_EMPTY_COPY.sinDatos("proveedores publicados")}
+        />
       ) : (
         <Stagger
           staggerDelay={0.05}

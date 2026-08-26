@@ -9,6 +9,8 @@ import { Stagger, StaggerItem } from "@/components/motion/stagger"
 import { formatNumero } from "@/lib/format"
 import { useMarcas } from "@/modules/catalogo/hooks/use-productos"
 
+import { SECTION_EMPTY_COPY, SectionEmpty } from "./section-empty"
+
 /** Marcas que caben en la grilla (5 columnas × 6 filas en desktop). */
 const MAX_VISIBLES = 30
 
@@ -73,8 +75,10 @@ function logoDeMarca(nombre: string): string | null {
  * proveedores: un proveedor distribuye varias marcas.
  *
  * Los datos vienen de `GET /brands`. Antes eran una lista estática de 30
- * marcas del sector que no correspondía a nada consultable. Se oculta si el
- * backend todavía no publica el endpoint, si falla o si no hay marcas.
+ * marcas del sector que no correspondía a nada consultable. Sin datos
+ * mantiene su encabezado con un `SectionEmpty`; solo desaparece del todo si
+ * el backend no publica el endpoint (404), porque entonces el eje marca aún
+ * no existe como concepto y anunciarlo confundiría.
  */
 export function BrandsSection() {
   const { data, isPending, isError, noImplementado } = useMarcas()
@@ -84,9 +88,9 @@ export function BrandsSection() {
     .sort((a, b) => (b.totalProductos ?? 0) - (a.totalProductos ?? 0))
     .slice(0, MAX_VISIBLES)
 
-  if (noImplementado || isError || (!isPending && marcas.length === 0)) {
-    return null
-  }
+  if (noImplementado) return null
+
+  const vacio = !isPending && marcas.length === 0
 
   return (
     <section aria-labelledby="marcas-title" className="flex flex-col gap-8">
@@ -116,6 +120,12 @@ export function BrandsSection() {
             />
           ))}
         </div>
+      ) : isError ? (
+        <SectionEmpty mensaje={SECTION_EMPTY_COPY.error} />
+      ) : vacio ? (
+        <SectionEmpty
+          mensaje={SECTION_EMPTY_COPY.sinDatos("marcas publicadas")}
+        />
       ) : (
         <Stagger
           staggerDelay={0.03}

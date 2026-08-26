@@ -6,6 +6,7 @@ import { formatNumero } from "@/lib/format"
 import { useProveedores } from "@/modules/catalogo/hooks/use-productos"
 
 import { iniciales } from "./iniciales"
+import { SECTION_EMPTY_COPY, SectionEmpty } from "./section-empty"
 
 /** Tope de proveedores en la cinta: con cientos, el bucle se vuelve eterno. */
 const MAX_EN_CINTA = 20
@@ -24,20 +25,23 @@ const MAX_EN_CINTA = 20
  * verdadero en vez de una frase de relleno.
  *
  * La traducción usa el propio contenido (2 copias) para un bucle perfecto;
- * con `useReducedMotion` se detiene en la primera copia. Se oculta si el API
- * no responde.
+ * con `useReducedMotion` se detiene en la primera copia.
+ *
+ * Sin proveedores la FRANJA SE MANTIENE (es el ritmo visual de la página: un
+ * bloque negro full-width entre dos bloques claros) y en lugar de la cinta
+ * muestra un estado vacío. Solo la animación desaparece — no se puede animar
+ * un bucle de cero elementos.
  */
 export function ProviderMarquee() {
   const reduce = useReducedMotion()
-  const { data, isError } = useProveedores()
+  const { data, isPending, isError } = useProveedores()
 
   const proveedores = (data ?? [])
     .slice()
     .sort((a, b) => (b.totalProductos ?? 0) - (a.totalProductos ?? 0))
     .slice(0, MAX_EN_CINTA)
 
-  // Sin datos no hay cinta: una franja negra vacía es peor que ninguna.
-  if (isError || proveedores.length === 0) return null
+  const sinCinta = !isPending && proveedores.length === 0
 
   // Se duplica la lista para que el bucle sea seamless: al llegar al final de
   // la primera copia, la segunda ocupa exactamente el mismo lugar.
@@ -64,58 +68,67 @@ export function ProviderMarquee() {
             </h2>
           </div>
 
-          <div
-            className="relative overflow-hidden"
-            // Máscara de desvanecimiento en los bordes para que la cinta
-            // "entre y salga" de la sección (pureza del bucle infinito).
-            style={{
-              maskImage:
-                "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
-              WebkitMaskImage:
-                "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
-            }}
-          >
-            <motion.div
-              className="flex w-max items-stretch gap-6"
-              animate={reduce ? undefined : { x: ["0%", `-50%`] }}
-              transition={
-                reduce
-                  ? undefined
-                  : {
-                      duration,
-                      ease: "linear",
-                      repeat: Infinity,
-                    }
-              }
+          {isError ? (
+            <SectionEmpty mensaje={SECTION_EMPTY_COPY.error} onInk />
+          ) : sinCinta ? (
+            <SectionEmpty
+              mensaje={SECTION_EMPTY_COPY.sinDatos("proveedores publicados")}
+              onInk
+            />
+          ) : (
+            <div
+              className="relative overflow-hidden"
+              // Máscara de desvanecimiento en los bordes para que la cinta
+              // "entre y salga" de la sección (pureza del bucle infinito).
+              style={{
+                maskImage:
+                  "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
+                WebkitMaskImage:
+                  "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
+              }}
             >
-              {items.map((proveedor, index) => (
-                <div
-                  key={`${proveedor.id}-${index}`}
-                  className="flex w-[22rem] shrink-0 items-center gap-4"
-                >
-                  <span
-                    aria-hidden="true"
-                    className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[var(--overlay-on-dark-08)] text-base font-bold text-[var(--color-on-ink)]"
+              <motion.div
+                className="flex w-max items-stretch gap-6"
+                animate={reduce ? undefined : { x: ["0%", `-50%`] }}
+                transition={
+                  reduce
+                    ? undefined
+                    : {
+                        duration,
+                        ease: "linear",
+                        repeat: Infinity,
+                      }
+                }
+              >
+                {items.map((proveedor, index) => (
+                  <div
+                    key={`${proveedor.id}-${index}`}
+                    className="flex w-[22rem] shrink-0 items-center gap-4"
                   >
-                    {iniciales(proveedor.nombre)}
-                  </span>
-                  <div className="flex min-w-0 flex-col gap-0.5">
-                    <h3 className="truncate text-base font-medium text-[var(--color-on-ink)]">
-                      {proveedor.nombre}
-                    </h3>
-                    {proveedor.totalProductos != null ? (
-                      <p className="text-sm text-[var(--color-on-ink-muted)]">
-                        {formatNumero(proveedor.totalProductos)}{" "}
-                        {proveedor.totalProductos === 1
-                          ? "referencia"
-                          : "referencias"}
-                      </p>
-                    ) : null}
+                    <span
+                      aria-hidden="true"
+                      className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[var(--overlay-on-dark-08)] text-base font-bold text-[var(--color-on-ink)]"
+                    >
+                      {iniciales(proveedor.nombre)}
+                    </span>
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <h3 className="truncate text-base font-medium text-[var(--color-on-ink)]">
+                        {proveedor.nombre}
+                      </h3>
+                      {proveedor.totalProductos != null ? (
+                        <p className="text-sm text-[var(--color-on-ink-muted)]">
+                          {formatNumero(proveedor.totalProductos)}{" "}
+                          {proveedor.totalProductos === 1
+                            ? "referencia"
+                            : "referencias"}
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </motion.div>
-          </div>
+                ))}
+              </motion.div>
+            </div>
+          )}
         </div>
       </div>
     </section>

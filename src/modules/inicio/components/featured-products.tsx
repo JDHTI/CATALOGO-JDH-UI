@@ -17,6 +17,8 @@ import {
   ProductoCardSkeleton,
 } from "@/modules/catalogo/components/producto-card"
 
+import { SECTION_EMPTY_COPY, SectionEmpty } from "./section-empty"
+
 /** Cuántas referencias trae el carrusel de la primera página del catálogo. */
 const MUESTRA = 8
 
@@ -30,17 +32,14 @@ const MUESTRA = 8
  * Antes vivía de un dataset mockeado con precios y botón "Añadir": ambos
  * desaparecieron con los datos inventados.
  *
- * Si el API no responde o el catálogo está vacío, la sección NO se muestra.
- * En la homepage eso es lo correcto: el visitante no vino a resolver un
- * error, y el resto de la página (hero, cobertura, CTA) sigue en pie. El
- * estado explícito de error vive en `/productos`, donde sí fue a buscar
- * productos.
+ * Sin datos la sección NO desaparece: conserva su encabezado y muestra un
+ * `SectionEmpty`. Ocultarla dejaba la homepage sin cuerpo cuando el catálogo
+ * está vacío, que es justo el estado en el que hoy vive el backend.
  */
 export function FeaturedProducts() {
   const { data, isPending, isError } = useProductos({ limit: MUESTRA })
   const productos = data?.data ?? []
-
-  if (isError || (!isPending && productos.length === 0)) return null
+  const vacio = !isPending && productos.length === 0
 
   return (
     <section aria-labelledby="destacados-title" className="flex flex-col gap-8">
@@ -72,26 +71,34 @@ export function FeaturedProducts() {
       </ScrollReveal>
 
       <ScrollReveal y={24}>
-        <Carousel opts={{ align: "start" }}>
-          <CarouselContent>
-            {isPending
-              ? Array.from({ length: 4 }, (_, i) => (
-                  <CarouselItem key={i} className="basis-1/2 md:basis-1/3">
-                    <ProductoCardSkeleton />
-                  </CarouselItem>
-                ))
-              : productos.map((producto) => (
-                  <CarouselItem
-                    key={producto.id}
-                    className="basis-1/2 md:basis-1/3"
-                  >
-                    <ProductoCard producto={producto} />
-                  </CarouselItem>
-                ))}
-          </CarouselContent>
-          <CarouselPrevious className="hidden sm:-left-6 sm:inline-flex" />
-          <CarouselNext className="hidden sm:-right-6 sm:inline-flex" />
-        </Carousel>
+        {isError ? (
+          <SectionEmpty mensaje={SECTION_EMPTY_COPY.error} />
+        ) : vacio ? (
+          <SectionEmpty
+            mensaje={SECTION_EMPTY_COPY.sinDatos("productos publicados")}
+          />
+        ) : (
+          <Carousel opts={{ align: "start" }}>
+            <CarouselContent>
+              {isPending
+                ? Array.from({ length: 4 }, (_, i) => (
+                    <CarouselItem key={i} className="basis-1/2 md:basis-1/3">
+                      <ProductoCardSkeleton />
+                    </CarouselItem>
+                  ))
+                : productos.map((producto) => (
+                    <CarouselItem
+                      key={producto.id}
+                      className="basis-1/2 md:basis-1/3"
+                    >
+                      <ProductoCard producto={producto} />
+                    </CarouselItem>
+                  ))}
+            </CarouselContent>
+            <CarouselPrevious className="hidden sm:-left-6 sm:inline-flex" />
+            <CarouselNext className="hidden sm:-right-6 sm:inline-flex" />
+          </Carousel>
+        )}
       </ScrollReveal>
     </section>
   )
