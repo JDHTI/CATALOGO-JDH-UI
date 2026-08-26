@@ -12,6 +12,13 @@ import { UserMenu } from "./user-menu"
  * (avatar + dropdown); sin sesión, un único enlace "Mi cuenta" a `/ingreso`
  * — mismo tratamiento visual que los íconos de Favoritos/Carrito (ícono +
  * etiqueta), no dos enlaces de texto separados de ingreso/registro.
+ *
+ * En móvil (<sm) el enlace es solo el ícono, cuadrado como `IconNavLink` — el
+ * label queda para lectores de pantalla vía `aria-label`. La fila de accesos
+ * del header (favoritos, carrito, tema, cuenta) no cabe de otra forma en el
+ * ancho mínimo soportado, y "Mi cuenta" es el único de los cuatro que traía
+ * texto. El esqueleto de carga cambia de forma con él para que la fila no dé
+ * un salto al resolverse la sesión.
  */
 export function AuthActions() {
   const { user, isPending } = useCurrentUser()
@@ -20,7 +27,7 @@ export function AuthActions() {
     return (
       <div
         aria-hidden
-        className="h-9 w-28 animate-pulse rounded-lg bg-[var(--overlay-on-dark-08)]"
+        className="size-9 animate-pulse rounded-lg bg-[var(--overlay-on-dark-08)] sm:h-9 sm:w-28"
       />
     )
   }
@@ -30,10 +37,11 @@ export function AuthActions() {
   return (
     <Link
       href="/ingreso"
-      className="flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium text-[var(--color-on-ink)] transition-colors hover:bg-[var(--overlay-on-dark-08)]"
+      aria-label="Mi cuenta"
+      className="flex h-9 w-9 items-center justify-center gap-2 rounded-lg px-0 text-sm font-medium text-[var(--color-on-ink)] transition-colors hover:bg-[var(--overlay-on-dark-08)] sm:w-auto sm:justify-start sm:px-3"
     >
-      <UserRound className="size-[18px]" />
-      Mi cuenta
+      <UserRound className="size-[18px] shrink-0" />
+      <span className="hidden sm:inline">Mi cuenta</span>
     </Link>
   )
 }

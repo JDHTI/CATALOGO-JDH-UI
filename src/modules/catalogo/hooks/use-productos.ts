@@ -41,7 +41,78 @@ const CLASIFICACION_STALE_MS = 5 * 60 * 1000
 export function useProductos(params: ProductosQueryParams) {
   return useQuery({
     queryKey: catalogoKeys.productos(params),
-    queryFn: () => listarProductos(params),
+    queryFn: ({ signal }) => listarProductos(params, signal),
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** Mínimo de caracteres antes de consultar el API desde el buscador. */
+export const MIN_CARACTERES_BUSQUEDA = 2
+
+/** Sugerencias por consulta. Son las que caben en el panel sin scroll. */
+export const LIMITE_SUGERENCIAS = 5
+
+/**
+ * Cuánto se considera fresca una sugerencia ya traída. Cinco minutos, no el
+ * minuto por defecto del `QueryClient`: el nombre de un producto no cambia
+ * durante una sesión, y este número es el que decide cuántas veces un mismo
+ * usuario vuelve a pedirle al API un término que ya buscó.
+ */
+const SUGERENCIAS_STALE_MS = 5 * 60 * 1000
+
+/** Las sugerencias sobreviven toda la sesión en memoria: son 5 objetos por
+ *  término, y volver a un término anterior debe abrir el panel sin red. */
+const SUGERENCIAS_GC_MS = 30 * 60 * 1000
+
+/**
+ * Sugerencias del buscador del header (`ProductSearchBar`): las primeras
+ * coincidencias del término que se está TECLEANDO, no una página del listado.
+ * Es una query aparte de `useProductos` a propósito, y cada opción está aquí
+ * por una razón de CARGA, no de UI — el buscador es el endpoint más caliente
+ * de la tienda (se dispara mientras se teclea, en todas las rutas del
+ * catálogo) y el que peor escala si se deja con los valores por defecto:
+ *
+ * - `limit` chico: el panel muestra 5, así que se piden 5 — no una página de
+ *   12 de la que se descartan 7.
+ * - `enabled`: con menos de `MIN_CARACTERES_BUSQUEDA` el API devolvería media
+ *   bodega, y con el panel cerrado el resultado no se ve. Teclear con el
+ *   panel cerrado (tras un Escape) no consume peticiones.
+ * - `staleTime` de 5 min + `gcTime` de 30 min: borrar un caracter y volver a
+ *   escribirlo, o repetir una búsqueda de hace un rato, sale de memoria.
+ * - `retry: false`: es la opción MÁS importante con muchos usuarios a la vez.
+ *   El default del `QueryClient` reintenta, y ante un 429 o un 5xx eso
+ *   multiplica por cuatro la carga exactamente cuando el backend está
+ *   sufriendo. Una sugerencia fallida no se reintenta: el usuario sigue
+ *   tecleando y la siguiente pulsación ya genera otra consulta.
+ * - `keepPreviousData`: mientras llega el término nuevo se mantienen las
+ *   sugerencias del anterior (la vista las atenúa con `isPlaceholderData`),
+ *   así el panel no parpadea vacío en cada pulsación.
+ *
+ * Y el `queryFn` propaga el `signal`: TanStack Query aborta la petición
+ * anterior cuando llega un término más nuevo, en vez de dejar tres corriendo.
+ *
+ * El debounce NO vive aquí: es responsabilidad del input (cuánto esperar
+ * antes de considerar que el usuario terminó de teclear es una decisión de
+ * interacción, no de caché).
+ */
+export function useBusquedaProductos(
+  termino: string,
+  { habilitada = true, limite = LIMITE_SUGERENCIAS } = {}
+) {
+  // Normaliza el espaciado para que "arroz  diana" y "arroz diana " sean UNA
+  // entrada de caché y UNA URL. No se toca la caja: si el backend distingue
+  // mayúsculas, bajarla cambiaría los resultados — y los nombres del ERP
+  // vienen en alta sostenida.
+  const search = termino.trim().replace(/\s+/g, " ")
+  const params: ProductosQueryParams = { search, limit: limite }
+
+  return useQuery({
+    queryKey: catalogoKeys.productos(params),
+    queryFn: ({ signal }) => listarProductos(params, signal),
+    enabled: habilitada && search.length >= MIN_CARACTERES_BUSQUEDA,
+    staleTime: SUGERENCIAS_STALE_MS,
+    gcTime: SUGERENCIAS_GC_MS,
+    retry: false,
     placeholderData: keepPreviousData,
   })
 }
@@ -50,7 +121,7 @@ export function useProductos(params: ProductosQueryParams) {
 export function useProducto(id: string) {
   return useQuery({
     queryKey: catalogoKeys.producto(id),
-    queryFn: () => obtenerProducto(id),
+    queryFn: ({ signal }) => obtenerProducto(id, signal),
     // Un 404 no se resuelve reintentando (el id no existe).
     retry: false,
   })
@@ -60,7 +131,7 @@ export function useProducto(id: string) {
 export function useProveedores() {
   return useQuery({
     queryKey: catalogoKeys.proveedores,
-    queryFn: listarProveedores,
+    queryFn: ({ signal }) => listarProveedores(signal),
     staleTime: CLASIFICACION_STALE_MS,
   })
 }
@@ -75,7 +146,7 @@ export function useProveedores() {
 export function useMarcas(params: MarcasQueryParams = {}) {
   const query = useQuery({
     queryKey: catalogoKeys.marcas(params),
-    queryFn: () => listarMarcas(params),
+    queryFn: ({ signal }) => listarMarcas(params, signal),
     staleTime: CLASIFICACION_STALE_MS,
     retry: (intento, error) =>
       error instanceof CatalogoApiError && error.statusCode === 404

@@ -167,7 +167,13 @@
 
   /* Altura apilada del chrome del catálogo en el tope (ContactBar h-9 +
      AppHeader 72px + MainNav h-14). El primer slide del homepage llena el
-     resto del viewport: `calc(100svh - var(--catalogo-chrome-height))`. */
+     resto del viewport: `calc(100svh - var(--catalogo-chrome-height))`.
+
+     FALLBACK: `CatalogoChrome` mide el chrome real con un ResizeObserver y
+     sobreescribe esta variable en `:root` tras hidratar (el header cambia de
+     alto con el breakpoint y la franja de contacto no existe bajo `md`, así
+     que un solo número a mano no puede ser correcto en todos los anchos).
+     Este valor solo se usa antes de la primera medición. */
   --catalogo-chrome-height: 10.25rem;
 
   --z-base: 0;

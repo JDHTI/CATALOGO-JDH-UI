@@ -76,17 +76,24 @@ export function MegaMenu() {
         aria-haspopup="true"
         aria-expanded={open}
         aria-controls="mega-menu-panel"
+        // El label visible desaparece en móvil (ver `MainNav`: los otros dos
+        // accesos de la franja llevan texto completo siempre), así que aquí el
+        // nombre accesible tiene que ser explícito.
+        aria-label="Menú"
         onClick={() => setOpen((value) => !value)}
         // `px-2` alinea el contenedor del icono con el mismo margen izquierdo
         // que el teléfono de la ContactBar (que usa px-2) y que el enlace de
         // Promociones: los tres controles arrancan en el mismo eje.
         className={cn(
-          "inline-flex h-9 shrink-0 items-center gap-2 rounded-lg px-2 text-sm font-medium text-[var(--color-on-ink)] transition-colors hover:bg-[var(--overlay-on-dark-08)]",
+          "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-[var(--color-on-ink)] transition-colors hover:bg-[var(--overlay-on-dark-08)] sm:gap-2",
           open && "bg-[var(--overlay-on-dark-08)]"
         )}
       >
-        <LayoutGrid className="size-[18px]" />
-        Menú
+        <LayoutGrid className="size-[18px] shrink-0" />
+        {/* Solo-icono en móvil: es el trigger más reconocible por su icono y
+            el ancho que se libera es el que necesitan "Explorar catálogo" y
+            "Promociones" para mostrar su texto completo a 320px. */}
+        <span className="hidden sm:inline">Menú</span>
         <ChevronDown
           aria-hidden
           className={cn("size-4 transition-transform", open && "rotate-180")}

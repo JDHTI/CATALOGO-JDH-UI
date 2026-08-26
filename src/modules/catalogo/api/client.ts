@@ -40,10 +40,18 @@ export { CatalogoApiError }
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1"
 
+/**
+ * `signal` viene del `queryFn` de TanStack Query, que lo aborta cuando la
+ * consulta queda obsoleta (el componente se desmonta, o llega un término de
+ * búsqueda más nuevo). Sin él, teclear "coca cola" deja tres peticiones vivas
+ * compitiendo por pintar el mismo panel: trabajo que el backend ya hizo para
+ * nada y, con muchos usuarios simultáneos, carga puramente desperdiciada.
+ */
 async function apiGet<Schema extends z.ZodType>(
   path: `/${string}`,
   schema: Schema,
-  params?: Record<string, string | number | undefined>
+  params?: Record<string, string | number | undefined>,
+  signal?: AbortSignal
 ): Promise<z.infer<Schema>> {
   const url = new URL(`${API_BASE_URL}${path}`)
   for (const [clave, valor] of Object.entries(params ?? {})) {
@@ -54,6 +62,7 @@ async function apiGet<Schema extends z.ZodType>(
 
   const respuesta = await fetch(url, {
     headers: { Accept: "application/json" },
+    signal,
   })
 
   if (!respuesta.ok) {
@@ -72,30 +81,48 @@ async function apiGet<Schema extends z.ZodType>(
 
 /** `GET /products` — listado paginado con búsqueda y filtro por proveedor. */
 export async function listarProductos(
-  params: ProductosQueryParams = {}
+  params: ProductosQueryParams = {},
+  signal?: AbortSignal
 ): Promise<Paginado<Producto>> {
-  const dto = await apiGet("/products", paginaProductosDtoSchema, {
-    page: params.page,
-    limit: params.limit,
-    search: params.search,
-    supplierId: params.supplierId,
-    brandId: params.brandId,
-  })
+  const dto = await apiGet(
+    "/products",
+    paginaProductosDtoSchema,
+    {
+      page: params.page,
+      limit: params.limit,
+      search: params.search,
+      supplierId: params.supplierId,
+      brandId: params.brandId,
+    },
+    signal
+  )
   return aPaginaProductos(dto)
 }
 
 /** `GET /products/:id` — detalle de un producto. */
-export async function obtenerProducto(id: string): Promise<Producto> {
+export async function obtenerProducto(
+  id: string,
+  signal?: AbortSignal
+): Promise<Producto> {
   const dto = await apiGet(
     `/products/${encodeURIComponent(id)}`,
-    productoDtoSchema
+    productoDtoSchema,
+    undefined,
+    signal
   )
   return aProducto(dto)
 }
 
 /** `GET /suppliers` — lista completa de proveedores (para el filtro). */
-export async function listarProveedores(): Promise<Proveedor[]> {
-  const dto = await apiGet("/suppliers", proveedoresDtoSchema)
+export async function listarProveedores(
+  signal?: AbortSignal
+): Promise<Proveedor[]> {
+  const dto = await apiGet(
+    "/suppliers",
+    proveedoresDtoSchema,
+    undefined,
+    signal
+  )
   return dto.map(aProveedor)
 }
 
@@ -104,10 +131,14 @@ export async function listarProveedores(): Promise<Proveedor[]> {
  * proveedor. Segundo eje de clasificación del catálogo, junto al proveedor.
  */
 export async function listarMarcas(
-  params: MarcasQueryParams = {}
+  params: MarcasQueryParams = {},
+  signal?: AbortSignal
 ): Promise<Marca[]> {
-  const dto = await apiGet("/brands", marcasDtoSchema, {
-    supplierId: params.supplierId,
-  })
+  const dto = await apiGet(
+    "/brands",
+    marcasDtoSchema,
+    { supplierId: params.supplierId },
+    signal
+  )
   return dto.map(aMarca)
 }

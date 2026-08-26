@@ -23,10 +23,6 @@ const MAX_ACCESOS = 6
  * la derecha — icono + label reservado a estos dos accesos y al trigger
  * "Menú", como distintivo de los controles principales de la barra.
  *
- * En pantallas angostas (`<sm`) "Explorar catálogo" y "Promociones" pierden
- * el label y quedan en solo-icono: con "Menú" + los tres labels completos no
- * caben en el ancho mínimo soportado (320px).
- *
  * Los accesos salían de una lista de 10 categorías inventadas en
  * `search.config.ts` que enlazaban a `/productos?categoria=…`, un filtro que
  * no existe en los datos reales. Ahora salen del API (`GET /brands`): la
@@ -39,9 +35,31 @@ const MAX_ACCESOS = 6
  * `relative` porque el panel del mega menú (`MegaMenu`) se ancla aquí con
  * `absolute inset-x-0 top-full`.
  *
- * Layout de 3 columnas (`auto_1fr_auto`): "Menú" + "Explorar catálogo" a la
- * izquierda, las marcas destacadas en la columna central (justificadas al
- * centro) y "Promociones" lockeado a la derecha.
+ * LAYOUT — flex en todos los anchos, con un solo interruptor por breakpoint.
+ * "Menú" es siempre el primer hijo, así que queda pegado al límite izquierdo
+ * de la franja sin depender de ninguna columna. El resto va en un grupo
+ * `flex-1` que se reparte de dos maneras:
+ *
+ * - Bajo `lg` las marcas están ocultas, así que el grupo tiene solo dos
+ *   hijos visibles y `justify-evenly` los reparte con la MISMA distancia
+ *   entre "Menú", "Explorar catálogo", "Promociones" y el borde derecho —
+ *   una fila de tres accesos equidistantes, sin divisores.
+ * - Desde `lg` entra la columna de marcas (`flex-1 justify-center`), que
+ *   absorbe todo el espacio sobrante: "Explorar catálogo" vuelve a quedar
+ *   junto a "Menú", las marcas centradas y "Promociones" lockeado al extremo
+ *   derecho, ya con su divisor.
+ *
+ * Un grid de 3 columnas NO sirve bajo `lg`: aunque "Menú" y "Explorar
+ * catálogo" se alineen al inicio de su propia columna, cada uno queda
+ * anclado al borde de una franja de ancho fijo, y entre ellos aparece el
+ * espacio muerto de esa franja sin importar el `justify-self`.
+ *
+ * Los TRES accesos llevan texto completo desde `sm`; el que se sacrifica a
+ * solo-icono en móvil es "Menú" (ver `MegaMenu`): es el trigger más
+ * reconocible por su icono (`LayoutGrid`) y el que menos necesita el label.
+ * En el ancho mínimo soportado (320px) el label de "Explorar catálogo" es lo
+ * único que puede encogerse (`truncate`) — antes que empujar la página a
+ * scroll horizontal.
  */
 export function MainNav({ className }: { className?: string }) {
   const { data: marcas } = useMarcas()
@@ -62,51 +80,53 @@ export function MainNav({ className }: { className?: string }) {
     >
       <nav
         aria-label="Menú"
-        className="mx-auto grid h-14 max-w-[var(--container-wide)] grid-cols-[auto_1fr_auto] items-center gap-2 px-4 sm:px-6"
+        className="mx-auto flex h-14 max-w-[var(--container-wide)] items-center px-4 sm:px-6"
       >
-        <div className="flex shrink-0 items-center gap-1">
-          <MegaMenu />
+        <MegaMenu />
+
+        <div className="flex min-w-0 flex-1 items-center justify-evenly lg:justify-start">
           <Link
             href="/productos"
-            aria-label="Explorar catálogo"
-            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-[var(--color-on-ink)] transition-colors hover:bg-[var(--overlay-on-dark-08)]"
+            className="inline-flex h-9 min-w-0 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-[var(--color-on-ink)] transition-colors hover:bg-[var(--overlay-on-dark-08)]"
           >
-            <Compass className="size-4" aria-hidden />
-            <span className="hidden sm:inline">Explorar catálogo</span>
+            <Compass className="size-4 shrink-0" aria-hidden />
+            <span className="truncate">Explorar catálogo</span>
           </Link>
-        </div>
 
-        {/* Marcas con más referencias — vacío mientras carga o si falla.
-            Oculto por debajo de `lg`: entre "Explorar catálogo" y
-            "Promociones" no queda ancho para seis nombres de marca, y al no
-            encoger se montaban unos sobre otros. En pantallas estrechas el
-            acceso al catálogo va por el mega menú y la barra inferior. */}
-        <div className="hidden min-w-0 items-center gap-1 justify-self-center lg:flex">
-          {destacados.map((marca) => (
+          {/* Marcas con más referencias — vacío mientras carga o si falla.
+              Oculto por debajo de `lg`: entre "Explorar catálogo" y
+              "Promociones" no queda ancho para seis nombres de marca, y al no
+              encoger se montaban unos sobre otros. En pantallas estrechas el
+              acceso al catálogo va por el mega menú y la barra inferior.
+              Desde `lg`, `flex-1` lo convierte en el fuelle de la franja. */}
+          <div className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex">
+            {destacados.map((marca) => (
+              <Link
+                key={marca.id}
+                href={`/productos?marca=${marca.id}` as Route}
+                className="inline-flex h-9 max-w-[12rem] shrink-0 items-center truncate rounded-lg px-3 text-sm font-medium text-[var(--color-on-ink-muted)] transition-colors hover:bg-[var(--overlay-on-dark-08)] hover:text-[var(--color-on-ink)]"
+              >
+                {formatNombreComercial(marca.nombre)}
+              </Link>
+            ))}
+          </div>
+
+          {/* Promociones — al extremo derecho de la franja. El divisor solo
+              tiene sentido pegado al borde de la columna de marcas; bajo `lg`
+              no hay nada de lo que separarlo y la fila se lee mejor limpia. */}
+          <div className="flex shrink-0 items-center gap-1">
+            <span
+              aria-hidden
+              className="mx-1 hidden h-6 w-px bg-[var(--color-ink-border)] lg:block"
+            />
             <Link
-              key={marca.id}
-              href={`/productos?marca=${marca.id}` as Route}
-              className="inline-flex h-9 max-w-[12rem] shrink-0 items-center truncate rounded-lg px-3 text-sm font-medium text-[var(--color-on-ink-muted)] transition-colors hover:bg-[var(--overlay-on-dark-08)] hover:text-[var(--color-on-ink)]"
+              href={"/productos?promocion=1" as Route}
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-[var(--color-on-ink)] transition-colors hover:bg-[var(--overlay-on-dark-08)]"
             >
-              {formatNombreComercial(marca.nombre)}
+              <Tag className="size-4 shrink-0" aria-hidden />
+              <span className="whitespace-nowrap">Promociones</span>
             </Link>
-          ))}
-        </div>
-
-        {/* Promociones — lockeado al extremo derecho, fuera del scroll. */}
-        <div className="flex shrink-0 items-center gap-1 justify-self-end">
-          <span
-            aria-hidden
-            className="mx-1 h-6 w-px bg-[var(--color-ink-border)]"
-          />
-          <Link
-            href={"/productos?promocion=1" as Route}
-            aria-label="Promociones"
-            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-[var(--color-on-ink)] transition-colors hover:bg-[var(--overlay-on-dark-08)]"
-          >
-            <Tag className="size-4" aria-hidden />
-            <span className="hidden sm:inline">Promociones</span>
-          </Link>
+          </div>
         </div>
       </nav>
     </div>

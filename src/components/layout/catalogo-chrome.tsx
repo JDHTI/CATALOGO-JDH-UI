@@ -20,13 +20,22 @@ import { MainNav } from "./main-nav"
 const BAR_HEIGHT = 36
 /** Scroll necesario (px) para ocultar por completo la franja. */
 const HIDE_DISTANCE = 48
+/** Breakpoint `md` de Tailwind, el mismo en el que aparece la franja. */
+const MD = "(min-width: 48rem)"
 
 /**
  * Chrome del catálogo, todo en UN sticky wrapper: barra de contacto (con el
  * aviso encima), header principal y menú.
  *
- * La franja de contacto NO se desplaza con la página: se muestra SOLO en el
- * límite superior (scrollY ≈ 0). En lugar de un toggle binario, la franja
+ * El bloque aviso + contacto NO se muestra en móvil (`hidden md:block`): son
+ * datos de contacto y contenido promocional, no navegación esencial, y bajo
+ * `md` compiten por altura con lo que sí importa en el tope de la pantalla
+ * (el buscador y el menú). Teléfono, correo, WhatsApp e Instagram siguen
+ * accesibles desde el footer. Se oculta con CSS y no desmontando el bloque
+ * para no tirar los motion values al cruzar el breakpoint.
+ *
+ * La franja de contacto tampoco se desplaza con la página: se muestra SOLO en
+ * el límite superior (scrollY ≈ 0). En lugar de un toggle binario, la franja
  * está ligada al scroll de forma CONTINUA (scroll-driven): su altura es una
  * función directa de `scrollY` (1 en el tope → 0 tras 48px), de modo que al
  * acercarte al tope la barra crece en sincronía exacta con el
@@ -39,6 +48,19 @@ const HIDE_DISTANCE = 48
  * `prefers-reduced-motion` se degrada a un toggle binario sin animación
  * (presente en el tope, ausente al scrollear). `aria-hidden`/`inert` solo
  * cuando la franja está oculta.
+ *
+ * `--catalogo-chrome-height` (que el hero resta de `100svh`, ver
+ * `hero-section.tsx`) NO se calcula a mano por breakpoint en `globals.css`:
+ * el header pasa de dos filas en móvil a una sola desde `lg`, y la franja de
+ * contacto solo existe desde `md` — cualquier número escrito a mano se
+ * desincroniza con el primer cambio de padding y el resultado es un chrome
+ * que tapa el contenido que dice restar. En su lugar, un `ResizeObserver`
+ * mide el alto REAL de `AppHeader` + `MainNav` (la parte que no se anima con
+ * el scroll) y fija la variable en `:root` con ese valor, más `BAR_HEIGHT`
+ * solo cuando el bloque aviso/contacto de verdad ocupa espacio (`md`+). Un
+ * listener de `matchMedia` recalcula si el viewport cruza `md` en caliente.
+ * El valor de `globals.css` queda solo como fallback antes de la primera
+ * medición (SSR / pre-hidratación).
  */
 export function CatalogoChrome() {
   const reduce = useReducedMotion()
@@ -53,36 +75,59 @@ export function CatalogoChrome() {
     setHidden(value <= 0.05)
   })
 
-  if (reduce) {
-    return (
-      <div className="sticky top-0 z-[var(--z-sticky)]">
-        <div
-          aria-hidden={hidden}
-          inert={hidden}
-          className={cn("overflow-hidden", hidden ? "h-0" : "h-9")}
-        >
-          <AnnouncementBar />
-          <ContactBar />
-        </div>
-        <AppHeader />
-        <MainNav />
-      </div>
-    )
-  }
+  const staticRef = React.useRef<HTMLDivElement>(null)
+  React.useEffect(() => {
+    const node = staticRef.current
+    if (!node) return
+
+    const mql = window.matchMedia(MD)
+
+    const updateChromeHeight = () => {
+      const medido = node.getBoundingClientRect().height
+      document.documentElement.style.setProperty(
+        "--catalogo-chrome-height",
+        `${medido + (mql.matches ? BAR_HEIGHT : 0)}px`
+      )
+    }
+
+    updateChromeHeight()
+    const observer = new ResizeObserver(updateChromeHeight)
+    observer.observe(node)
+    mql.addEventListener("change", updateChromeHeight)
+    return () => {
+      observer.disconnect()
+      mql.removeEventListener("change", updateChromeHeight)
+    }
+  }, [])
+
+  const bloqueSuperior = reduce ? (
+    <div
+      aria-hidden={hidden}
+      inert={hidden}
+      className={cn("hidden overflow-hidden md:block", hidden ? "h-0" : "h-9")}
+    >
+      <AnnouncementBar />
+      <ContactBar />
+    </div>
+  ) : (
+    <motion.div
+      aria-hidden={hidden}
+      inert={hidden}
+      style={{ height, opacity }}
+      className="hidden overflow-hidden md:block"
+    >
+      <AnnouncementBar />
+      <ContactBar />
+    </motion.div>
+  )
 
   return (
     <div className="sticky top-0 z-[var(--z-sticky)]">
-      <motion.div
-        aria-hidden={hidden}
-        inert={hidden}
-        style={{ height, opacity }}
-        className="overflow-hidden"
-      >
-        <AnnouncementBar />
-        <ContactBar />
-      </motion.div>
-      <AppHeader />
-      <MainNav />
+      {bloqueSuperior}
+      <div ref={staticRef}>
+        <AppHeader />
+        <MainNav />
+      </div>
     </div>
   )
 }
