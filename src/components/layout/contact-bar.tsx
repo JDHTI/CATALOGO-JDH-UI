@@ -1,6 +1,5 @@
 import { Mail, Phone } from "lucide-react"
 
-import { ThemeSwitcher } from "@/components/common/theme-switcher"
 import { InstagramIcon } from "@/components/icons/instagram-icon"
 import { WhatsappIcon } from "@/components/icons/whatsapp-icon"
 import { contactConfig } from "@/config/contact.config"
@@ -9,9 +8,10 @@ import { contactConfig } from "@/config/contact.config"
  * Primera franja del chrome — barra de contacto con fondo en GRADIENTE
  * simétrico NEGRO → BLANCO → NEGRO (del negro del tema `--color-ink` al
  * blanco `--color-on-ink` en el centro y de vuelta al negro). Ambos clústeres
- * (contacto a la izquierda, redes + tema a la derecha) quedan sobre el negro
- * de los extremos, así que TODO el texto es blanco (`--color-on-ink`) — un
- * único estándar en la franja.
+ * (contacto a la izquierda, redes a la derecha) quedan sobre el negro de los
+ * extremos, así que TODO el texto es blanco (`--color-on-ink`) — un único
+ * estándar en la franja. El selector de tema vive en la SEGUNDA barra
+ * (`AppHeader`), junto a "Mi cuenta".
  *
  * El despliegue/colapso al hacer scroll lo maneja `CatalogoChrome` (liga la
  * altura de esta franja al scroll, de forma continua y suavizada por Lenis):
@@ -54,7 +54,7 @@ export function ContactBar() {
           </a>
         </div>
 
-        {/* Derecha: redes + tema — blanco sobre el negro del extremo */}
+        {/* Derecha: redes — blanco sobre el negro del extremo */}
         <div className="flex shrink-0 items-center gap-1 text-[var(--color-on-ink)]">
           <a
             href={contactConfig.whatsappUrl}
@@ -81,8 +81,6 @@ export function ContactBar() {
           >
             <InstagramIcon className="size-[18px]" />
           </a>
-          <span aria-hidden className="h-4 w-px bg-[var(--color-ink-border)]" />
-          <ThemeSwitcher variant="on-ink" />
         </div>
       </div>
     </div>
