@@ -1,25 +1,44 @@
 "use client"
 
-import * as React from "react"
 import { motion, useReducedMotion } from "motion/react"
 
-import type { Proveedor } from "../types"
+import { formatNumero } from "@/lib/format"
+import { useProveedores } from "@/modules/catalogo/hooks/use-productos"
+
 import { iniciales } from "./iniciales"
+
+/** Tope de proveedores en la cinta: con cientos, el bucle se vuelve eterno. */
+const MAX_EN_CINTA = 20
 
 /**
  * Cinta INFINITA de proveedores ("marquee") con desplazamiento FLUIDO y
  * continuo: el contenido se duplica una vez y se traduce con una animación
- * CSS/JS de bucle sin saltos (loop seamless), pausando al hover. Cada
- * proveedor = logo (monograma) + nombre y descripción AL FRENTE (en fila,
- * no columna). Sección NEGRA full-width (abarca todo el ancho de la
- * pantalla) y SIN divisor entre el título de la sección y el carrusel —
- * ambos viven en la misma franja negra.
+ * de bucle sin saltos (loop seamless), pausando con `prefers-reduced-motion`.
+ * Cada proveedor = monograma + nombre y su conteo de referencias AL FRENTE
+ * (en fila, no columna). Sección NEGRA full-width y SIN divisor entre el
+ * título y el carrusel — ambos viven en la misma franja negra.
+ *
+ * Los proveedores son REALES (`GET /suppliers`). Antes venían de un mock con
+ * un `slogan` y una `descripcion` inventados por proveedor; el API solo da
+ * nombre y conteo, así que la línea de apoyo es el conteo — un dato
+ * verdadero en vez de una frase de relleno.
  *
  * La traducción usa el propio contenido (2 copias) para un bucle perfecto;
- * con `useReducedMotion` se detiene en la primera copia.
+ * con `useReducedMotion` se detiene en la primera copia. Se oculta si el API
+ * no responde.
  */
-export function ProviderMarquee({ proveedores }: { proveedores: Proveedor[] }) {
+export function ProviderMarquee() {
   const reduce = useReducedMotion()
+  const { data, isError } = useProveedores()
+
+  const proveedores = (data ?? [])
+    .slice()
+    .sort((a, b) => (b.totalProductos ?? 0) - (a.totalProductos ?? 0))
+    .slice(0, MAX_EN_CINTA)
+
+  // Sin datos no hay cinta: una franja negra vacía es peor que ninguna.
+  if (isError || proveedores.length === 0) return null
+
   // Se duplica la lista para que el bucle sea seamless: al llegar al final de
   // la primera copia, la segunda ocupa exactamente el mismo lugar.
   const items = [...proveedores, ...proveedores]
@@ -84,9 +103,14 @@ export function ProviderMarquee({ proveedores }: { proveedores: Proveedor[] }) {
                     <h3 className="truncate text-base font-medium text-[var(--color-on-ink)]">
                       {proveedor.nombre}
                     </h3>
-                    <p className="line-clamp-2 text-sm text-[var(--color-on-ink-muted)]">
-                      {proveedor.descripcion}
-                    </p>
+                    {proveedor.totalProductos != null ? (
+                      <p className="text-sm text-[var(--color-on-ink-muted)]">
+                        {formatNumero(proveedor.totalProductos)}{" "}
+                        {proveedor.totalProductos === 1
+                          ? "referencia"
+                          : "referencias"}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               ))}

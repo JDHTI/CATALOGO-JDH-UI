@@ -6,11 +6,11 @@ import type { Producto } from "../types"
 import { ProductoImagen } from "./producto-imagen"
 
 /**
- * Card del listado de productos REALES (`/productos`). Distinta de
- * `components/cards/product-card.tsx` (homepage, mock de marketing con
- * precio y carrito): el catálogo conectado es solo referencia visual —
- * identifica el producto (imagen, marca, nombre, sku) y su proveedor, el
- * criterio principal de agrupación. Toda la card navega al detalle.
+ * Card de producto del catálogo — única card de producto de la app, usada
+ * por el listado (`/productos`) y por la muestra del homepage. El catálogo
+ * es solo referencia visual: identifica el producto (imagen, marca, nombre,
+ * sku) y su proveedor, el eje principal de clasificación. Toda la card
+ * navega al detalle.
  */
 export function ProductoCard({ producto }: { producto: Producto }) {
   return (

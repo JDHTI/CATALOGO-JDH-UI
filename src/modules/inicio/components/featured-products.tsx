@@ -2,10 +2,6 @@
 
 import Link from "next/link"
 
-import {
-  ProductCard,
-  type ProductCardData,
-} from "@/components/cards/product-card"
 import { JdhButton } from "@/components/common/jdh-button"
 import { ScrollReveal } from "@/components/motion/scroll-reveal"
 import {
@@ -15,55 +11,54 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
+import { useProductos } from "@/modules/catalogo/hooks/use-productos"
+import {
+  ProductoCard,
+  ProductoCardSkeleton,
+} from "@/modules/catalogo/components/producto-card"
 
-import type { ProductoDestacado } from "../types"
-
-function aCardData(p: ProductoDestacado): ProductCardData {
-  return {
-    id: p.id,
-    nombre: p.nombre,
-    categoria: p.categoria,
-    marca: p.marca,
-    precioCentavos: p.precioCentavos,
-    unidadVenta: p.unidadVenta,
-    presentacion: p.presentacion,
-    descripcionCorta: p.descripcionCorta,
-    descripcionLarga: p.descripcionLarga,
-    detallesEmpaque: p.detallesEmpaque,
-    imagen: p.imagen,
-    badge: p.badge,
-    disponible: true,
-  }
-}
+/** Cuántas referencias trae el carrusel de la primera página del catálogo. */
+const MUESTRA = 8
 
 /**
- * Productos destacados en CARRUSEL con imágenes cuadradas agrandadas (2 por
- * fila en móvil, 3 en desktop). Arrastre nativo (embla) en móvil; flechas en
- * ≥sm a los costados. Usa la card de producto compartida (con modal de
- * detalle): categoría, nombre, unidad de venta, precio, favoritos y añadir.
+ * Muestra del portafolio en CARRUSEL, con productos REALES del API: la
+ * primera página de `GET /products`. Arrastre nativo (embla) en móvil;
+ * flechas en ≥sm a los costados. Usa la misma card que el listado
+ * (`ProductoCard`) — sin precio y sin carrito, porque el catálogo es
+ * referencia visual.
+ *
+ * Antes vivía de un dataset mockeado con precios y botón "Añadir": ambos
+ * desaparecieron con los datos inventados.
+ *
+ * Si el API no responde o el catálogo está vacío, la sección NO se muestra.
+ * En la homepage eso es lo correcto: el visitante no vino a resolver un
+ * error, y el resto de la página (hero, cobertura, CTA) sigue en pie. El
+ * estado explícito de error vive en `/productos`, donde sí fue a buscar
+ * productos.
  */
-export function FeaturedProducts({
-  productos,
-}: {
-  productos: ProductoDestacado[]
-}) {
+export function FeaturedProducts() {
+  const { data, isPending, isError } = useProductos({ limit: MUESTRA })
+  const productos = data?.data ?? []
+
+  if (isError || (!isPending && productos.length === 0)) return null
+
   return (
     <section aria-labelledby="destacados-title" className="flex flex-col gap-8">
       <ScrollReveal>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex flex-col gap-2">
             <p className="font-mono text-xs tracking-[0.08em] text-muted-foreground uppercase">
-              Los más pedidos
+              Del portafolio
             </p>
             <h2
               id="destacados-title"
               className="text-2xl font-bold tracking-tight text-balance sm:text-3xl"
             >
-              Productos destacados
+              Una muestra del catálogo
             </h2>
             <p className="max-w-2xl text-sm text-muted-foreground">
-              Precios de lista pública. Crea tu cuenta para ver tus precios
-              negociados.
+              Consulta el portafolio completo por proveedor, marca o código de
+              producto.
             </p>
           </div>
           <JdhButton
@@ -79,14 +74,20 @@ export function FeaturedProducts({
       <ScrollReveal y={24}>
         <Carousel opts={{ align: "start" }}>
           <CarouselContent>
-            {productos.map((producto) => (
-              <CarouselItem
-                key={producto.id}
-                className="basis-1/2 md:basis-1/3"
-              >
-                <ProductCard producto={aCardData(producto)} variant="imagen" />
-              </CarouselItem>
-            ))}
+            {isPending
+              ? Array.from({ length: 4 }, (_, i) => (
+                  <CarouselItem key={i} className="basis-1/2 md:basis-1/3">
+                    <ProductoCardSkeleton />
+                  </CarouselItem>
+                ))
+              : productos.map((producto) => (
+                  <CarouselItem
+                    key={producto.id}
+                    className="basis-1/2 md:basis-1/3"
+                  >
+                    <ProductoCard producto={producto} />
+                  </CarouselItem>
+                ))}
           </CarouselContent>
           <CarouselPrevious className="hidden sm:-left-6 sm:inline-flex" />
           <CarouselNext className="hidden sm:-right-6 sm:inline-flex" />
