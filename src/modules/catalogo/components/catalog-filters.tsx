@@ -43,14 +43,6 @@ import type { Marca, Proveedor } from "../types"
 
 const MAX_VISIBLES = 50
 
-/**
- * El estado real de los ejes se difiere hasta después de montar (ver
- * `useMontado`). Sin eso, `next dev` lanza un error de hidratación aquí: la
- * vista vive dentro del `<Suspense>` que exige `useSearchParams`, y React
- * hidrata ese subárbol DESPUÉS del layout. Para entonces `MainNav` —que
- * comparte la misma query de marcas— ya la resolvió, así que el cliente
- * pintaba "Sin datos" donde el HTML del servidor tenía el esqueleto.
- */
 const CONSULTA_ESCRITORIO = "(min-width: 1024px)"
 
 /**
@@ -115,6 +107,12 @@ export function CatalogFilters({
   onLimpiar,
   scrollRef,
 }: CatalogFiltersProps) {
+  // El estado real de los ejes se difiere hasta después de montar. Sin eso,
+  // `next dev` lanza un error de hidratación: la vista vive dentro del
+  // `<Suspense>` que exige `useSearchParams` y React hidrata ese subárbol
+  // DESPUÉS del layout, cuando `MainNav` —que comparte la query de marcas—
+  // ya la resolvió; el cliente pintaba "Sin datos" donde el HTML del
+  // servidor tenía el esqueleto.
   const montado = useMontado()
   const esEscritorio = useEsEscritorio()
   // `null` = nadie ha tocado el disclosure, así que manda el viewport.
@@ -184,7 +182,13 @@ export function CatalogFilters({
           // de un input) creaba una barra horizontal en un panel donde no
           // hay nada que ver a los lados; los nombres largos se recortan con
           // `truncate`, que es lo que debe pasar.
-          className="max-h-[60vh] overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-2 lg:max-h-[calc(100vh-var(--catalogo-chrome-height)-7rem)] lg:[scrollbar-gutter:stable]"
+          //
+          // `contain: content` aísla este subárbol del layout de la página.
+          // Sin él, la lista interna (casi 4.000 px con los dos ejes
+          // desplegados) se filtraba al `scrollHeight` de los ancestros pese
+          // al `overflow`, y la página de productos dejaba seguir bajando
+          // ~600 px por debajo del paginador, con la pantalla ya en blanco.
+          className="max-h-[60vh] overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-2 [contain:content] lg:max-h-[calc(100vh-var(--catalogo-chrome-height)-7rem)] lg:[scrollbar-gutter:stable]"
         >
           <EjeFiltro
             grupo="proveedor"
