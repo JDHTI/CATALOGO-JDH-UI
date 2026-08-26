@@ -259,10 +259,12 @@ export function CatalogoView() {
               ) : null}
             </div>
 
+            {/* Con 0 resultados no se anuncia el rango: lo dice el estado
+                vacío de abajo, y "Mostrando 0–0 de 0" es puro ruido. */}
             <p className="text-sm text-muted-foreground" aria-live="polite">
               {productos.isPending ? (
                 "Cargando productos…"
-              ) : meta ? (
+              ) : meta && meta.total > 0 ? (
                 <>
                   Mostrando{" "}
                   <span className="font-medium text-foreground">
