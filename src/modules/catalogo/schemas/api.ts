@@ -17,6 +17,9 @@ export const proveedorDtoSchema = z.object({
   nombre: z.string(),
   // Solo lo envía GET /suppliers; embebido en producto no viaja.
   totalProductos: z.number().nullish(),
+  // Acordado con el backend, aún no publicado: nullish para que la
+  // respuesta actual (sin el campo) siga validando.
+  logoUrl: z.string().nullish(),
 })
 
 /** `GET /brands` → marcas con id propio (tabla normalizada en el backend). */
@@ -24,6 +27,7 @@ export const marcaDtoSchema = z.object({
   id: idSchema,
   nombre: z.string(),
   totalProductos: z.number().nullish(),
+  logoUrl: z.string().nullish(),
 })
 
 const categoriaDtoSchema = z.object({
@@ -81,6 +85,7 @@ export function aProveedor(dto: ProveedorDto): Proveedor {
     id: dto.id,
     nombre: dto.nombre,
     ...(dto.totalProductos != null && { totalProductos: dto.totalProductos }),
+    logoUrl: dto.logoUrl ?? null,
   }
 }
 
@@ -89,6 +94,7 @@ export function aMarca(dto: MarcaDto): Marca {
     id: dto.id,
     nombre: dto.nombre,
     ...(dto.totalProductos != null && { totalProductos: dto.totalProductos }),
+    logoUrl: dto.logoUrl ?? null,
   }
 }
 

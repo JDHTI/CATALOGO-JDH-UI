@@ -2,18 +2,26 @@
 
 import Link from "next/link"
 import type { Route } from "next"
-import { Store } from "lucide-react"
 
 import { JdhButton } from "@/components/common/jdh-button"
 import { ScrollReveal } from "@/components/motion/scroll-reveal"
 import { Stagger, StaggerItem } from "@/components/motion/stagger"
 import { formatNombreComercial, formatNumero } from "@/lib/format"
+import {
+  LogoComercial,
+  LogoComercialVacio,
+} from "@/modules/catalogo/components/logo-comercial"
 import { useProveedores } from "@/modules/catalogo/hooks/use-productos"
 
-import { SECTION_EMPTY_COPY, SectionEmpty } from "./section-empty"
+import { SECTION_EMPTY_COPY, SectionNota } from "./section-empty"
 
 /** Proveedores que caben en la grilla sin empujar la página. */
 const MAX_VISIBLES = 10
+
+const CLASES_GRILLA =
+  "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+const CLASES_CAJA =
+  "flex h-full flex-col gap-3 rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5"
 
 /**
  * Grilla de acceso por PROVEEDOR — el eje de clasificación principal del
@@ -22,10 +30,14 @@ const MAX_VISIBLES = 10
  * pero no tienen datos, así que la única clasificación real es proveedor y
  * marca.
  *
+ * Cada tarjeta reserva el espacio del LOGO del proveedor (`LogoComercial`).
+ * Hoy casi todos caen al monograma porque el backend todavía no envía
+ * `logoUrl`; cuando lo haga, la imagen entra sola en ese hueco y la grilla
+ * no cambia de forma.
+ *
  * Se muestran los de mayor catálogo (el API los devuelve alfabéticos, que en
- * cientos de proveedores no prioriza nada) con su conteo de referencias, y se
- * enlaza al listado ya filtrado. Sin datos la sección NO desaparece: mantiene
- * su encabezado y muestra un `SectionEmpty` — ver ese archivo.
+ * cientos de proveedores no prioriza nada) con su conteo de referencias.
+ * Sin datos se dibuja la MISMA grilla en fantasma — ver `section-empty.tsx`.
  */
 export function ProveedoresSection() {
   const { data, isPending, isError } = useProveedores()
@@ -36,6 +48,7 @@ export function ProveedoresSection() {
     .slice(0, MAX_VISIBLES)
 
   const hayMas = (data?.length ?? 0) > destacados.length
+  const sinContenido = !isPending && destacados.length === 0
 
   return (
     <section
@@ -67,38 +80,43 @@ export function ProveedoresSection() {
         </div>
       </ScrollReveal>
 
-      {isPending ? (
-        <div
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
-          aria-hidden="true"
-        >
-          {Array.from({ length: MAX_VISIBLES }, (_, i) => (
-            <div
-              key={i}
-              className="h-[7.5rem] animate-pulse rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-subtle)]"
+      {isPending || sinContenido || isError ? (
+        <div className="flex flex-col gap-4">
+          <div className={CLASES_GRILLA} aria-hidden="true">
+            {Array.from({ length: MAX_VISIBLES }, (_, i) => (
+              <div key={i} className={CLASES_CAJA}>
+                <LogoComercialVacio className="size-12" />
+                <span className="flex flex-col gap-2">
+                  <span className="h-3.5 w-3/4 rounded bg-[var(--color-surface-subtle)]" />
+                  <span className="h-3 w-1/2 rounded bg-[var(--color-surface-subtle)]" />
+                </span>
+              </div>
+            ))}
+          </div>
+          {!isPending ? (
+            <SectionNota
+              mensaje={
+                isError
+                  ? SECTION_EMPTY_COPY.error
+                  : SECTION_EMPTY_COPY.sinDatos("proveedores")
+              }
             />
-          ))}
+          ) : null}
         </div>
-      ) : isError ? (
-        <SectionEmpty mensaje={SECTION_EMPTY_COPY.error} />
-      ) : destacados.length === 0 ? (
-        <SectionEmpty
-          mensaje={SECTION_EMPTY_COPY.sinDatos("proveedores publicados")}
-        />
       ) : (
-        <Stagger
-          staggerDelay={0.05}
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
-        >
+        <Stagger staggerDelay={0.05} className={CLASES_GRILLA}>
           {destacados.map((proveedor) => (
             <StaggerItem key={proveedor.id} className="h-full">
               <Link
                 href={`/productos?proveedor=${proveedor.id}` as Route}
-                className="group flex h-full flex-col gap-3 rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-[var(--color-border-strong)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                className={`group transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-[var(--color-border-strong)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none ${CLASES_CAJA}`}
               >
-                <span className="flex size-11 items-center justify-center rounded-[var(--jdh-radius-md)] bg-[var(--color-surface-subtle)] text-foreground transition-transform duration-[var(--duration-fast)] group-hover:scale-110">
-                  <Store className="size-5" aria-hidden="true" />
-                </span>
+                <LogoComercial
+                  nombre={proveedor.nombre}
+                  logoUrl={proveedor.logoUrl}
+                  sizes="48px"
+                  className="size-12 transition-transform duration-[var(--duration-fast)] group-hover:scale-110"
+                />
                 <span className="flex flex-col gap-1">
                   <span className="text-sm font-medium">
                     {formatNombreComercial(proveedor.nombre)}

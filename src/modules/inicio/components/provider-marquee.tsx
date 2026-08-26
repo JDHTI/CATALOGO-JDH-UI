@@ -5,8 +5,12 @@ import { motion, useReducedMotion } from "motion/react"
 import { formatNombreComercial, formatNumero } from "@/lib/format"
 import { useProveedores } from "@/modules/catalogo/hooks/use-productos"
 
-import { iniciales } from "./iniciales"
-import { SECTION_EMPTY_COPY, SectionEmpty } from "./section-empty"
+import {
+  LogoComercial,
+  LogoComercialVacio,
+} from "@/modules/catalogo/components/logo-comercial"
+
+import { SECTION_EMPTY_COPY, SectionNota } from "./section-empty"
 
 /** Tope de proveedores en la cinta: con cientos, el bucle se vuelve eterno. */
 const MAX_EN_CINTA = 20
@@ -15,9 +19,10 @@ const MAX_EN_CINTA = 20
  * Cinta INFINITA de proveedores ("marquee") con desplazamiento FLUIDO y
  * continuo: el contenido se duplica una vez y se traduce con una animación
  * de bucle sin saltos (loop seamless), pausando con `prefers-reduced-motion`.
- * Cada proveedor = monograma + nombre y su conteo de referencias AL FRENTE
- * (en fila, no columna). Sección NEGRA full-width y SIN divisor entre el
- * título y el carrusel — ambos viven en la misma franja negra.
+ * Cada proveedor = slot de LOGO (`LogoComercial`, hoy monograma hasta que el
+ * backend envíe `logoUrl`) + nombre y su conteo de referencias AL FRENTE (en
+ * fila, no columna). Sección NEGRA full-width y SIN divisor entre el título
+ * y el carrusel — ambos viven en la misma franja negra.
  *
  * Los proveedores son REALES (`GET /suppliers`). Antes venían de un mock con
  * un `slogan` y una `descripcion` inventados por proveedor; el API solo da
@@ -28,9 +33,9 @@ const MAX_EN_CINTA = 20
  * con `useReducedMotion` se detiene en la primera copia.
  *
  * Sin proveedores la FRANJA SE MANTIENE (es el ritmo visual de la página: un
- * bloque negro full-width entre dos bloques claros) y en lugar de la cinta
- * muestra un estado vacío. Solo la animación desaparece — no se puede animar
- * un bucle de cero elementos.
+ * bloque negro full-width entre dos bloques claros) y dibuja una fila
+ * fantasma con los mismos slots de logo. Solo la animación desaparece — no
+ * se puede animar un bucle de cero elementos.
  */
 export function ProviderMarquee() {
   const reduce = useReducedMotion()
@@ -68,13 +73,37 @@ export function ProviderMarquee() {
             </h2>
           </div>
 
-          {isError ? (
-            <SectionEmpty mensaje={SECTION_EMPTY_COPY.error} onInk />
-          ) : sinCinta ? (
-            <SectionEmpty
-              mensaje={SECTION_EMPTY_COPY.sinDatos("proveedores publicados")}
-              onInk
-            />
+          {isError || sinCinta ? (
+            // Cinta fantasma: misma fila de logos + texto, sin animar (no se
+            // puede hacer un bucle de cero elementos). Mantiene la franja
+            // negra con cuerpo en vez de dejar un bloque vacío.
+            <div className="flex flex-col gap-6">
+              <div className="flex gap-6 overflow-hidden" aria-hidden="true">
+                {Array.from({ length: 6 }, (_, i) => (
+                  <div
+                    key={i}
+                    className="flex w-[22rem] shrink-0 items-center gap-4"
+                  >
+                    <LogoComercialVacio
+                      className="size-12 rounded-full"
+                      onInk
+                    />
+                    <div className="flex min-w-0 flex-1 flex-col gap-2">
+                      <span className="h-4 w-2/3 rounded bg-[var(--overlay-on-dark-08)]" />
+                      <span className="h-3 w-1/3 rounded bg-[var(--overlay-on-dark-08)]" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <SectionNota
+                mensaje={
+                  isError
+                    ? SECTION_EMPTY_COPY.error
+                    : SECTION_EMPTY_COPY.sinDatos("proveedores")
+                }
+                onInk
+              />
+            </div>
           ) : (
             <div
               className="relative overflow-hidden"
@@ -105,12 +134,15 @@ export function ProviderMarquee() {
                     key={`${proveedor.id}-${index}`}
                     className="flex w-[22rem] shrink-0 items-center gap-4"
                   >
-                    <span
-                      aria-hidden="true"
-                      className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[var(--overlay-on-dark-08)] text-base font-bold text-[var(--color-on-ink)]"
-                    >
-                      {iniciales(proveedor.nombre)}
-                    </span>
+                    {/* Mismo slot que la grilla: cuando el backend envíe
+                        `logoUrl`, la cinta muestra logos sin más cambios. */}
+                    <LogoComercial
+                      nombre={proveedor.nombre}
+                      logoUrl={proveedor.logoUrl}
+                      sizes="48px"
+                      onInk
+                      className="size-12 rounded-full"
+                    />
                     <div className="flex min-w-0 flex-col gap-0.5">
                       <h3 className="truncate text-base font-medium text-[var(--color-on-ink)]">
                         {formatNombreComercial(proveedor.nombre)}

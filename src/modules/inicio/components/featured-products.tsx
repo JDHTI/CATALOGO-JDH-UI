@@ -14,10 +14,11 @@ import {
 import { useProductos } from "@/modules/catalogo/hooks/use-productos"
 import {
   ProductoCard,
+  ProductoCardFantasma,
   ProductoCardSkeleton,
 } from "@/modules/catalogo/components/producto-card"
 
-import { SECTION_EMPTY_COPY, SectionEmpty } from "./section-empty"
+import { SECTION_EMPTY_COPY, SectionNota } from "./section-empty"
 
 /** Cuántas referencias trae el carrusel de la primera página del catálogo. */
 const MUESTRA = 8
@@ -71,12 +72,27 @@ export function FeaturedProducts() {
       </ScrollReveal>
 
       <ScrollReveal y={24}>
-        {isError ? (
-          <SectionEmpty mensaje={SECTION_EMPTY_COPY.error} />
-        ) : vacio ? (
-          <SectionEmpty
-            mensaje={SECTION_EMPTY_COPY.sinDatos("productos publicados")}
-          />
+        {isError || vacio ? (
+          // Fila fantasma con la silueta real de las cards (incluido el
+          // marco de la imagen), para que la sección tenga cuerpo antes de
+          // que existan productos.
+          <div className="flex flex-col gap-4">
+            <div
+              className="grid grid-cols-2 gap-4 md:grid-cols-3"
+              aria-hidden="true"
+            >
+              {Array.from({ length: 3 }, (_, i) => (
+                <ProductoCardFantasma key={i} />
+              ))}
+            </div>
+            <SectionNota
+              mensaje={
+                isError
+                  ? SECTION_EMPTY_COPY.error
+                  : SECTION_EMPTY_COPY.sinDatos("productos")
+              }
+            />
+          </div>
         ) : (
           <Carousel opts={{ align: "start" }}>
             <CarouselContent>

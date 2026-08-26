@@ -1,83 +1,51 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
 import type { Route } from "next"
 
 import { ScrollReveal } from "@/components/motion/scroll-reveal"
 import { Stagger, StaggerItem } from "@/components/motion/stagger"
 import { formatNombreComercial, formatNumero } from "@/lib/format"
+import {
+  LogoComercial,
+  LogoComercialVacio,
+} from "@/modules/catalogo/components/logo-comercial"
 import { useMarcas } from "@/modules/catalogo/hooks/use-productos"
 
-import { SECTION_EMPTY_COPY, SectionEmpty } from "./section-empty"
+import { SECTION_EMPTY_COPY, SectionNota } from "./section-empty"
 
 /** Marcas que caben en la grilla (5 columnas × 6 filas en desktop). */
 const MAX_VISIBLES = 30
+/** Celdas de la grilla fantasma: una fila y media, sin inflar la página. */
+const FANTASMAS = 10
 
 /**
- * Logos disponibles en `public/photos/marcas/`. Es un catálogo de ASSETS, no
- * de datos: si el nombre real que llega del API normaliza a uno de estos
- * slugs, la celda muestra el logo; si no, muestra el nombre en texto. Así la
- * sección nunca depende de que el asset exista.
+ * Rejilla hairline SIN el truco de `gap-px` sobre un fondo gris: con ese
+ * truco, cuando la última fila queda incompleta (y con 2/3/4/5 columnas
+ * responsivas eso pasa casi siempre) el fondo del contenedor asoma como un
+ * bloque gris. Aquí cada celda dibuja sus propias líneas derecha e inferior
+ * con `box-shadow`, y el `overflow-hidden` del contenedor recorta las del
+ * borde. Donde no hay celda, no hay línea.
  */
-const LOGOS_DISPONIBLES = new Set([
-  "aguila-roja",
-  "alpina",
-  "arcor",
-  "bimbo",
-  "campbells",
-  "coca-cola",
-  "colgate",
-  "corona",
-  "crem-helado",
-  "danone",
-  "delmonte",
-  "doritos",
-  "heinz",
-  "lactalis",
-  "lays",
-  "lipton",
-  "maggi",
-  "nestle",
-  "noel",
-  "nutella",
-  "oetker",
-  "oreo",
-  "pepsi",
-  "pietran",
-  "pringles",
-  "quaker",
-  "rica",
-  "tosh",
-  "yoplait",
-  "zenu",
-])
+const CLASES_GRILLA =
+  "grid grid-cols-2 overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+const CLASES_CELDA =
+  "flex h-full min-h-[8.5rem] flex-col items-center justify-center gap-2 px-4 py-6 text-center shadow-[1px_0_0_0_var(--color-border),0_1px_0_0_var(--color-border)]"
 
 /**
- * Normaliza el nombre de una marca a slug de archivo: minúsculas, sin
- * acentos, sin sufijos societarios y con guiones. "Alpina S.A." → "alpina".
- */
-function logoDeMarca(nombre: string): string | null {
-  const slug = nombre
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase()
-    .replace(/\b(s\.?a\.?s?|ltda|inc|sa)\b/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-  return LOGOS_DISPONIBLES.has(slug) ? `/photos/marcas/${slug}.png` : null
-}
-
-/**
- * Banner de MARCAS del catálogo: grilla con hairline-grid (gap-px sobre
- * borde) donde cada celda enlaza al listado filtrado por esa marca. Las
- * marcas son el SEGUNDO eje de clasificación real y son distintas de los
- * proveedores: un proveedor distribuye varias marcas.
+ * Grilla de MARCAS del catálogo, con hairline-grid (gap-px sobre borde):
+ * cada celda enlaza al listado filtrado por esa marca. Las marcas son el
+ * SEGUNDO eje de clasificación real y son distintas de los proveedores: un
+ * proveedor distribuye varias marcas.
  *
- * Los datos vienen de `GET /brands`. Antes eran una lista estática de 30
- * marcas del sector que no correspondía a nada consultable. Sin datos
- * mantiene su encabezado con un `SectionEmpty`; solo desaparece del todo si
- * el backend no publica el endpoint (404), porque entonces el eje marca aún
+ * La celda reserva el espacio del LOGO y lo resuelve con `LogoComercial`:
+ * primero el `logoUrl` del backend (pendiente de publicar), luego el asset
+ * local de `public/photos/marcas/` si el nombre casa, y si no el monograma.
+ * El hueco es del mismo tamaño en los tres casos, así que la grilla ya está
+ * lista para recibir los logos sin rehacerse.
+ *
+ * Sin datos se dibuja la misma grilla en fantasma; solo desaparece del todo
+ * si el backend no publica `/brands` (404), porque entonces el eje marca aún
  * no existe como concepto y anunciarlo confundiría.
  */
 export function BrandsSection() {
@@ -90,7 +58,7 @@ export function BrandsSection() {
 
   if (noImplementado) return null
 
-  const vacio = !isPending && marcas.length === 0
+  const sinContenido = !isPending && marcas.length === 0
 
   return (
     <section aria-labelledby="marcas-title" className="flex flex-col gap-8">
@@ -108,62 +76,51 @@ export function BrandsSection() {
         </div>
       </ScrollReveal>
 
-      {isPending ? (
-        <div
-          className="grid grid-cols-2 gap-px overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-border)] sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
-          aria-hidden="true"
-        >
-          {Array.from({ length: 10 }, (_, i) => (
-            <div
-              key={i}
-              className="h-[6.5rem] animate-pulse bg-[var(--color-surface-subtle)]"
+      {isPending || sinContenido || isError ? (
+        <div className="flex flex-col gap-4">
+          <div className={CLASES_GRILLA} aria-hidden="true">
+            {Array.from({ length: FANTASMAS }, (_, i) => (
+              <div key={i} className={CLASES_CELDA}>
+                <LogoComercialVacio className="size-12" />
+                <span className="h-3 w-16 rounded bg-[var(--color-surface-subtle)]" />
+              </div>
+            ))}
+          </div>
+          {!isPending ? (
+            <SectionNota
+              mensaje={
+                isError
+                  ? SECTION_EMPTY_COPY.error
+                  : SECTION_EMPTY_COPY.sinDatos("logos de marca")
+              }
             />
-          ))}
+          ) : null}
         </div>
-      ) : isError ? (
-        <SectionEmpty mensaje={SECTION_EMPTY_COPY.error} />
-      ) : vacio ? (
-        <SectionEmpty
-          mensaje={SECTION_EMPTY_COPY.sinDatos("marcas publicadas")}
-        />
       ) : (
-        <Stagger
-          staggerDelay={0.03}
-          className="grid grid-cols-2 gap-px overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-border)] sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
-        >
-          {marcas.map((marca) => {
-            // El logo se resuelve con el nombre CRUDO (así lo normaliza
-            // `logoDeMarca`); lo que se muestra va formateado.
-            const logo = logoDeMarca(marca.nombre)
-            const nombre = formatNombreComercial(marca.nombre)
-            return (
-              <StaggerItem key={marca.id} className="h-full">
-                <Link
-                  href={`/productos?marca=${marca.id}` as Route}
-                  className="flex h-full min-h-[6.5rem] flex-col items-center justify-center gap-2 bg-[var(--color-surface)] px-4 py-6 text-center transition-colors hover:bg-[var(--color-surface-subtle)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                >
-                  {logo ? (
-                    <Image
-                      src={logo}
-                      alt={nombre}
-                      width={96}
-                      height={48}
-                      className="h-10 w-auto max-w-full object-contain"
-                    />
-                  ) : (
-                    <span className="line-clamp-2 text-sm font-medium">
-                      {nombre}
-                    </span>
-                  )}
-                  {marca.totalProductos != null ? (
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                      {formatNumero(marca.totalProductos)}
-                    </span>
-                  ) : null}
-                </Link>
-              </StaggerItem>
-            )
-          })}
+        <Stagger staggerDelay={0.03} className={CLASES_GRILLA}>
+          {marcas.map((marca) => (
+            <StaggerItem key={marca.id} className="h-full">
+              <Link
+                href={`/productos?marca=${marca.id}` as Route}
+                className={`transition-colors hover:bg-[var(--color-surface-subtle)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${CLASES_CELDA}`}
+              >
+                <LogoComercial
+                  nombre={marca.nombre}
+                  logoUrl={marca.logoUrl}
+                  sizes="64px"
+                  className="size-14"
+                />
+                <span className="line-clamp-2 text-xs font-medium">
+                  {formatNombreComercial(marca.nombre)}
+                </span>
+                {marca.totalProductos != null ? (
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {formatNumero(marca.totalProductos)}
+                  </span>
+                ) : null}
+              </Link>
+            </StaggerItem>
+          ))}
         </Stagger>
       )}
     </section>

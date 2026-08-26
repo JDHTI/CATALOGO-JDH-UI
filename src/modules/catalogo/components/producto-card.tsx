@@ -1,6 +1,6 @@
 import Link from "next/link"
 import type { Route } from "next"
-import { Store } from "lucide-react"
+import { Package, Store } from "lucide-react"
 
 import { formatNombreComercial } from "@/lib/format"
 
@@ -59,6 +59,35 @@ export function ProductoCard({ producto }: { producto: Producto }) {
         </div>
       </Link>
     </article>
+  )
+}
+
+/**
+ * Card FANTASMA: la misma silueta, sin animación de carga, para cuando el
+ * catálogo todavía no tiene productos. Un esqueleto que late diría "esto
+ * está cargando" y no es el caso — aquí no hay nada que esperar, solo se
+ * está mostrando la forma que tendrá la sección.
+ */
+export function ProductoCardFantasma() {
+  return (
+    <div
+      aria-hidden="true"
+      className="h-full overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]"
+    >
+      <div className="flex aspect-[4/3] w-full items-center justify-center bg-[var(--color-surface-subtle)]">
+        <Package
+          className="size-10 text-muted-foreground opacity-30"
+          strokeWidth={1.25}
+          aria-hidden="true"
+        />
+      </div>
+      <div className="flex flex-col gap-2 p-4">
+        <div className="h-3 w-16 rounded bg-[var(--color-surface-subtle)]" />
+        <div className="h-4 w-4/5 rounded bg-[var(--color-surface-subtle)]" />
+        <div className="h-3 w-24 rounded bg-[var(--color-surface-subtle)]" />
+        <div className="mt-3 h-3 w-28 rounded bg-[var(--color-surface-subtle)]" />
+      </div>
+    </div>
   )
 }
 

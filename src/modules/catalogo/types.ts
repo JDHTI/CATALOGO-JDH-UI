@@ -17,6 +17,13 @@ export interface Proveedor {
    *  productos activos del proveedor. `/suppliers` no acepta parámetros,
    *  así que este conteo no se acota por nada. */
   totalProductos?: number
+  /**
+   * Logo del proveedor en el bucket. Campo ACORDADO pero todavía no
+   * publicado por el backend: mientras llegue `null`/ausente, la UI pinta el
+   * monograma de `LogoComercial`. Cuando el backend empiece a enviarlo, la
+   * imagen aparece sola — no hay que tocar componentes.
+   */
+  logoUrl?: string | null
 }
 
 /**
@@ -37,6 +44,8 @@ export interface Marca {
    * lista siempre dicen lo mismo.
    */
   totalProductos?: number
+  /** Logo de la marca en el bucket — mismo trato que `Proveedor.logoUrl`. */
+  logoUrl?: string | null
 }
 
 /** Categoría / subcategoría (existen en el esquema, aún sin datos). */
