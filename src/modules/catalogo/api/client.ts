@@ -23,24 +23,18 @@ import {
  *
  * Cada respuesta se valida con zod y se traduce a dominio en `schemas/api.ts`;
  * los componentes nunca ven el DTO crudo.
+ *
+ * NO hay datos de relleno: esta es la única fuente de productos de la UI. Si
+ * el backend no responde, las vistas muestran su estado de error o se
+ * ocultan — nunca productos inventados.
  */
 
-import {
-  listarProductosMock,
-  listarProveedoresMock,
-  obtenerProductoMock,
-} from "../mock/productos.mock"
 import { CatalogoApiError } from "./errors"
 
 export { CatalogoApiError }
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1"
-
-/** Switch mock/API real. Se evalúa en build (NEXT_PUBLIC_*): con "1" el
- *  catálogo funciona completo sin backend; se apaga cuando jdh-catalogo-api
- *  publique los endpoints reales. */
-const USAR_MOCK = process.env.NEXT_PUBLIC_CATALOGO_MOCK === "1"
 
 async function apiGet<Schema extends z.ZodType>(
   path: `/${string}`,
@@ -76,7 +70,6 @@ async function apiGet<Schema extends z.ZodType>(
 export async function listarProductos(
   params: ProductosQueryParams = {}
 ): Promise<Paginado<Producto>> {
-  if (USAR_MOCK) return listarProductosMock(params)
   const dto = await apiGet("/products", paginaProductosDtoSchema, {
     page: params.page,
     limit: params.limit,
@@ -88,7 +81,6 @@ export async function listarProductos(
 
 /** `GET /products/:id` — detalle de un producto. */
 export async function obtenerProducto(id: string): Promise<Producto> {
-  if (USAR_MOCK) return obtenerProductoMock(id)
   const dto = await apiGet(
     `/products/${encodeURIComponent(id)}`,
     productoDtoSchema
@@ -98,7 +90,6 @@ export async function obtenerProducto(id: string): Promise<Producto> {
 
 /** `GET /suppliers` — lista completa de proveedores (para el filtro). */
 export async function listarProveedores(): Promise<Proveedor[]> {
-  if (USAR_MOCK) return listarProveedoresMock()
   const dto = await apiGet("/suppliers", proveedoresDtoSchema)
   return dto.map(aProveedor)
 }
