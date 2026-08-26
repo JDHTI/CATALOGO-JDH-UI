@@ -5,7 +5,7 @@ import type { Route } from "next"
 
 import { ScrollReveal } from "@/components/motion/scroll-reveal"
 import { Stagger, StaggerItem } from "@/components/motion/stagger"
-import { formatNombreComercial, formatNumero } from "@/lib/format"
+import { formatNombreComercial } from "@/lib/format"
 import {
   LogoComercial,
   LogoComercialVacio,
@@ -19,14 +19,6 @@ const MAX_VISIBLES = 30
 /** Celdas de la grilla fantasma: una fila y media, sin inflar la página. */
 const FANTASMAS = 10
 
-/**
- * Rejilla hairline SIN el truco de `gap-px` sobre un fondo gris: con ese
- * truco, cuando la última fila queda incompleta (y con 2/3/4/5 columnas
- * responsivas eso pasa casi siempre) el fondo del contenedor asoma como un
- * bloque gris. Aquí cada celda dibuja sus propias líneas derecha e inferior
- * con `box-shadow`, y el `overflow-hidden` del contenedor recorta las del
- * borde. Donde no hay celda, no hay línea.
- */
 const CLASES_GRILLA =
   "grid grid-cols-2 overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
 const CLASES_CELDA =
@@ -42,6 +34,10 @@ const CLASES_CELDA =
  * el `logoUrl` del backend, y si no hay, el monograma. El hueco mide igual
  * en ambos casos, así que la grilla ya está lista para recibir los logos sin
  * rehacerse.
+ *
+ * La celda muestra SOLO logo y nombre: el conteo de productos por marca se
+ * retiró de esta grilla a propósito. Es una vitrina de marcas, no un cuadro
+ * de inventario, y el número competía con el logo por la atención.
  *
  * Sin datos se dibuja la misma grilla en fantasma; solo desaparece del todo
  * si el backend no publica `/brands` (404), porque entonces el eje marca aún
@@ -112,11 +108,6 @@ export function BrandsSection() {
                 <span className="line-clamp-2 text-xs font-medium">
                   {formatNombreComercial(marca.nombre)}
                 </span>
-                {marca.totalProductos != null ? (
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    {formatNumero(marca.totalProductos)}
-                  </span>
-                ) : null}
               </Link>
             </StaggerItem>
           ))}
