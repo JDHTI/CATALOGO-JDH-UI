@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useSyncExternalStore } from "react"
 import { RotateCcw, Search, SlidersHorizontal, Store, Tags } from "lucide-react"
 
 import { JdhButton } from "@/components/common/jdh-button"
@@ -27,6 +27,35 @@ import type { Marca, Proveedor } from "../types"
  */
 
 const MAX_VISIBLES = 50
+
+/**
+ * Difiere el estado real de los ejes hasta después de montar.
+ *
+ * Sin esto, `next dev` lanza un error de hidratación en `/productos`: la
+ * vista vive dentro del `<Suspense>` que exige `useSearchParams`, y React
+ * hidrata ese subárbol DESPUÉS del layout. Para entonces `MainNav` —que
+ * comparte la misma query de marcas— ya la resolvió, así que el cliente
+ * pintaba "Sin datos" donde el HTML del servidor tenía el esqueleto.
+ *
+ * Forzando el estado de carga en el primer render del cliente, servidor y
+ * cliente coinciden siempre. El coste es un fotograma extra de esqueleto;
+ * en producción ni se nota, porque la ruta se sirve prerenderizada con el
+ * fallback del propio `Suspense`.
+ */
+const sinSuscripcion = () => () => {}
+
+function useMontado(): boolean {
+  // `useSyncExternalStore` es el mecanismo que React ofrece justo para esto:
+  // devuelve el snapshot del servidor (false) durante SSR y la hidratación, y
+  // el del cliente (true) después. Un `useEffect` con `setState` haría lo
+  // mismo, pero la regla `react-hooks/set-state-in-effect` lo prohíbe con
+  // razón (renders en cascada).
+  return useSyncExternalStore(
+    sinSuscripcion,
+    () => true,
+    () => false
+  )
+}
 
 export interface CatalogFiltersProps {
   proveedores: Proveedor[] | undefined
@@ -69,6 +98,7 @@ export function CatalogFilters({
   onLimpiar,
   scrollRef,
 }: CatalogFiltersProps) {
+  const montado = useMontado()
   const activos = (proveedorId ? 1 : 0) + (marcaId ? 1 : 0)
 
   return (
@@ -102,14 +132,16 @@ export function CatalogFilters({
             etiquetaTodos="Todos los proveedores"
             placeholderBusqueda="Buscar proveedor…"
             items={proveedores}
-            isPending={proveedoresPending}
-            isError={proveedoresError}
+            isPending={!montado || proveedoresPending}
+            isError={montado && proveedoresError}
             onRetry={onRetryProveedores}
             seleccionado={proveedorId}
             onSeleccionar={onProveedorChange}
           />
 
-          {marcasNoImplementado ? null : (
+          {/* El 404 de `/brands` solo se conoce en cliente: ocultar el eje
+              antes de montar cambiaría la estructura respecto al SSR. */}
+          {montado && marcasNoImplementado ? null : (
             <EjeFiltro
               grupo="marca"
               icono={Tags}
@@ -117,8 +149,8 @@ export function CatalogFilters({
               etiquetaTodos="Todas las marcas"
               placeholderBusqueda="Buscar marca…"
               items={marcas}
-              isPending={marcasPending}
-              isError={marcasError}
+              isPending={!montado || marcasPending}
+              isError={montado && marcasError}
               onRetry={onRetryMarcas}
               seleccionado={marcaId}
               onSeleccionar={onMarcaChange}
