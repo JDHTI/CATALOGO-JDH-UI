@@ -1,7 +1,8 @@
+import { Suspense } from "react"
 import type { Metadata } from "next"
 
 import { CatalogoPage } from "@/components/layout/catalogo-page"
-import { CatalogoView } from "@/modules/catalogo"
+import { CatalogoView, CatalogoViewFallback } from "@/modules/catalogo"
 
 export const metadata: Metadata = {
   title: "Productos",
@@ -10,14 +11,17 @@ export const metadata: Metadata = {
 }
 
 /**
- * Vacía a propósito mientras se rediseña el listado (ver `CatalogoView`):
- * sin grid, sin llamadas a `getPriceContext()`/`listarProductos()` — esas
- * volverán cuando exista la vista real.
+ * Ruta delgada: el listado real vive en el módulo (`CatalogoView`, conectado
+ * a jdh-catalogo-api). El Suspense es obligatorio: la vista lee
+ * `useSearchParams` (q/proveedor/pagina en la URL) y sin límite el prerender
+ * estático de la ruta falla en build.
  */
 export default function ProductosPage() {
   return (
     <CatalogoPage>
-      <CatalogoView />
+      <Suspense fallback={<CatalogoViewFallback />}>
+        <CatalogoView />
+      </Suspense>
     </CatalogoPage>
   )
 }

@@ -30,6 +30,24 @@ const DEBOUNCE_MS = 400
  * el mismo mecanismo. La data llega vía TanStack Query con `keepPreviousData`
  * (grid atenuado mientras carga la página siguiente, sin flash de skeleton).
  */
+/**
+ * Fallback de Suspense para la ruta: `CatalogoView` usa `useSearchParams`,
+ * así que el prerender estático de `/productos` sirve esto hasta hidratar.
+ * Misma silueta que la carga inicial del grid para que no haya salto.
+ */
+export function CatalogoViewFallback() {
+  return (
+    <div
+      className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4"
+      aria-hidden="true"
+    >
+      {Array.from({ length: 8 }, (_, i) => (
+        <ProductoCardSkeleton key={i} />
+      ))}
+    </div>
+  )
+}
+
 export function CatalogoView() {
   const router = useRouter()
   const pathname = usePathname()
