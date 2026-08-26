@@ -122,8 +122,13 @@ export function CatalogFilters({
               onRetry={onRetryMarcas}
               seleccionado={marcaId}
               onSeleccionar={onMarcaChange}
+              // Con proveedor elegido, el API acota tanto la lista como el
+              // conteo de cada marca; el copy lo dice para que el número no
+              // se lea como el total del catálogo.
               nota={
-                proveedorId ? "Marcas del proveedor seleccionado." : undefined
+                proveedorId
+                  ? "Marcas y conteos del proveedor seleccionado."
+                  : undefined
               }
             />
           )}

@@ -14,7 +14,8 @@ export interface Proveedor {
   id: string
   nombre: string
   /** Solo en `GET /suppliers` (no embebido en producto) — conteo de
-   *  productos activos, para el panel de filtros. */
+   *  productos activos del proveedor. `/suppliers` no acepta parámetros,
+   *  así que este conteo no se acota por nada. */
   totalProductos?: number
 }
 
@@ -27,7 +28,14 @@ export interface Proveedor {
 export interface Marca {
   id: string
   nombre: string
-  /** Conteo de productos activos, para el panel de filtros. */
+  /**
+   * Conteo de productos activos, para el panel de filtros. SE ACOTA al
+   * `supplierId` de la consulta: pidiendo `/brands?supplierId=5`, el número
+   * es de productos de esa marca EN ESE PROVEEDOR, no global (verificado en
+   * el backend, que usa el mismo filtro para la lista y para el conteo). Por
+   * eso puede mostrarse junto a la marca sin condicionarlo: el número y la
+   * lista siempre dicen lo mismo.
+   */
   totalProductos?: number
 }
 
