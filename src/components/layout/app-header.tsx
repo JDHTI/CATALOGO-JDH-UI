@@ -51,7 +51,7 @@ export function AppHeader() {
         <Link
           href="/"
           aria-label="Ir al inicio"
-          className="flex shrink-0 items-center justify-self-start"
+          className="flex min-w-0 shrink-0 items-center justify-self-start"
         >
           {/* Lockup completo: isotipo (mark) + wordmark compuestos en render
               (logo.tsx, variant "lockup") — cada parte se escala de su propio
@@ -61,10 +61,16 @@ export function AppHeader() {
         </Link>
 
         {/* `order-last` lo baja a la segunda fila en móvil (el grid coloca
-            logo y acciones primero); en `lg` vuelve a su sitio central. */}
-        <ProductSearchBar className="order-last col-span-2 w-full lg:order-none lg:col-span-1 lg:max-w-2xl lg:justify-self-center" />
+            logo y acciones primero); en `lg` vuelve a su sitio central.
+            `min-w-0`: por defecto un hijo de grid tiene `min-width: auto`
+            (se ancla al min-content del contenido), así que el navegador
+            nunca lo encoge por debajo de eso — Chrome respeta ese mínimo más
+            literalmente que otros motores y, al crecer el clúster de
+            acciones con el `ThemeSwitcher`, el buscador se quedaba con un
+            ancho mayor al de su columna y solapaba lo de al lado. */}
+        <ProductSearchBar className="order-last col-span-2 w-full min-w-0 lg:order-none lg:col-span-1 lg:max-w-2xl lg:min-w-0 lg:justify-self-center" />
 
-        <div className="flex shrink-0 items-center gap-1 justify-self-end">
+        <div className="flex min-w-0 shrink-0 items-center gap-1 justify-self-end">
           <IconNavLink href="/favoritos" icon={Heart} label="Favoritos" />
           <IconNavLink
             href="/carrito"
