@@ -29,8 +29,11 @@ export const footerConfig: FooterConfig = {
       title: "Catálogo",
       links: [
         { label: "Todos los productos", href: "/productos" },
-        { label: "Categorías", href: "/categorias" },
-        { label: "Marcas", href: "/marcas" },
+        // Aquí había "Categorías" (→ /categorias) y "Marcas" (→ /marcas):
+        // ambas rutas eran 404, y el catálogo real no se clasifica por
+        // categorías (el esquema las tiene, pero sin datos). Los dos ejes
+        // reales, proveedor y marca, se filtran DENTRO del listado y no
+        // tienen página propia; cuando la tengan, vuelven aquí.
       ],
     },
     {
