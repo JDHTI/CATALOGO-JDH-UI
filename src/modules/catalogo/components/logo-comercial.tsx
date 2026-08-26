@@ -22,6 +22,13 @@ import { cn } from "@/lib/utils"
  *
  * El ESPACIO está siempre reservado (mismo cuadro en ambos casos), así que la
  * grilla no salta cuando los logos empiecen a existir.
+ *
+ * Sobre formatos, verificado contra el bucket: un `logoUrl` que termina en
+ * `.svg` lo sirve Next SIN optimizar (marca `unoptimized` solo, por la
+ * extensión) y el navegador lo pide directo al bucket; los raster (png, jpg,
+ * webp) sí pasan por `/_next/image`. Los dos casos funcionan, así que NO hace
+ * falta `dangerouslyAllowSVG` — activarlo solo añadiría superficie de riesgo
+ * sin ganar nada.
  */
 export function LogoComercial({
   nombre,
