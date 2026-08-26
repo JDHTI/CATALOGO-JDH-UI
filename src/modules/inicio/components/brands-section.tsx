@@ -39,10 +39,9 @@ const CLASES_CELDA =
  * proveedor distribuye varias marcas.
  *
  * La celda reserva el espacio del LOGO y lo resuelve con `LogoComercial`:
- * primero el `logoUrl` del backend (pendiente de publicar), luego el asset
- * local de `public/photos/marcas/` si el nombre casa, y si no el monograma.
- * El hueco es del mismo tamaño en los tres casos, así que la grilla ya está
- * lista para recibir los logos sin rehacerse.
+ * el `logoUrl` del backend, y si no hay, el monograma. El hueco mide igual
+ * en ambos casos, así que la grilla ya está lista para recibir los logos sin
+ * rehacerse.
  *
  * Sin datos se dibuja la misma grilla en fantasma; solo desaparece del todo
  * si el backend no publica `/brands` (404), porque entonces el eje marca aún

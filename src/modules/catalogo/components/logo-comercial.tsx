@@ -6,100 +6,23 @@ import { cn } from "@/lib/utils"
 /**
  * Slot de LOGO de una entidad comercial (marca o proveedor).
  *
- * Es el punto único donde se resuelve la imagen, con tres niveles de
- * respaldo en orden:
+ * Es el punto único donde se resuelve la imagen, y solo tiene dos estados:
  *
- *   1. `logoUrl` — el logo que el backend servirá desde el bucket. Aún no
- *      viaja en el contrato; en cuanto empiece a llegar, aparece solo aquí y
- *      en todas las superficies que usan este componente, sin tocar nada más.
- *   2. Asset local por slug (`public/photos/marcas/…`), para las marcas del
- *      sector cuyo logo ya tenemos en el repo.
- *   3. Monograma con las iniciales del nombre — nunca un hueco vacío.
+ *   1. `logoUrl` — el logo servido desde el bucket. TODOS los logos, de
+ *      marca y de proveedor, llegan por aquí: son un dato editorial que se
+ *      sube aparte del sync de productos.
+ *   2. Monograma con las iniciales del nombre — nunca un hueco vacío.
  *
- * El ESPACIO está siempre reservado (mismo cuadro en los tres casos), así
- * que la grilla no salta cuando los logos empiecen a existir: es lo que
- * permite bindear la imagen después sin rehacer el layout.
+ * Deliberadamente NO hay respaldo con logos guardados en el repo. Lo hubo, y
+ * la medición contra el catálogo real mostró por qué era mala idea: de 639
+ * marcas solo casaban 13 por nombre, y la de mayor volumen (CORONA, 1.198
+ * productos de menaje) casaba con un asset que era la corona dorada de la
+ * cerveza — el logo equivocado en el 13% del catálogo. Emparejar logos por
+ * parecido de nombre acierta poco y falla caro.
+ *
+ * El ESPACIO está siempre reservado (mismo cuadro en ambos casos), así que la
+ * grilla no salta cuando los logos empiecen a existir.
  */
-
-/**
- * Logos que ya viven en `public/photos/marcas/`. Es un catálogo de ASSETS,
- * no de datos: si el nombre real normaliza a uno de estos slugs se usa,
- * y si no, se cae al monograma.
- */
-const LOGOS_LOCALES = new Set([
-  "aguila-roja",
-  "alpina",
-  "arcor",
-  "bimbo",
-  "campbells",
-  "coca-cola",
-  "colgate",
-  "corona",
-  "crem-helado",
-  "danone",
-  "delmonte",
-  "doritos",
-  "heinz",
-  "lactalis",
-  "lays",
-  "lipton",
-  "maggi",
-  "nestle",
-  "noel",
-  "nutella",
-  "oetker",
-  "oreo",
-  "pepsi",
-  "pietran",
-  "pringles",
-  "quaker",
-  "rica",
-  "tosh",
-  "yoplait",
-  "zenu",
-])
-
-/**
- * Normaliza un nombre comercial a slug de archivo: minúsculas, sin acentos,
- * sin forma jurídica y con guiones. "ALPINA S.A." → "alpina".
- */
-export function slugComercial(nombre: string): string {
-  return nombre
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase()
-    .replace(/\b(s\.?a\.?s?|ltda|inc|sa)\b/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-}
-
-/** Asset local para ese nombre, si existe. */
-export function logoLocal(nombre: string): string | null {
-  const slug = slugComercial(nombre)
-  return LOGOS_LOCALES.has(slug) ? `/photos/marcas/${slug}.png` : null
-}
-
-/** Iniciales (máx. 2) para el monograma. */
-export function iniciales(nombre: string): string {
-  const palabras = nombre
-    .split(/\s+/)
-    .filter((p) => /\p{L}|\d/u.test(p))
-    // "S.A." y compañía no describen a nadie: fuera del monograma.
-    .filter((p) => !/^(s\.?a\.?s?\.?|ltda\.?|inc\.?|cia\.?)$/i.test(p))
-  const fuente = palabras.length > 0 ? palabras : [nombre.trim() || "?"]
-
-  // Una marca ya corta ES su propio monograma: "3M" se muestra entero, no
-  // reducido a "3".
-  if (fuente.length === 1 && fuente[0]!.length <= 3) {
-    return fuente[0]!.toUpperCase()
-  }
-
-  return fuente
-    .slice(0, 2)
-    .map((p) => p[0]!.toUpperCase())
-    .join("")
-}
-
 export function LogoComercial({
   nombre,
   logoUrl,
@@ -114,7 +37,6 @@ export function LogoComercial({
   sizes?: string
   onInk?: boolean
 }) {
-  const fuente = logoUrl ?? logoLocal(nombre)
   const etiqueta = formatNombreComercial(nombre)
 
   return (
@@ -127,9 +49,9 @@ export function LogoComercial({
         className
       )}
     >
-      {fuente ? (
+      {logoUrl ? (
         <Image
-          src={fuente}
+          src={logoUrl}
           alt={etiqueta}
           fill
           sizes={sizes}
@@ -146,6 +68,27 @@ export function LogoComercial({
       )}
     </div>
   )
+}
+
+/** Iniciales (máx. 2) para el monograma. */
+export function iniciales(nombre: string): string {
+  const palabras = nombre
+    .split(/\s+/)
+    .filter((p) => /\p{L}|\d/u.test(p))
+    // "S.A." y compañía no describen a nadie: fuera del monograma.
+    .filter((p) => !/^(s\.?a\.?s?\.?|ltda\.?|inc\.?|cia\.?|e\.?u\.?)$/i.test(p))
+  const fuente = palabras.length > 0 ? palabras : [nombre.trim() || "?"]
+
+  // Una marca ya corta ES su propio monograma: "3M" se muestra entero, no
+  // reducido a "3".
+  if (fuente.length === 1 && fuente[0]!.length <= 3) {
+    return fuente[0]!.toUpperCase()
+  }
+
+  return fuente
+    .slice(0, 2)
+    .map((p) => p[0]!.toUpperCase())
+    .join("")
 }
 
 /**
