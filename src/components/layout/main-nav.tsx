@@ -59,8 +59,12 @@ export function MainNav({ className }: { className?: string }) {
       >
         <MegaMenu />
 
-        {/* Marcas con más referencias — vacío mientras carga o si falla. */}
-        <div className="flex min-w-0 items-center gap-1 justify-self-center">
+        {/* Marcas con más referencias — vacío mientras carga o si falla.
+            Oculto por debajo de `lg`: entre "Menú" y "Todo el catálogo" no
+            queda ancho para seis nombres de marca, y al no encoger se
+            montaban unos sobre otros. En pantallas estrechas el acceso al
+            catálogo va por el mega menú y la barra inferior. */}
+        <div className="hidden min-w-0 items-center gap-1 justify-self-center lg:flex">
           {destacados.map((marca) => (
             <Link
               key={marca.id}
