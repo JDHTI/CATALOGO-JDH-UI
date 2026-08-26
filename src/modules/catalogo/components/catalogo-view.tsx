@@ -23,14 +23,6 @@ const PAGE_SIZE = 12
 const DEBOUNCE_MS = 400
 
 /**
- * Listado de productos REALES del API (jdh-catalogo-api) — referencia visual
- * sin venta ni precio. Búsqueda, filtro por proveedor y página viven en la
- * URL (`?q=&proveedor=&pagina=`): el estado es compartible, el botón atrás
- * funciona, y el buscador del header (que navega a `/productos?q=…`) cae en
- * el mismo mecanismo. La data llega vía TanStack Query con `keepPreviousData`
- * (grid atenuado mientras carga la página siguiente, sin flash de skeleton).
- */
-/**
  * Fallback de Suspense para la ruta: `CatalogoView` usa `useSearchParams`,
  * así que el prerender estático de `/productos` sirve esto hasta hidratar.
  * Misma silueta que la carga inicial del grid para que no haya salto.
@@ -48,6 +40,15 @@ export function CatalogoViewFallback() {
   )
 }
 
+/**
+ * Listado de productos REALES del API (jdh-catalogo-api) — referencia visual
+ * sin venta ni precio. Búsqueda, los dos ejes de clasificación y la página
+ * viven en la URL (`?q=&proveedor=&marca=&pagina=`): el estado es
+ * compartible, el botón atrás funciona, y el buscador del header (que navega
+ * a `/productos?q=…`) cae en el mismo mecanismo. La data llega vía TanStack
+ * Query con `keepPreviousData` (grid atenuado mientras carga la página
+ * siguiente, sin flash de skeleton).
+ */
 export function CatalogoView() {
   const router = useRouter()
   const pathname = usePathname()

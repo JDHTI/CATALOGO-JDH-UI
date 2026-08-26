@@ -3,10 +3,7 @@
 import * as React from "react"
 import Autoplay from "embla-carousel-autoplay"
 import Image from "next/image"
-import Link from "next/link"
-import type { Route } from "next"
 
-import { JdhButton } from "@/components/common/jdh-button"
 import {
   Carousel,
   type CarouselApi,
@@ -20,58 +17,52 @@ const BANNERS = [
     id: "aceites",
     titulo: "Aceites y grasas",
     texto: "Cocina institucional con rendimiento constante.",
-    cta: "Explorar",
-    href: "/productos?categoria=aceites-y-grasas",
     imagen: "/photos/categorias/aceites-y-grasas.jpg",
   },
   {
     id: "granos",
     titulo: "Granos y cereales",
     texto: "Granel con trazabilidad de origen.",
-    cta: "Explorar",
-    href: "/productos?categoria=granos-y-cereales",
     imagen: "/photos/categorias/granos-y-cereales.jpg",
   },
   {
     id: "lacteos",
     titulo: "Lácteos",
     texto: "Cadena de frío de la planta a tu bodega.",
-    cta: "Explorar",
-    href: "/productos?categoria=lacteos",
     imagen: "/photos/categorias/lacteos.jpg",
   },
   {
     id: "bebidas",
     titulo: "Bebidas",
     texto: "Gaseosas, aguas y jugos para food service.",
-    cta: "Explorar",
-    href: "/productos?categoria=bebidas",
     imagen: "/photos/categorias/bebidas.jpg",
   },
   {
     id: "carnicos",
     titulo: "Cárnicos y fríos",
     texto: "Embutidos y carnes frías de mostrador.",
-    cta: "Explorar",
-    href: "/productos?categoria=carnicos-y-frios",
     imagen: "/photos/categorias/carnicos-y-frios.jpg",
   },
   {
     id: "enlatados",
     titulo: "Enlatados y conservas",
     texto: "Despensa institucional con estándar de exportación.",
-    cta: "Explorar",
-    href: "/productos?categoria=enlatados-y-conservas",
     imagen: "/photos/categorias/enlatados-y-conservas.jpg",
   },
 ]
 
 /**
  * Banner de publicidad del listado: carrusel de IMÁGENES de producto (fotos
- * reales de categorías) más grande que el anterior, con autoplay y dots.
- * Va DENTRO de la columna de resultados (mismo ancho que la lista de
- * productos — "fixeado al tamaño de las listas"). Texto sobre la imagen con
- * degradado oscuro sutil para legibilidad y CTA al catálogo filtrado.
+ * reales del portafolio) con autoplay y dots. Va DENTRO de la columna de
+ * resultados (mismo ancho que la lista de productos — "fixeado al tamaño de
+ * las listas"). Texto sobre la imagen con degradado oscuro sutil para
+ * legibilidad.
+ *
+ * Pieza PURAMENTE VISUAL: no lleva CTA. Los banners enlazaban a
+ * `/productos?categoria=…`, un filtro por categorías que nunca existió en
+ * los datos reales — la clasificación del catálogo es por proveedor y marca
+ * (ver `catalog-filters.tsx`). Antes que inventar un destino, el banner se
+ * queda como publicidad del portafolio.
  */
 export function CatalogBannerCarousel() {
   const [api, setApi] = React.useState<CarouselApi>()
@@ -123,9 +114,6 @@ export function CatalogBannerCarousel() {
                   <p className="max-w-[34ch] text-sm text-[var(--color-on-ink-muted)]">
                     {banner.texto}
                   </p>
-                  <JdhButton asChild variant="primary-on-ink" size="sm">
-                    <Link href={banner.href as Route}>{banner.cta}</Link>
-                  </JdhButton>
                 </div>
               </div>
             </CarouselItem>
