@@ -2,6 +2,7 @@ import { BrandsSection } from "./brands-section"
 import { CtaSection } from "./cta-section"
 import { FeaturedProducts } from "./featured-products"
 import { HeroSection } from "./hero-section"
+import { PromoBanner } from "./promo-banner"
 import { ProveedoresSection } from "./proveedores-section"
 import { ProviderMarquee } from "./provider-marquee"
 import { ValueProps } from "./value-props"
@@ -13,8 +14,8 @@ import { ValueProps } from "./value-props"
  * negro de la página.
  *
  * Orden: hero → cobertura negra → proveedores (grilla) → muestra del catálogo
- * (carrusel) → cinta INFINITA de proveedores (franja negra full-width) →
- * marcas (grilla de logos) → CTA final.
+ * (carrusel) → banners publicitarios → cinta INFINITA de proveedores (franja
+ * negra full-width) → marcas (grilla de logos) → CTA final.
  *
  * Esta vista ya NO pasa datos: las secciones que dependen del catálogo
  * (`ProveedoresSection`, `FeaturedProducts`, `ProviderMarquee`,
@@ -36,6 +37,7 @@ export function InicioView() {
       <div className="mx-auto flex w-full max-w-[var(--container-wide)] flex-col gap-[var(--space-16)] px-6 py-[var(--space-16)] pb-24 md:pb-[var(--space-32)] lg:gap-[var(--space-32)] lg:py-[var(--space-32)]">
         <ProveedoresSection />
         <FeaturedProducts />
+        <PromoBanner />
       </div>
 
       <ProviderMarquee />
