@@ -23,8 +23,11 @@ import { cn } from "@/lib/utils"
  *
  * MEDIDAS (ver `docs/brand/imagenes.md`): el bloque ocupa el ancho útil del
  * sitio —`--container-wide` (1440px) menos el gutter de `px-6`, o sea
- * 1392px— y la caja es 3:1 en escritorio y 4:3 en móvil. Exportar a 2x:
- * 2784×928 px la pieza ancha y 1440×1080 px la vertical, ambas en WebP.
+ * 1392px— y solo baja de ALTO respecto a la primera versión: dos tercios,
+ * de 464px a 310px en escritorio (y de 4:3 a 2:1 en móvil). El ancho no se
+ * toca, que era el requisito: de margen a margen, sin espacios extra.
+ * Exportar a 2x: 2784×620 px la pieza ancha y 1440×720 px la de móvil,
+ * ambas en WebP.
  *
  * `imagenMovil` es OPCIONAL: sin ella se usa la pieza ancha recortada al
  * centro por `object-cover`, que es aceptable para un fondo pero se come los
@@ -34,17 +37,19 @@ import { cn } from "@/lib/utils"
  * un arte distinto — un `display: none` no evita la descarga.
  */
 
-const RELACION_ESCRITORIO = "md:aspect-[3/1]"
-const RELACION_MOVIL = "aspect-[4/3]"
+/** 1392×310 CSS. Se escribe como fracción literal y no como `4.49/1` para
+ *  que se lea de dónde sale: es el ancho útil del sitio por el alto real. */
+const RELACION_ESCRITORIO = "md:aspect-[1392/310]"
+const RELACION_MOVIL = "aspect-[2/1]"
 
 /** `--container-wide` (1440px) menos el gutter lateral de `px-6` (2×24px). */
 const ANCHO_UTIL = "(min-width: 1440px) 1392px, calc(100vw - 3rem)"
 
 interface Banner {
   id: string
-  /** Pieza ancha (3:1). Exportar 2784×928 px, WebP. */
+  /** Pieza ancha (1392×310). Exportar 2784×620 px, WebP. */
   imagen: string
-  /** Pieza vertical (4:3) para <768px. Exportar 1440×1080 px, WebP. */
+  /** Pieza para <768px (2:1). Exportar 1440×720 px, WebP. */
   imagenMovil?: string
   /**
    * Qué anuncia el banner. Si el arte lleva texto horneado, TRANSCRÍBELO

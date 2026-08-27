@@ -28,15 +28,20 @@ es el techo, no una sugerencia.
 catálogo. **Imagen completa: sin borde, sin degradado, sin texto encima del
 componente.** Todo el mensaje va horneado en el arte.
 
-| Pieza             | Caja en pantalla  | **Exportar (2x)** | Relación |
-| ----------------- | ----------------- | ----------------- | -------- |
-| Ancha (≥768px)    | 1392 × 464 px     | **2784 × 928**    | 3:1      |
-| Vertical (<768px) | 100vw − 48px, 4:3 | **1440 × 1080**   | 4:3      |
+| Pieza          | Caja en pantalla  | **Exportar (2x)** | Relación |
+| -------------- | ----------------- | ----------------- | -------- |
+| Ancha (≥768px) | 1392 × 310 px     | **2784 × 620**    | ≈ 4.5:1  |
+| Móvil (<768px) | 100vw − 48px, 2:1 | **1440 × 720**    | 2:1      |
 
-- La pieza vertical es **opcional**. Sin ella, la ancha se recorta al centro
+El ancho es el ancho útil completo del sitio, de margen a margen. Solo el
+ALTO se recortó a dos tercios del original (464 → 310px), así que la franja
+es más baja y más apaisada que la primera versión.
+
+- La pieza de móvil es **opcional**. Sin ella, la ancha se recorta al centro
   con `object-cover` en móvil: sirve para un fondo, se come los bordes de
   cualquier texto horneado. Si el banner lleva tipografía, entrega las dos.
-- **Zona segura:** 8% de margen interno en cada lado. Nada crítico ahí.
+- **Zona segura:** 8% de margen interno en cada lado. Nada crítico ahí. Con
+  la franja ya baja, el texto horneado no debería pasar de dos líneas.
 - El bloque tiene 8px de radio en las esquinas (`--jdh-radius-md`): no pongas
   nada que se lea mal recortado en la esquina.
 - Peso objetivo: ≤ 200 KB por pieza.
