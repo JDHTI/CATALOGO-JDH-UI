@@ -86,6 +86,7 @@ export function ProductoDetalleView({ id }: { id: string }) {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <ProductoImagen
           producto={producto}
+          variant="detalle"
           sizes="(min-width: 1024px) 50vw, 100vw"
           priority
           className="aspect-square rounded-[var(--jdh-radius-md)] border border-[var(--color-border)]"

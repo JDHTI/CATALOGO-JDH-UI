@@ -1,6 +1,12 @@
 import { z } from "zod"
 
-import type { Marca, Paginado, Producto, Proveedor } from "../types"
+import type {
+  ImagenProducto,
+  Marca,
+  Paginado,
+  Producto,
+  Proveedor,
+} from "../types"
 
 /**
  * DTOs de jdh-catalogo-api (NestJS) — contrato PROVISIONAL validado con zod
@@ -35,6 +41,17 @@ const categoriaDtoSchema = z.object({
   nombre: z.string(),
 })
 
+// `imagenes` es reciente: nullish para que responda tanto un backend viejo
+// (sin el campo) como uno nuevo con la galería vacía.
+const imagenProductoDtoSchema = z.object({
+  thumbUrl: z.string(),
+  cardUrl: z.string(),
+  fullUrl: z.string(),
+  alt: z.string().nullish(),
+  position: z.number(),
+  esPrincipal: z.boolean(),
+})
+
 export const productoDtoSchema = z.object({
   id: idSchema,
   sku: z.string(),
@@ -46,6 +63,7 @@ export const productoDtoSchema = z.object({
   categoria: categoriaDtoSchema.nullish(),
   subcategoria: categoriaDtoSchema.nullish(),
   imagenUrl: z.string().nullish(),
+  imagenes: z.array(imagenProductoDtoSchema).nullish(),
 })
 
 export const paginacionMetaDtoSchema = z.object({
@@ -98,6 +116,19 @@ export function aMarca(dto: MarcaDto): Marca {
   }
 }
 
+function aImagenProducto(
+  dto: z.infer<typeof imagenProductoDtoSchema>
+): ImagenProducto {
+  return {
+    thumbUrl: dto.thumbUrl,
+    cardUrl: dto.cardUrl,
+    fullUrl: dto.fullUrl,
+    alt: dto.alt ?? null,
+    position: dto.position,
+    esPrincipal: dto.esPrincipal,
+  }
+}
+
 export function aProducto(dto: ProductoDto): Producto {
   return {
     id: dto.id,
@@ -110,6 +141,7 @@ export function aProducto(dto: ProductoDto): Producto {
     categoria: dto.categoria ?? null,
     subcategoria: dto.subcategoria ?? null,
     imagenUrl: dto.imagenUrl ?? null,
+    imagenes: (dto.imagenes ?? []).map(aImagenProducto),
   }
 }
 
