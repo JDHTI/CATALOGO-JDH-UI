@@ -407,10 +407,10 @@
 }
 
 /* La utility `contact-bar-gradient` (gradiente simétrico NEGRO → BLANCO →
-   NEGRO) se retiró: la ContactBar es BLANCA SÓLIDA y un color plano no
-   necesita utility propia — va como `bg-[var(--color-on-ink)]` en el
-   componente, junto al primer plano en tinta que ese fondo exige. Ver
-   `components/layout/contact-bar.tsx`. */
+   NEGRO) se retiró: la ContactBar usa la misma receta de chrome que el header
+   y el menú —`--color-ink` de fondo, `--color-on-ink` de texto y un hairline
+   `--color-ink-border`—, que son clases normales de Tailwind y no necesitan
+   utility propia. Ver `components/layout/contact-bar.tsx`. */
 
 /* View Transitions — barrido circular del cambio de tema (ThemeSwitcher).
    Se anula el cross-fade por defecto para que la única animación sea el
