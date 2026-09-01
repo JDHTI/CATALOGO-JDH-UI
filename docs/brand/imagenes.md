@@ -92,11 +92,18 @@ monitor de 1920×1080, 1920 × 916.
 | ------ | --------------- | -------- |
 | Master | **2560 × 1440** | 16:9     |
 
-- **Zona segura:** el copy va anclado a la IZQUIERDA (máx. 40ch dentro del
-  container) y en negro de marca, sin velo oscuro. El 45% izquierdo tiene que
-  ser claro y con poco detalle, o el texto deja de leerse.
-- El encuadre se recorta al centro (`object-cover object-center`): en móvil
-  se ve una franja vertical del centro. Compón pensando en ese recorte.
+- **El componente NO pone texto encima.** Hasta ahora reservaba el 45%
+  izquierdo para un eyebrow, un titular y dos botones; se retiraron, porque el
+  arte se cambia sin desplegar y cualquier copy del código puede contradecir la
+  pieza vigente. **Todo el mensaje va horneado en el arte**, y ya no hay zona
+  segura que respetar por el copy — la pieza se ve completa.
+- **ENCUADRE, que sí condiciona la composición:** `object-cover` recorta.
+  - **Escritorio (`md`+):** anclado al CENTRO. Con la caja más apaisada que el
+    16:9 del master (1920×916 ≈ 2.1:1) se recorta arriba y abajo.
+  - **Móvil (<768px):** anclado a la DERECHA (`object-right`). El viewport es
+    angosto y alto, así que se ve una franja vertical del **lado derecho** de
+    la pieza, completa. **Pon ahí el motivo principal**; el lado izquierdo es
+    lo primero que se pierde en móvil.
 - **Ubicación: la carpeta `site/hero/` del bucket**, con el slug
   **`home-desktop`**:
 
@@ -109,9 +116,10 @@ monitor de 1920×1080, 1920 × 916.
   `home`). Se puede dejar el arte de la próxima campaña subido con otro nombre
   y activarlo cuando toque renombrándolo.
 
-- El hero es **una sola pieza** para todos los anchos: se recorta al centro.
-  Aunque el slug diga `-desktop`, no hay un `home-mobile` en uso; si alguna vez
-  hace falta un encuadre propio de móvil, hay que añadirlo al componente.
+- El hero es **una sola pieza** para todos los anchos, solo cambia el anclaje
+  del recorte. Aunque el slug diga `-desktop`, no hay un `home-mobile` en uso;
+  si el recorte a la derecha no basta para móvil, la salida es una pieza propia
+  y una segunda `<Image>` con `md:hidden`, como ya hacen los banners.
 
 - **No hay respaldo local.** Sin pieza subida la sección se dibuja sin imagen
   (el copy es negro sobre fondo claro, sigue legible y con el mismo alto). El

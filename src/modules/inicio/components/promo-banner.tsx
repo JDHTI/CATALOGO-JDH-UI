@@ -3,6 +3,7 @@
 import * as React from "react"
 import Autoplay from "embla-carousel-autoplay"
 import Image from "next/image"
+import { useReducedMotion } from "motion/react"
 
 import {
   Carousel,
@@ -22,6 +23,9 @@ import type { BannerSitio } from "../types"
  * Todo el mensaje va horneado en el arte, así que el componente solo aporta
  * el marco, el recorte y el cambio entre piezas — nada que pueda competir
  * con lo que diseñó el equipo de mercadeo.
+ *
+ * Las piezas ROTAN SOLAS cada `AUTOPLAY_MS`, en bucle. Ver `AUTOPLAY_OPCIONES`
+ * para por qué la rotación se detenía antes y no volvía.
  *
  * LAS PIEZAS VIENEN DEL BUCKET (`site/banners/`), no del repo: mercadeo
  * cambia la publicidad sobreescribiendo archivos, sin desplegar. Los huecos y
@@ -58,10 +62,48 @@ const ANCHO_UTIL = "(min-width: 1440px) 1392px, calc(100vw - 3rem)"
  *  carrusel de navegación, y un cambio rápido se lee como parpadeo. */
 const AUTOPLAY_MS = 7000
 
+/**
+ * Por qué estas opciones y no los valores por defecto — antes la rotación
+ * automática se detenía y no volvía:
+ *
+ * - **`stopOnInteraction: false`** es la corrección importante. Su default es
+ *   `true`, que detiene el autoplay PARA SIEMPRE en cuanto hay una
+ *   interacción. Combinado con `stopOnMouseEnter`, bastaba pasar el cursor por
+ *   encima una vez —trivial, el banner ocupa el ancho de la página— para que
+ *   los banners no volvieran a rotar en toda la visita. Con `false`, entrar con
+ *   el cursor PAUSA y salir REANUDA, que es el comportamiento que se buscaba.
+ * - **`stopOnMouseEnter: true`** se conserva: si alguien se detiene a leer la
+ *   pieza, cambiarla debajo del cursor es hostil.
+ */
+const AUTOPLAY_OPCIONES = {
+  delay: AUTOPLAY_MS,
+  stopOnInteraction: false,
+  stopOnMouseEnter: true,
+} as const
+
 export function PromoBanner({ banners }: { banners: BannerSitio[] }) {
   const [api, setApi] = React.useState<CarouselApi>()
   const [current, setCurrent] = React.useState(0)
   const [count, setCount] = React.useState(0)
+
+  /**
+   * Una sola instancia del plugin para toda la vida del componente. Crearla
+   * en el JSX la reconstruía en cada render —y este componente re-renderiza
+   * en cada cambio de pieza, por `current`—, lo que deja el temporizador a
+   * merced de cuándo vuelve a pintar React en vez de del `delay`.
+   */
+  const autoplay = React.useMemo(() => Autoplay(AUTOPLAY_OPCIONES), [])
+
+  /**
+   * Respetar `prefers-reduced-motion` (DESIGN.md, WCAG 2.2 AA): con la
+   * preferencia activa no se monta el plugin y las piezas solo cambian con los
+   * dots. Es la misma regla que siguen los primitivos de `components/motion`.
+   */
+  const reduce = useReducedMotion()
+  const plugins = React.useMemo(
+    () => (reduce ? [] : [autoplay]),
+    [reduce, autoplay]
+  )
 
   React.useEffect(() => {
     if (!api) return
@@ -82,7 +124,7 @@ export function PromoBanner({ banners }: { banners: BannerSitio[] }) {
       <Carousel
         setApi={setApi}
         opts={{ loop: true, align: "center" }}
-        plugins={[Autoplay({ delay: AUTOPLAY_MS, stopOnMouseEnter: true })]}
+        plugins={plugins}
       >
         <CarouselContent>
           {banners.map((banner, i) => (
