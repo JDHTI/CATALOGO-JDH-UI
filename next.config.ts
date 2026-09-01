@@ -31,9 +31,12 @@ const nextConfig: NextConfig = {
         port: "9000",
         pathname: "/jdh-catalogo/**",
       },
-      // El dominio del bucket de producción aún no está definido.
-      // Restringir al hostname real cuando exista.
-      { protocol: "https", hostname: "**" },
+      // Bucket de producción (Cloudflare R2, subdominio público r2.dev).
+      // Mismo host que NEXT_PUBLIC_ASSETS_CDN_URL / S3_PUBLIC_URL del backend.
+      {
+        protocol: "https",
+        hostname: "pub-b1f8029314db46a59976c23763aa4b06.r2.dev",
+      },
     ],
   },
 }
