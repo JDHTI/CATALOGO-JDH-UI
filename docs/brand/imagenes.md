@@ -45,7 +45,25 @@ es más baja y más apaisada que la primera versión.
 - El bloque tiene 8px de radio en las esquinas (`--jdh-radius-md`): no pongas
   nada que se lea mal recortado en la esquina.
 - Peso objetivo: ≤ 200 KB por pieza.
-- Ubicación: `public/banners/home-1.webp`, `home-1-movil.webp`, …
+- **Ubicación: la carpeta `site/banners/` del bucket**, no el repo. Se sube
+  desde el repo del API y cambia el sitio sin desplegar (se refleja en ~5
+  minutos):
+
+  ```bash
+  pnpm site-images:upload -- --categoria=banners --slug=home-desktop-1 --archivo=./pieza.png
+  ```
+
+- **El `--slug` tiene que ser exacto**, porque la UI no lista la carpeta: sabe
+  de antemano qué nombres buscar. Los huecos publicados hoy son
+  `home-desktop-1` + `home-mobile-1` y `home-desktop-2` + `home-mobile-2`
+  (ojo: el formato va **antes** del índice) — la lista viva está en
+  `src/modules/inicio/placements.ts`. Un archivo con otro nombre **no se
+  muestra**, y un hueco sin su pieza de escritorio se omite.
+- El slug nombra el **hueco, no la campaña**: para cambiar el creativo se
+  sobreescribe `home-desktop-1`, no se sube `blackfriday-2026`. Así la URL
+  nunca cambia. Añadir un TERCER banner sí requiere tocar el código.
+- Rotan en el orden declarado en `placements.ts` (`home-1`, luego `home-2`).
+- El comando reencoda a WebP, así que puedes entregar PNG/JPG/TIFF/AVIF.
 
 ## 2. Banner de la página de productos
 
@@ -79,9 +97,28 @@ monitor de 1920×1080, 1920 × 916.
   ser claro y con poco detalle, o el texto deja de leerse.
 - El encuadre se recorta al centro (`object-cover object-center`): en móvil
   se ve una franja vertical del centro. Compón pensando en ese recorte.
-- Hoy el archivo es `public/photos/hero-alimentos.png` — **pasarlo a WebP**;
-  un PNG a este tamaño es el activo más pesado de la página.
-- Peso objetivo: ≤ 400 KB.
+- **Ubicación: la carpeta `site/hero/` del bucket**, con el slug
+  **`home-desktop`**:
+
+  ```bash
+  pnpm site-images:upload -- --categoria=hero --slug=home-desktop --archivo=./hero.png
+  ```
+
+  La UI publica el primer slug de `HERO_SLUGS` que exista
+  (`src/modules/inicio/placements.ts`; hoy `home-desktop` y, como alternativa,
+  `home`). Se puede dejar el arte de la próxima campaña subido con otro nombre
+  y activarlo cuando toque renombrándolo.
+
+- El hero es **una sola pieza** para todos los anchos: se recorta al centro.
+  Aunque el slug diga `-desktop`, no hay un `home-mobile` en uso; si alguna vez
+  hace falta un encuadre propio de móvil, hay que añadirlo al componente.
+
+- **No hay respaldo local.** Sin pieza subida la sección se dibuja sin imagen
+  (el copy es negro sobre fondo claro, sigue legible y con el mismo alto). El
+  antiguo `public/photos/hero-alimentos.png` se retira del repo junto con los
+  demás assets que pasan al bucket, así que el hero **depende** de que esta
+  pieza exista.
+- Peso objetivo: ≤ 400 KB. La pieza actual pesa 399 KB — justo en el límite.
 
 ## 4. Imágenes de producto
 

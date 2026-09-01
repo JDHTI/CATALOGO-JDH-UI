@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/carousel"
 import { cn } from "@/lib/utils"
 
+import type { BannerSitio } from "../types"
+
 /**
  * Banners publicitarios del homepage, debajo de la muestra del catálogo.
  *
@@ -21,6 +23,13 @@ import { cn } from "@/lib/utils"
  * el marco, el recorte y el cambio entre piezas — nada que pueda competir
  * con lo que diseñó el equipo de mercadeo.
  *
+ * LAS PIEZAS VIENEN DEL BUCKET (`site/banners/`), no del repo: mercadeo
+ * cambia la publicidad sobreescribiendo archivos, sin desplegar. Los huecos y
+ * sus dos formatos se declaran en `../placements.ts` y la ruta los resuelve
+ * en el servidor, así que llegan aquí ya emparejados y verificados. Sin
+ * piezas la sección no se dibuja: una franja publicitaria vacía o en
+ * fantasma no comunica nada.
+ *
  * MEDIDAS (ver `docs/brand/imagenes.md`): el bloque ocupa el ancho útil del
  * sitio —`--container-wide` (1440px) menos el gutter de `px-6`, o sea
  * 1392px— y solo baja de ALTO respecto a la primera versión: dos tercios,
@@ -29,12 +38,12 @@ import { cn } from "@/lib/utils"
  * Exportar a 2x: 2784×620 px la pieza ancha y 1440×720 px la de móvil,
  * ambas en WebP.
  *
- * `imagenMovil` es OPCIONAL: sin ella se usa la pieza ancha recortada al
- * centro por `object-cover`, que es aceptable para un fondo pero se come los
- * bordes de cualquier texto horneado. Si el banner lleva tipografía, entrega
- * las dos piezas. Cuando existen ambas se montan dos `<img>` y el CSS elige
- * cuál mostrar, así que solo se declara `imagenMovil` cuando de verdad hay
- * un arte distinto — un `display: none` no evita la descarga.
+ * La pieza de MÓVIL es opcional: sin ella se usa la ancha recortada al centro
+ * por `object-cover`, que es aceptable para un fondo pero se come los bordes
+ * de cualquier texto horneado. Si el banner lleva tipografía, sube las dos.
+ * Cuando existen ambas se montan dos `<img>` y el CSS elige cuál mostrar, así
+ * que la de móvil solo se declara cuando de verdad hay un arte distinto — un
+ * `display: none` no evita la descarga.
  */
 
 /** 1392×310 CSS. Se escribe como fracción literal y no como `4.49/1` para
@@ -45,43 +54,11 @@ const RELACION_MOVIL = "aspect-[2/1]"
 /** `--container-wide` (1440px) menos el gutter lateral de `px-6` (2×24px). */
 const ANCHO_UTIL = "(min-width: 1440px) 1392px, calc(100vw - 3rem)"
 
-interface Banner {
-  id: string
-  /** Pieza ancha (1392×310). Exportar 2784×620 px, WebP. */
-  imagen: string
-  /** Pieza para <768px (2:1). Exportar 1440×720 px, WebP. */
-  imagenMovil?: string
-  /**
-   * Qué anuncia el banner. Si el arte lleva texto horneado, TRANSCRÍBELO
-   * aquí: es lo único que un lector de pantalla va a recibir de la pieza.
-   */
-  alt: string
-}
-
-/**
- * TODO(mercadeo): reemplazar por el arte definitivo en `public/banners/`
- * (`home-1.webp`, `home-1-movil.webp`, …). Mientras tanto van dos fotos del
- * portafolio ya presentes en el repo, para que la sección tenga su tamaño
- * real en pantalla y se pueda validar el encuadre.
- */
-const BANNERS: Banner[] = [
-  {
-    id: "flota",
-    imagen: "/photos/camion-carretera.webp",
-    alt: "Flota JDH en carretera: entrega en siete ciudades de Colombia.",
-  },
-  {
-    id: "patio",
-    imagen: "/photos/flota-patio.webp",
-    alt: "Patio de operaciones JDH cargando pedidos institucionales.",
-  },
-]
-
 /** Cada cuánto rota la pieza. Largo a propósito: es publicidad, no un
  *  carrusel de navegación, y un cambio rápido se lee como parpadeo. */
 const AUTOPLAY_MS = 7000
 
-export function PromoBanner() {
+export function PromoBanner({ banners }: { banners: BannerSitio[] }) {
   const [api, setApi] = React.useState<CarouselApi>()
   const [current, setCurrent] = React.useState(0)
   const [count, setCount] = React.useState(0)
@@ -98,7 +75,7 @@ export function PromoBanner() {
     })
   }, [api])
 
-  if (BANNERS.length === 0) return null
+  if (banners.length === 0) return null
 
   return (
     <section aria-label="Publicidad" className="flex flex-col gap-3">
@@ -108,7 +85,7 @@ export function PromoBanner() {
         plugins={[Autoplay({ delay: AUTOPLAY_MS, stopOnMouseEnter: true })]}
       >
         <CarouselContent>
-          {BANNERS.map((banner, i) => (
+          {banners.map((banner, i) => (
             <CarouselItem key={banner.id} className="basis-full">
               <div
                 className={cn(
@@ -117,10 +94,10 @@ export function PromoBanner() {
                   RELACION_ESCRITORIO
                 )}
               >
-                {banner.imagenMovil ? (
+                {banner.movil ? (
                   <>
                     <Image
-                      src={banner.imagenMovil}
+                      src={banner.movil.url}
                       alt={banner.alt}
                       fill
                       // La primera pieza entra en el viewport en cuanto se
@@ -130,7 +107,7 @@ export function PromoBanner() {
                       className="object-cover md:hidden"
                     />
                     <Image
-                      src={banner.imagen}
+                      src={banner.escritorio.url}
                       alt=""
                       aria-hidden="true"
                       fill
@@ -140,7 +117,7 @@ export function PromoBanner() {
                   </>
                 ) : (
                   <Image
-                    src={banner.imagen}
+                    src={banner.escritorio.url}
                     alt={banner.alt}
                     fill
                     priority={i === 0}
