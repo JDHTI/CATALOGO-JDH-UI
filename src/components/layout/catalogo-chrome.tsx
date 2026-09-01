@@ -16,8 +16,17 @@ import { AppHeader } from "./app-header"
 import { ContactBar } from "./contact-bar"
 import { MainNav } from "./main-nav"
 
-/** Altura de la ContactBar (h-9). */
-const BAR_HEIGHT = 36
+/**
+ * Altura TOTAL de la ContactBar: su fila de `h-9` (36px) MÁS el hairline de
+ * 1px con el que se separa del header (`border-b border-[--color-ink-border]`,
+ * el mismo divisor que usan `AppHeader` y `MainNav`).
+ *
+ * El +1 no es cosmético: este valor es el tope de la animación de altura, y el
+ * contenedor lleva `overflow-hidden`. Con 36 el borde inferior quedaba
+ * recortado justo cuando la franja está desplegada. También entra en
+ * `--catalogo-chrome-height`, que el hero resta de `100svh`.
+ */
+const BAR_HEIGHT = 37
 /** Scroll necesario (px) para ocultar por completo la franja. */
 const HIDE_DISTANCE = 48
 /** Breakpoint `md` de Tailwind, el mismo en el que aparece la franja. */
@@ -104,7 +113,11 @@ export function CatalogoChrome() {
     <div
       aria-hidden={hidden}
       inert={hidden}
-      className={cn("hidden overflow-hidden md:block", hidden ? "h-0" : "h-9")}
+      className={cn(
+        "hidden overflow-hidden md:block",
+        // `h-[37px]` y no `h-9`: mismo +1px del hairline que BAR_HEIGHT.
+        hidden ? "h-0" : "h-[37px]"
+      )}
     >
       <AnnouncementBar />
       <ContactBar />

@@ -15,12 +15,15 @@ import type { Producto } from "../types"
  *
  * El caller define la relación de aspecto y el `sizes` (depende del grid).
  *
- * `variant` decide CUÁNTO placeholder cabe, no cómo se ve la foto:
+ * `variant` decide CUÁNTO placeholder cabe Y qué variante de la imagen se
+ * pide (`imagenes` trae 3 tamaños WebP — pedir la más chica que alcance
+ * evita bajar el `full` de 1600px en una miniatura de 56px):
  * - `card` (por defecto): ícono grande + marca + "Imagen próximamente". Es el
- *   tratamiento para un recuadro de varios cientos de px.
+ *   tratamiento para un recuadro de varios cientos de px. Pide `cardUrl`.
  * - `miniatura`: solo el ícono, a escala. En una miniatura de ~56px el texto
  *   de apoyo no se lee y solo ensucia la fila — el nombre y la marca ya van
- *   al lado, no hace falta repetirlos dentro del recuadro.
+ *   al lado, no hace falta repetirlos dentro del recuadro. Pide `thumbUrl`.
+ * - `detalle`: el recuadro grande de la ficha de producto. Pide `fullUrl`.
  */
 export function ProductoImagen({
   producto,
@@ -29,14 +32,23 @@ export function ProductoImagen({
   priority = false,
   variant = "card",
 }: {
-  producto: Pick<Producto, "nombre" | "marca" | "imagenUrl">
+  producto: Pick<Producto, "nombre" | "marca" | "imagenUrl" | "imagenes">
   /** `sizes` de next/image acorde al layout del caller. */
   sizes: string
   className?: string
   priority?: boolean
-  variant?: "card" | "miniatura"
+  variant?: "card" | "miniatura" | "detalle"
 }) {
   const esMiniatura = variant === "miniatura"
+  const principal =
+    producto.imagenes.find((imagen) => imagen.esPrincipal) ??
+    producto.imagenes[0]
+  const src =
+    (variant === "miniatura"
+      ? principal?.thumbUrl
+      : variant === "detalle"
+        ? principal?.fullUrl
+        : principal?.cardUrl) ?? producto.imagenUrl
 
   return (
     <div
@@ -45,9 +57,9 @@ export function ProductoImagen({
         className
       )}
     >
-      {producto.imagenUrl ? (
+      {src ? (
         <Image
-          src={producto.imagenUrl}
+          src={src}
           alt={producto.nombre}
           fill
           sizes={sizes}

@@ -406,26 +406,11 @@
   }
 }
 
-/* ==========================================================================
-   ContactBar — gradiente simétrico NEGRO → BLANCO → NEGRO.
-   Utility propia (en vez de clases arbitrarias de Tailwind) para garantizar
-   el render y controlar los stops. La barra permanece NEGRO SÓLIDO mientras
-   cubre el clúster de contacto (teléfono/email, ~30% del ancho) — el
-   gradiente "empieza donde terminan las letras" —, sube al blanco del tema
-   exactamente en el centro (50%) y regresa a negro sólido antes del clúster
-   derecho (redes + tema). Ambos textos (blanco, `--color-on-ink`) viven
-   sobre el negro de los extremos.
-   ========================================================================== */
-@utility contact-bar-gradient {
-  background-image: linear-gradient(
-    to right,
-    var(--color-ink) 0%,
-    var(--color-ink) 30%,
-    var(--color-on-ink) 50%,
-    var(--color-ink) 70%,
-    var(--color-ink) 100%
-  );
-}
+/* La utility `contact-bar-gradient` (gradiente simétrico NEGRO → BLANCO →
+   NEGRO) se retiró: la ContactBar usa la misma receta de chrome que el header
+   y el menú —`--color-ink` de fondo, `--color-on-ink` de texto y un hairline
+   `--color-ink-border`—, que son clases normales de Tailwind y no necesitan
+   utility propia. Ver `components/layout/contact-bar.tsx`. */
 
 /* View Transitions — barrido circular del cambio de tema (ThemeSwitcher).
    Se anula el cross-fade por defecto para que la única animación sea el

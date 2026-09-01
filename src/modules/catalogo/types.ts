@@ -54,6 +54,16 @@ export interface CategoriaProducto {
   nombre: string
 }
 
+/** Una imagen de la galería del producto, en sus 3 variantes WebP. */
+export interface ImagenProducto {
+  thumbUrl: string
+  cardUrl: string
+  fullUrl: string
+  alt: string | null
+  position: number
+  esPrincipal: boolean
+}
+
 /** Producto real del catálogo (listado y detalle comparten forma). */
 export interface Producto {
   id: string
@@ -65,8 +75,15 @@ export interface Producto {
   proveedor: Proveedor
   categoria: CategoriaProducto | null
   subcategoria: CategoriaProducto | null
-  /** URL del bucket S3 — null mientras el producto no tenga foto. */
+  /**
+   * URL de la variante `card` de la imagen primaria — null mientras el
+   * producto no tenga foto. Se mantiene por compatibilidad; `ProductoImagen`
+   * prefiere `imagenes` cuando está disponible (permite pedir `thumb`/`full`
+   * según el tamaño del recuadro).
+   */
   imagenUrl: string | null
+  /** Galería completa, primaria primero. Vacío si el producto no tiene fotos. */
+  imagenes: ImagenProducto[]
 }
 
 /** Meta de paginación estándar de los listados del API. */
