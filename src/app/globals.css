@@ -205,6 +205,19 @@
   --color-on-ink-muted: var(--overlay-on-dark-64);
   --color-ink-border: var(--overlay-on-dark-12);
 
+  /* Superficie primaria — botón primario y estados activos.
+     En claro coincide con el chrome negro (DESIGN.md §3: "el negro es la
+     firma"), pero es un par PROPIO y no un alias de `--color-ink*`: el chrome
+     se queda negro en los dos temas y el botón primario NO puede. Sobre el
+     lienzo oscuro (`--color-bg` = --neutral-900) un botón `--color-ink` es
+     exactamente del color del fondo — invisible salvo por su texto. En oscuro
+     este par se invierte a blanco sobre negro, que es lo que pide la regla de
+     DESIGN.md §2.3: "componer siempre en pares; si un color solo funciona en
+     un tema, está mal elegido". */
+  --color-primary-surface: var(--color-ink);
+  --color-primary-surface-hover: var(--color-ink-hover);
+  --color-on-primary-surface: var(--color-on-ink);
+
   /* Chrome papel — fijo, no cambia con el tema (simétrico al chrome negro).
      Superficies que deben quedarse blancas en ambos temas: la nav principal
      y el footer en oscuro. Los valores replican los semánticos del tema claro
@@ -244,10 +257,16 @@
   --color-surface: var(--neutral-900);
   --color-surface-subtle: var(--neutral-700);
   --color-border: var(--overlay-on-dark-12);
-  /* NOTA: DESIGN.md §2.3 define border-strong (08) con menos opacidad que
-     border (12) en oscuro — se replica literal; parece una inversión
-     involuntaria en la fuente. Señalar si se ratifica el documento. */
-  --color-border-strong: var(--overlay-on-dark-08);
+  /* DESIGN.md §2.3 define border-strong (08) con MENOS presencia que border
+     (12) en oscuro. Se replicó literal durante el port y el resultado es un
+     borde de ~1.1:1 contra el lienzo: los controles delineados (JdhButton
+     `secondary`, inputs) desaparecían en oscuro, incumpliendo WCAG 2.2 SC
+     1.4.11, que exige 3:1 para el límite visual de un componente. Aquí se
+     corrige a `--neutral-500` (5.3:1 sobre --neutral-900), que además es el
+     análogo exacto de lo que hace el tema claro: un neutral sólido un paso
+     por encima de `--color-border`, no un overlay más tenue.
+     Pendiente ratificar la corrección en DESIGN.md §2.3. */
+  --color-border-strong: var(--neutral-500);
   --color-text: var(--neutral-0);
   --color-text-secondary: var(--neutral-300);
   --color-text-tertiary: var(--neutral-500);
@@ -258,6 +277,13 @@
      temas). Solo el SEPARADOR sube de opacidad para que header/footer/hero
      ink no se fundan con el fondo oscuro (el color del chrome no cambia). */
   --color-ink-border: var(--overlay-on-dark-16);
+
+  /* La superficie primaria SÍ se invierte (ver la nota en :root): blanco
+     sobre negro. El hover se oscurece un paso en vez de aclararse, que es la
+     misma dirección de "un paso hacia el fondo" que toma el tema claro. */
+  --color-primary-surface: var(--neutral-0);
+  --color-primary-surface-hover: var(--neutral-200);
+  --color-on-primary-surface: var(--neutral-900);
 
   /* Tinte semántico para alertas (tema oscuro) — ver nota en :root. */
   --color-success: #4ade80;
@@ -326,8 +352,8 @@
   --card-foreground: var(--color-text);
   --popover: var(--color-surface);
   --popover-foreground: var(--color-text);
-  --primary: var(--color-ink);
-  --primary-foreground: var(--color-on-ink);
+  --primary: var(--color-primary-surface);
+  --primary-foreground: var(--color-on-primary-surface);
   --secondary: var(--color-bg-subtle);
   --secondary-foreground: var(--color-text);
   --muted: var(--color-bg-subtle);
@@ -368,8 +394,8 @@
   --card-foreground: var(--color-text);
   --popover: var(--color-surface);
   --popover-foreground: var(--color-text);
-  --primary: var(--color-ink);
-  --primary-foreground: var(--color-on-ink);
+  --primary: var(--color-primary-surface);
+  --primary-foreground: var(--color-on-primary-surface);
   --secondary: var(--color-bg-subtle);
   --secondary-foreground: var(--color-text);
   --muted: var(--color-bg-subtle);

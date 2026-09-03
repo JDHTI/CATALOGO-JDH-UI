@@ -21,8 +21,13 @@ export interface InitialsAvatarProps {
   size?: keyof typeof sizeClasses
   /** Optional photo; falls back to initials while loading or if absent. */
   src?: string
-  /** `muted` = subtle surface (lists); `ink` = black chrome (header/profile). */
-  tone?: "muted" | "ink"
+  /**
+   * `muted` = subtle surface (lists); `ink` = a black chip on a light surface;
+   * `on-ink` = the avatar itself sits ON black chrome, so the fallback has to
+   * read against ink rather than against the page — same `--overlay-on-dark-*`
+   * recipe `DateChip`'s and `JdhButton`'s on-ink variants use.
+   */
+  tone?: "muted" | "ink" | "on-ink"
   className?: string
 }
 
@@ -43,9 +48,10 @@ export function InitialsAvatar({
       <AvatarFallback
         className={cn(
           "font-medium",
-          tone === "ink"
-            ? "bg-primary text-primary-foreground"
-            : "bg-muted text-muted-foreground"
+          tone === "ink" && "bg-primary text-primary-foreground",
+          tone === "on-ink" &&
+            "bg-[var(--overlay-on-dark-16)] text-[var(--color-on-ink)]",
+          tone === "muted" && "bg-muted text-muted-foreground"
         )}
       >
         {initialsFrom(name)}

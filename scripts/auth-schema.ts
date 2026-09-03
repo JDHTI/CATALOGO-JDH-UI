@@ -13,6 +13,9 @@ export const auth = betterAuth({
   // Presente porque habilita la tabla `account` con credenciales (hash de
   // contraseña) que usan las cuentas de cliente.
   emailAndPassword: { enabled: true },
+  // Presente porque `storage: "database"` es lo que hace que el CLI cree la
+  // tabla `rateLimit`. Ver la nota de `rateLimit` en src/lib/auth/server.ts.
+  rateLimit: { storage: "database" },
   user: {
     additionalFields: {
       roles: {

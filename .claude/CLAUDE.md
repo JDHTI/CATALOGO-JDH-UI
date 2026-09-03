@@ -83,8 +83,10 @@ Better Auth (**pinned to 1.6.25** — 1.7.x breaks `additionalFields` inference)
 
 - `getEffectivePermissions()`, not `user?.permissions ?? []`, on any surface that also serves anonymous visitors — otherwise the public catalog hides itself when there's no session.
 - `src/proxy.ts` is **public-first**: only `PROTECTED_PREFIXES` require a session. A new private area is NOT protected by default — add it there. The authoritative check is always `requirePermissions` in the layout / Server Action.
-- `clienteId` / `listaPrecioId` are `input: false` — only writable via `internalAdapter.updateUser`. The admin flow that assigns them does not exist yet, so no client can actually sign in yet.
-- Infra is undefined: `DATABASE_URL` is a placeholder. Sessions won't work until Postgres exists and `pnpm auth:migrate` runs.
+- `clienteId` / `listaPrecioId` are `input: false` — only writable via `internalAdapter.updateUser`. **That is what makes open self-registration safe:** a client can sign up freely, but the account is born with no `clienteId`, so it sees exactly the public price list until an admin links it to the ERP. Never widen those fields to `input: true`.
+- Client sign-up is enforced by a **Server Action** (`src/lib/auth/acciones.ts`), not by `authClient.signUp`. Better Auth only checks password length; the rest of the policy lives in `src/lib/auth/registro.ts` and would be trivially bypassed by a hand-rolled `fetch` to the endpoint. New auth flows follow that shape.
+- Staff profile photos are served by `/api/perfil/foto`, and `user.image` holds that fixed path — never the image bytes. Putting a data URL there lands it inside the session cookie. See `src/lib/auth/foto-perfil.ts`.
+- `DATABASE_URL` points to the **`jdh_auth`** database in the API's Postgres container (`localhost:5435`), not to `jdh_catalogo`. Apply the schema with `pnpm auth:migrate`. Setup details in `.env.example`.
 
 ### Design system: DESIGN.md is the source of truth
 
@@ -95,6 +97,7 @@ Better Auth (**pinned to 1.6.25** — 1.7.x breaks `additionalFields` inference)
 Deliberate deviations from DESIGN.md (all commented in `globals.css`):
 
 - Dark mode toggles via the `.dark` class (next-themes convention) rather than DESIGN.md's `[data-theme]` attribute — same values, different selector.
+- **`--primary` inverts in dark** (white surface, ink text) via the `--color-primary-surface` pair, instead of staying `--color-ink` like the chrome does. It has to: on the dark canvas `--color-ink` _is_ the background. Likewise `--color-border-strong` in dark is `--neutral-500`, not DESIGN.md's `--overlay-on-dark-08`, which rendered outlined controls at ~1.1:1 and failed WCAG 2.2 SC 1.4.11. Both are corrections pending ratification in DESIGN.md §2.3 — see ARCHITECTURE.md 2026-09-03.
 - `--destructive` keeps shadcn's red instead of strict monochrome, as a pragmatic exception for destructive affordances.
 - Centrale Sans is live: `@font-face` at the top of `globals.css` loads `.woff2` from `public/fonts/`, first in the `--font-sans` stack. Only the four authorized weights ship (Light 300, Regular 400, Medium 500, Bold 700) each with its italic. Originals in `docs/brand/fonts/`; re-run `python scripts/generate-font-assets.py` (needs `fonttools` + `brotli`) if they change. Don't reference a weight outside those four.
 - shadcn's radius scale is derived from one `--radius` base (set to 4px so `rounded-lg` controls match DESIGN.md exactly); `rounded-xl` cards land ~5.6px instead of 8px — accepted rather than fighting the derivation formula.

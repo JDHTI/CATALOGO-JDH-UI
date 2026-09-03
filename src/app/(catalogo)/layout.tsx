@@ -1,3 +1,6 @@
+import { Suspense } from "react"
+
+import { WelcomeCurtain } from "@/components/auth/welcome-curtain"
 import { CatalogoChrome } from "@/components/layout/catalogo-chrome"
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav"
 import { SiteFooter } from "@/components/layout/site-footer"
@@ -33,6 +36,15 @@ export default function CatalogoLayout({
 }) {
   return (
     <div className="flex min-h-svh flex-col">
+      {/* Cortina de llegada tras ingresar. En `Suspense` porque lee
+          `useSearchParams`: sin el límite, ese hook desde el layout arrastraría
+          a renderizado en cliente TODAS las rutas del grupo, incluidas las que
+          hoy sí se generan estáticas. Con `fallback={null}` no dibuja nada
+          hasta hidratar, que es justo lo que corresponde a una animación. */}
+      <Suspense fallback={null}>
+        <WelcomeCurtain />
+      </Suspense>
+
       <CatalogoChrome />
 
       <main className="w-full flex-1">{children}</main>

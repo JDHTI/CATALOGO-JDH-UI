@@ -21,7 +21,13 @@ import { hasSessionCookie } from "@/lib/auth/session-cookie"
  * `admin/layout.tsx` and each private route's `page.tsx` (`requirePermissions`)
  * and in each Server Action — see `src/lib/auth/index.ts`.
  */
-const PROTECTED_PREFIXES = ["/cuenta", "/listas", "/favoritos", "/carrito", "/admin"]
+const PROTECTED_PREFIXES = [
+  "/cuenta",
+  "/listas",
+  "/favoritos",
+  "/carrito",
+  "/admin",
+]
 
 function isProtected(pathname: string): boolean {
   return PROTECTED_PREFIXES.some(

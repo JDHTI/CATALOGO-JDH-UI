@@ -2,9 +2,16 @@
 
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ChevronDown, ClipboardList, LogOut, UserRound } from "lucide-react"
+import {
+  ChevronDown,
+  ClipboardList,
+  LayoutDashboard,
+  LogOut,
+  UserRound,
+} from "lucide-react"
 
 import { InitialsAvatar } from "@/components/common/initials-avatar"
+import { PERMISSIONS } from "@/config/permissions"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,10 +30,17 @@ import { authClient } from "@/lib/auth/client"
  * directamente (`useCurrentUser`).
  */
 export function UserMenu() {
-  const { user } = useCurrentUser()
+  const { user, permissions } = useCurrentUser()
   const router = useRouter()
 
   if (!user) return null
+
+  // Administración salió del destino automático tras ingresar (ahora todo el
+  // mundo aterriza en el catálogo, ver `redirect-to.ts`), así que el personal
+  // JDH necesita una puerta explícita. Solo se dibuja con el permiso: para
+  // quien no lo tiene, `/admin` responde 404 y anunciarla sería filtrar que
+  // existe.
+  const puedeAdministrar = permissions.includes(PERMISSIONS.admin.access)
 
   return (
     <DropdownMenu>
@@ -35,7 +49,12 @@ export function UserMenu() {
           type="button"
           className="flex h-9 items-center gap-2 rounded-lg px-1.5 text-left transition-colors outline-none hover:bg-[var(--overlay-on-dark-08)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus-on-ink)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-ink)]"
         >
-          <InitialsAvatar name={user.name} size="sm" tone="muted" />
+          <InitialsAvatar
+            name={user.name}
+            src={user.image ?? undefined}
+            size="sm"
+            tone="on-ink"
+          />
           <span className="hidden min-w-0 flex-col leading-tight sm:flex">
             <span className="truncate text-sm font-medium text-[var(--color-on-ink)]">
               {user.name}
@@ -71,6 +90,17 @@ export function UserMenu() {
             Mis listas
           </Link>
         </DropdownMenuItem>
+        {puedeAdministrar ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/admin">
+                <LayoutDashboard />
+                Administración
+              </Link>
+            </DropdownMenuItem>
+          </>
+        ) : null}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"
