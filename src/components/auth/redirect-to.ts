@@ -31,9 +31,10 @@ export const BIENVENIDA_PARAM = "bienvenida"
  * de "volví a esta pestaña". La URL sí sobrevive al viaje completo, y es lo
  * único que Better Auth propaga a través de `callbackURL`.
  *
- * `WelcomeCurtain` retira el parámetro con `router.replace` en cuanto la
- * animación arranca, así que no queda en el historial ni se re-dispara al
- * recargar.
+ * `WelcomeCurtain` retira el parámetro al TERMINAR la animación, con
+ * `history.replaceState`, así que no queda en la barra de direcciones. No se
+ * retira al arrancar a propósito: hacerlo ahí cancelaba la propia animación
+ * (ver el efecto de arranque en `welcome-curtain.tsx`).
  */
 export function conBienvenida(destino: string): string {
   const [ruta, hash] = destino.split("#")
