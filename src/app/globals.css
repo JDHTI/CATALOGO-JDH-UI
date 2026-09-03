@@ -228,6 +228,12 @@
   --color-on-paper-muted: var(--neutral-500);
   --color-on-paper-disabled: var(--neutral-300);
   --color-paper-border: var(--neutral-200);
+  /* Rojo destructivo SOBRE PAPEL. Es el valor del tema claro y se queda fijo
+     también en oscuro, como el resto del bloque: el `--destructive` de `.dark`
+     está aclarado para leerse sobre el lienzo oscuro y sobre blanco pierde
+     contraste. Lo usa cualquier superficie papel con una acción destructiva
+     dentro (hoy, el menú de perfil). */
+  --color-destructive-on-paper: oklch(0.577 0.245 27.325);
 
   --color-focus: var(--neutral-900);
   --color-focus-on-ink: var(--neutral-0);
