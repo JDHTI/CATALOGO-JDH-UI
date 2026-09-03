@@ -26,8 +26,11 @@ export interface InitialsAvatarProps {
    * `on-ink` = the avatar itself sits ON black chrome, so the fallback has to
    * read against ink rather than against the page — same `--overlay-on-dark-*`
    * recipe `DateChip`'s and `JdhButton`'s on-ink variants use.
+   * `on-paper` = the mirror of `on-ink`, for a surface that stays WHITE in both
+   * themes (the welcome curtain). `muted` can't do it: its tokens follow the
+   * theme and go dark-on-dark there.
    */
-  tone?: "muted" | "ink" | "on-ink"
+  tone?: "muted" | "ink" | "on-ink" | "on-paper"
   className?: string
 }
 
@@ -51,6 +54,8 @@ export function InitialsAvatar({
           tone === "ink" && "bg-primary text-primary-foreground",
           tone === "on-ink" &&
             "bg-[var(--overlay-on-dark-16)] text-[var(--color-on-ink)]",
+          tone === "on-paper" &&
+            "bg-[var(--color-paper-hover)] text-[var(--color-on-paper)]",
           tone === "muted" && "bg-muted text-muted-foreground"
         )}
       >
