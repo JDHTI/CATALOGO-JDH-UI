@@ -40,9 +40,8 @@ type Fase = "saludando" | "abriendo" | "fin"
  * animación. El orden importa: hacerlo al arrancar es lo que impedía que la
  * cortina se pintara — ver el comentario del efecto de arranque.
  *
- * `aria-hidden`: es cromo de transición, no contenido. Lo que de verdad hay
- * que anunciar —quién eres y qué precios estás viendo— lo dice `WelcomeBanner`,
- * que sí es texto real en el documento y sigue ahí después.
+ * `aria-hidden`: es cromo de transición, no contenido persistente. La sesión
+ * activa queda representada en el menú de usuario del header.
  *
  * Bajo `prefers-reduced-motion` la cortina SÍ sale, pero sin desplazamiento:
  * los paneles se funden en vez de deslizarse. Antes se saltaba entera, y eso
