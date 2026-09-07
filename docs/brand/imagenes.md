@@ -131,12 +131,14 @@ monitor de 1920×1080, 1920 × 916.
 ## 4. Imágenes de producto
 
 Vienen del bucket (`imagenUrl`), no del repo. Un solo master **cuadrado**
-sirve a los tres usos, porque todos recortan con `object-cover`:
+sirve a los cuatro usos, y desde el 2026-09-07 **todas las cajas son 1:1**, así
+que el master se ve entero: `object-cover` sobre una caja cuadrada no recorta
+nada. Antes la card era `aspect-[4/3]` y se comía ~12.5% arriba y abajo.
 
 | Uso                    | Caja            | Ancho máx. en pantalla |
 | ---------------------- | --------------- | ---------------------- |
-| Card del listado       | `aspect-[4/3]`  | 258px (4 columnas)     |
-| Card en el homepage    | `aspect-[4/3]`  | ~448px (carrusel)      |
+| Card del listado       | `aspect-square` | 258px (4 columnas)     |
+| Card en el homepage    | `aspect-square` | ~448px (carrusel)      |
 | Detalle del producto   | `aspect-square` | ~696px                 |
 | Miniatura del buscador | cuadrada        | 56px                   |
 
@@ -146,8 +148,10 @@ sirve a los tres usos, porque todos recortan con `object-cover`:
 
 - Mínimo aceptable: 1200 × 1200. Por debajo, el detalle se ve blando.
 - **Fondo blanco o gris neutro** (el catálogo es monocromo, ver `DESIGN.md`)
-  y producto centrado con **~10% de aire arriba y abajo**: la card recorta el
-  12.5% superior y el 12.5% inferior del cuadrado para llegar a 4:3.
+  y producto centrado con **~10% de aire alrededor**. Ese aire ahora se VE
+  en todas las cajas: ya no hay recorte que lo absorba, así que un master con
+  el producto pegado al borde se nota, y uno con demasiado aire deja el
+  producto pequeño en la card. 10% es el punto medio.
 - Peso objetivo: ≤ 120 KB.
 - Sin imagen la UI no se rompe: `ProductoImagen` pinta un placeholder
   monocromo. Es parte del diseño, no un estado de error.

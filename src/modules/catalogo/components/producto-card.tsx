@@ -22,10 +22,19 @@ export function ProductoCard({ producto }: { producto: Producto }) {
         aria-label={`Ver detalle de ${producto.nombre}`}
         className="flex h-full flex-col focus-visible:outline-none"
       >
+        {/* Recuadro CUADRADO, igual que el detalle y la miniatura del
+            buscador: el master de producto es 1:1 y las tres variantes que
+            genera el API (`thumb`/`card`/`full`) son cuadradas con relleno
+            blanco, así que aquí no se recorta nada. Con el `aspect-[4/3]`
+            anterior el `object-cover` se comía ~12.5% arriba y abajo del
+            cuadrado, que es justo el aire que la guía de marca pide dejar
+            alrededor del producto. Las tres siluetas de este archivo (real,
+            fantasma y esqueleto) tienen que compartir esta relación o la
+            card salta de alto al terminar de cargar. */}
         <ProductoImagen
           producto={producto}
           sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
-          className="aspect-[4/3] w-full"
+          className="aspect-square w-full"
         />
 
         <div className="flex flex-1 flex-col gap-2 p-4">
@@ -74,7 +83,7 @@ export function ProductoCardFantasma() {
       aria-hidden="true"
       className="h-full overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]"
     >
-      <div className="flex aspect-[4/3] w-full items-center justify-center bg-[var(--color-surface-subtle)]">
+      <div className="flex aspect-square w-full items-center justify-center bg-[var(--color-surface-subtle)]">
         <Package
           className="size-10 text-muted-foreground opacity-30"
           strokeWidth={1.25}
@@ -98,7 +107,7 @@ export function ProductoCardSkeleton() {
       aria-hidden="true"
       className="h-full animate-pulse overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]"
     >
-      <div className="aspect-[4/3] w-full bg-[var(--color-surface-subtle)]" />
+      <div className="aspect-square w-full bg-[var(--color-surface-subtle)]" />
       <div className="flex flex-col gap-2 p-4">
         <div className="h-3 w-16 rounded bg-[var(--color-surface-subtle)]" />
         <div className="h-4 w-4/5 rounded bg-[var(--color-surface-subtle)]" />
