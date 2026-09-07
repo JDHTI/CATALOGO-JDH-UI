@@ -32,9 +32,8 @@ const VALUE_PROPS = [
 ] as const
 
 /**
- * Sección de cobertura y precios de lista: FULL-BLEED NEGRA (`--color-ink`),
- * pegada al hero — el "spacer" entre la imagen del hero y la siguiente
- * sección es el propio negro de la página. Las 4 propuestas de valor son
+ * Sección de cobertura y precios de lista: full-bleed negra en tema claro y
+ * blanca en tema oscuro, pegada al hero. Las 4 propuestas de valor son
  * CARDS INDEPENDIENTES (cada una con su borde hairline `--color-ink-border`,
  * separadas por gap) con texto en tokens on-ink y hover con overlay sutil.
  *
@@ -46,7 +45,7 @@ export function ValueProps() {
   return (
     <section
       aria-label="Por qué comprar en el catálogo JDH"
-      className="bg-[var(--color-ink)]"
+      className="bg-[var(--color-ink)] dark:bg-[var(--color-paper)]"
     >
       <Stagger
         staggerDelay={0.08}
@@ -54,12 +53,12 @@ export function ValueProps() {
       >
         {VALUE_PROPS.map(({ icon: Icon, title, description }) => (
           <StaggerItem key={title} className="h-full">
-            <div className="flex h-full flex-col gap-3 rounded-[var(--jdh-radius-md)] border border-[var(--color-ink-border)] bg-[var(--color-ink)] p-6 text-[var(--color-on-ink)] transition-colors duration-[var(--duration-fast)] hover:bg-[var(--overlay-on-dark-04)]">
-              <span className="flex size-10 items-center justify-center rounded-[var(--jdh-radius-sm)] bg-[var(--overlay-on-dark-08)] text-[var(--color-on-ink)]">
+            <div className="flex h-full flex-col gap-3 rounded-[var(--jdh-radius-md)] border border-[var(--color-ink-border)] bg-[var(--color-ink)] p-6 text-[var(--color-on-ink)] transition-colors duration-[var(--duration-fast)] hover:bg-[var(--overlay-on-dark-04)] dark:border-[var(--color-paper-border)] dark:bg-[var(--color-paper)] dark:text-[var(--color-on-paper)] dark:hover:bg-[var(--color-paper-hover)]">
+              <span className="flex size-10 items-center justify-center rounded-[var(--jdh-radius-sm)] bg-[var(--overlay-on-dark-08)] text-[var(--color-on-ink)] dark:bg-[var(--color-paper-hover)] dark:text-[var(--color-on-paper)]">
                 <Icon className="size-5" aria-hidden="true" />
               </span>
               <h2 className="text-base font-medium">{title}</h2>
-              <p className="text-sm text-[var(--color-on-ink-muted)]">
+              <p className="text-sm text-[var(--color-on-ink-muted)] dark:text-[var(--color-on-paper-muted)]">
                 {description}
               </p>
             </div>

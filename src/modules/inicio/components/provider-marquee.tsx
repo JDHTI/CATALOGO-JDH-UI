@@ -23,8 +23,8 @@ const SEGUNDOS_POR_PROVEEDOR = 4
  * de bucle sin saltos (loop seamless), pausando con `prefers-reduced-motion`.
  * Cada proveedor = slot de LOGO (`LogoComercial`, hoy monograma hasta que el
  * backend envíe `logoUrl`) + nombre y su conteo de referencias AL FRENTE (en
- * fila, no columna). Sección NEGRA full-width y SIN divisor entre el título
- * y el carrusel — ambos viven en la misma franja negra.
+ * fila, no columna). La sección es negra en tema claro y blanca en tema
+ * oscuro, full-width y sin divisor entre el título y el carrusel.
  *
  * Los proveedores son REALES (`GET /suppliers`). Antes venían de un mock con
  * un `slogan` y una `descripcion` inventados por proveedor; el API solo da
@@ -67,17 +67,17 @@ export function ProviderMarquee() {
   return (
     <section
       aria-label="Proveedores aliados"
-      className="overflow-hidden bg-[var(--color-ink)] text-[var(--color-on-ink)]"
+      className="overflow-hidden bg-[var(--color-ink)] text-[var(--color-on-ink)] dark:bg-[var(--color-paper)] dark:text-[var(--color-on-paper)]"
     >
       <div className="mx-auto max-w-[var(--container-wide)] px-4 py-[var(--space-16)] sm:px-6 lg:py-[var(--space-24)]">
         <div className="flex flex-col gap-8">
           <div className="flex flex-col gap-2">
-            <p className="font-mono text-xs tracking-[0.08em] text-[var(--color-on-ink-muted)] uppercase">
+            <p className="font-mono text-xs tracking-[0.08em] text-[var(--color-on-ink-muted)] uppercase dark:text-[var(--color-on-paper-muted)]">
               Aliados de confianza
             </p>
             <h2
               id="proveedores-title"
-              className="text-2xl font-bold tracking-tight text-balance text-[var(--color-on-ink)] sm:text-3xl"
+              className="text-2xl font-bold tracking-tight text-balance text-[var(--color-on-ink)] sm:text-3xl dark:text-[var(--color-on-paper)]"
             >
               Proveedores que respaldan cada pedido
             </h2>
@@ -95,12 +95,12 @@ export function ProviderMarquee() {
                     className="flex w-[22rem] shrink-0 items-center gap-4"
                   >
                     <LogoComercialVacio
-                      className="size-12 rounded-full"
+                      className="size-12 rounded-full dark:bg-[var(--color-paper-hover)]"
                       onInk
                     />
                     <div className="flex min-w-0 flex-1 flex-col gap-2">
-                      <span className="h-4 w-2/3 rounded bg-[var(--overlay-on-dark-08)]" />
-                      <span className="h-3 w-1/3 rounded bg-[var(--overlay-on-dark-08)]" />
+                      <span className="h-4 w-2/3 rounded bg-[var(--overlay-on-dark-08)] dark:bg-[var(--color-paper-hover)]" />
+                      <span className="h-3 w-1/3 rounded bg-[var(--overlay-on-dark-08)] dark:bg-[var(--color-paper-hover)]" />
                     </div>
                   </div>
                 ))}
@@ -112,6 +112,7 @@ export function ProviderMarquee() {
                     : SECTION_EMPTY_COPY.sinDatos("proveedores")
                 }
                 onInk
+                className="dark:text-[var(--color-on-paper-muted)]"
               />
             </div>
           ) : (
@@ -154,14 +155,14 @@ export function ProviderMarquee() {
                       logoUrl={proveedor.logoUrl}
                       sizes="48px"
                       onInk
-                      className="size-12 rounded-full"
+                      className="size-12 rounded-full dark:bg-[var(--color-paper-hover)] dark:text-[var(--color-on-paper)]"
                     />
                     <div className="flex min-w-0 flex-col gap-0.5">
-                      <h3 className="truncate text-base font-medium text-[var(--color-on-ink)]">
+                      <h3 className="truncate text-base font-medium text-[var(--color-on-ink)] dark:text-[var(--color-on-paper)]">
                         {formatNombreComercial(proveedor.nombre)}
                       </h3>
                       {proveedor.totalProductos != null ? (
-                        <p className="text-sm text-[var(--color-on-ink-muted)]">
+                        <p className="text-sm text-[var(--color-on-ink-muted)] dark:text-[var(--color-on-paper-muted)]">
                           {formatNumero(proveedor.totalProductos)}{" "}
                           {proveedor.totalProductos === 1
                             ? "referencia"

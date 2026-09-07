@@ -21,7 +21,7 @@ import { MainNav } from "./main-nav"
 /**
  * Altura TOTAL de la ContactBar: su fila de `h-9` (36px) MÁS el hairline de
  * 1px con el que se separa del header (`border-b border-[--color-ink-border]`,
- * el mismo divisor que usan `AppHeader` y `MainNav`).
+ * el mismo divisor que usa `AppHeader` para separar el menú).
  *
  * El +1 no es cosmético: este valor es el tope de la animación de altura, y el
  * contenedor lleva `overflow-hidden`. Con 36 el borde inferior quedaba

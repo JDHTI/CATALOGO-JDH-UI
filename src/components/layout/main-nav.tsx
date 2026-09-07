@@ -15,8 +15,9 @@ const MAX_ACCESOS = 6
 
 /**
  * Barra del menú — mismo chrome negro que `ContactBar` y `AppHeader` (ver
- * ahí: "las tres franjas son el mismo chrome"), separada de la barra
- * principal por una línea hairline `--color-ink-border`. Navegación: el
+ * ahí: "las tres franjas son el mismo chrome"). `AppHeader` aporta la única
+ * línea hairline que separa ambas barras, evitando que dos bordes contiguos
+ * formen un divisor de 2px. Navegación: el
  * trigger "Menú" del mega menú, junto a él "Explorar catálogo" (acceso
  * directo a `/productos`, el hub completo); accesos directos a las MARCAS
  * con más referencias, a texto plano sin iconos; y "Promociones" lockeado a
@@ -74,7 +75,7 @@ export function MainNav({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "relative border-t border-[var(--color-ink-border)] bg-[var(--color-ink)] text-[var(--color-on-ink)]",
+        "relative bg-[var(--color-ink)] text-[var(--color-on-ink)]",
         className
       )}
     >

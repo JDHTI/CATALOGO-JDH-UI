@@ -11,13 +11,12 @@ import { ValueProps } from "./value-props"
 
 /**
  * Vista del homepage (Server Component): el primer slide es full-bleed
- * (imagen de fondo a viewport); le sigue la sección de cobertura FULL-BLEED
- * NEGRA (`ValueProps`) pegada al hero — el espacio entre ambos es el propio
- * negro de la página.
+ * (imagen de fondo a viewport); le sigue la sección de cobertura full-bleed
+ * (`ValueProps`) pegada al hero, negra en tema claro y blanca en oscuro.
  *
  * Orden: hero → cobertura negra → proveedores (grilla) → muestra del catálogo
- * (carrusel) → banners publicitarios → cinta INFINITA de proveedores (franja
- * negra full-width) → marcas (grilla de logos) → CTA final.
+ * (carrusel) → banners publicitarios → cinta INFINITA de proveedores
+ * (negra en claro, blanca en oscuro) → marcas (grilla de logos) → CTA final.
  *
  * Las secciones que dependen del CATÁLOGO (`ProveedoresSection`,
  * `FeaturedProducts`, `ProviderMarquee`, `BrandsSection`) piden sus datos
