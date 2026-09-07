@@ -78,7 +78,31 @@ async function enrichFromEntra(
  * `plugins` inline dentro del mismo objeto que se está construyendo,
  * TypeScript no puede inferirlo (referencia circular).
  */
-const pool = new Pool({ connectionString: requireEnv("DATABASE_URL") })
+/**
+ * Pool dimensionado para SERVERLESS, que es como corre esto en Vercel.
+ *
+ * El `max` por defecto de `pg` es 10, y ahí está la trampa: en serverless no
+ * hay UN proceso con un pool, hay tantas instancias como concurrencia tenga la
+ * función, y cada una abre el suyo. El total contra la base es
+ * `instancias × max`, así que con el valor por defecto basta un pico modesto
+ * para agotar las ~100 conexiones que trae un Postgres gestionado y empezar a
+ * devolver 500 por "too many clients". Un `max` pequeño acota ese producto;
+ * el `idleTimeoutMillis` corto devuelve la conexión rápido, que es justo lo
+ * que conviene cuando la instancia se congela entre invocaciones.
+ *
+ * `connectionTimeoutMillis` es lo que convierte un host inalcanzable en un
+ * error rápido y legible en los logs, en vez de una petición colgada hasta que
+ * la plataforma la corta sin explicación.
+ *
+ * Si algún día se pone un pooler delante (PgBouncer, el `-pooler` de Neon),
+ * esto puede bajar a 1: quien multiplexa entonces es el pooler.
+ */
+const pool = new Pool({
+  connectionString: requireEnv("DATABASE_URL"),
+  max: 3,
+  idleTimeoutMillis: 10_000,
+  connectionTimeoutMillis: 10_000,
+})
 
 /**
  * `pg.Pool` es un `EventEmitter`: si un cliente inactivo del pool encuentra un
