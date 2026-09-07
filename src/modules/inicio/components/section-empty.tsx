@@ -15,15 +15,18 @@ import { cn } from "@/lib/utils"
 export function SectionNota({
   mensaje,
   onInk = false,
+  className,
 }: {
   mensaje: string
   onInk?: boolean
+  className?: string
 }) {
   return (
     <p
       className={cn(
         "text-center text-xs",
-        onInk ? "text-[var(--color-on-ink-muted)]" : "text-muted-foreground"
+        onInk ? "text-[var(--color-on-ink-muted)]" : "text-muted-foreground",
+        className
       )}
     >
       {mensaje}
