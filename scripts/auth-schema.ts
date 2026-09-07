@@ -6,10 +6,17 @@
 // datos (`database`, `user.additionalFields`, `emailAndPassword`); si esos
 // campos cambian en `src/lib/auth/server.ts`, cambian aquí también.
 import { betterAuth } from "better-auth"
+import { jwt } from "better-auth/plugins"
 import { Pool } from "pg"
 
 export const auth = betterAuth({
   database: new Pool({ connectionString: process.env.DATABASE_URL }),
+  // Presente porque el plugin `jwt` añade la tabla `jwks`, donde vive el par
+  // de claves con el que se firman los tokens para jdh-catalogo-api (la
+  // privada, cifrada con `BETTER_AUTH_SECRET`). Solo se declara el plugin: su
+  // configuración de `issuer`/`audience`/payload no afecta al esquema y vive
+  // en src/lib/auth/server.ts.
+  plugins: [jwt()],
   // Presente porque habilita la tabla `account` con credenciales (hash de
   // contraseña) que usan las cuentas de cliente.
   emailAndPassword: { enabled: true },

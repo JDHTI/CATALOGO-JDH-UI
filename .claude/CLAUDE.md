@@ -111,7 +111,7 @@ Every table goes through `components/data/data-table.tsx` (TanStack Table engine
 
 - `src/lib/query-client.ts`: SSR-safe TanStack Query pattern (fresh client per request on the server, cached singleton in the browser). Use `getQueryClient()`.
 - Client-side fetching goes through TanStack Query hooks in a module's `hooks/`, never loose `useEffect` + `fetch`.
-- `src/lib/api/backend-fetch.ts` calls the (not-yet-existing) catalog backend as the current user. Don't use it for public reads — it forces a session and would break caching of anonymous pages.
+- `src/lib/api/backend-fetch.ts` calls the (not-yet-existing) catalog backend as the current user, forwarding a **short-lived JWT** minted by Better Auth's `jwt` plugin — never the session token, and never DB credentials. The API verifies it against `GET /api/auth/jwks` and must stay out of the `jdh_auth` database. Don't use this helper for public reads — it forces a session and would break caching of anonymous pages. See ARCHITECTURE.md 2026-09-07.
 
 ### Path aliases
 
