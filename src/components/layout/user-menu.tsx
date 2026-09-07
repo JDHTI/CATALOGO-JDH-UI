@@ -136,9 +136,10 @@ export function UserMenu() {
           onSelect={() => {
             void authClient.signOut({
               fetchOptions: {
-                // Al catálogo público, no a `/ingreso`: cerrar sesión no debe
-                // dejar al usuario en una pantalla de login sin salida.
-                onSuccess: () => router.push("/productos"),
+                // Revalida el árbol con la cookie ya eliminada sin cambiar la
+                // URL: en rutas públicas el usuario permanece exactamente
+                // donde estaba. Las rutas protegidas aplican su guard normal.
+                onSuccess: () => router.refresh(),
               },
             })
           }}
