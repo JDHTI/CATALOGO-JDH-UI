@@ -23,8 +23,12 @@ const jdhButtonVariants = cva(
   {
     variants: {
       variant: {
+        // El hover sale de `--color-primary-surface-hover` y no de
+        // `--color-ink-hover`: la superficie primaria se invierte con el tema
+        // (negro en claro, blanco en oscuro) mientras el chrome ink no. Ver la
+        // nota de `--color-primary-surface` en globals.css.
         primary:
-          "bg-primary text-primary-foreground hover:bg-[var(--color-ink-hover)]",
+          "bg-primary text-primary-foreground hover:bg-[var(--color-primary-surface-hover)]",
         secondary:
           "border-[var(--color-border-strong)] text-foreground hover:border-foreground hover:bg-accent",
         ghost: "text-foreground hover:bg-accent",

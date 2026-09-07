@@ -1,3 +1,4 @@
+import { WelcomeCurtain } from "@/components/auth/welcome-curtain"
 import { CatalogoChrome } from "@/components/layout/catalogo-chrome"
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav"
 import { SiteFooter } from "@/components/layout/site-footer"
@@ -33,6 +34,12 @@ export default function CatalogoLayout({
 }) {
   return (
     <div className="flex min-h-svh flex-col">
+      {/* Cortina de llegada tras ingresar. Ya no necesita `Suspense`: lo
+          llevaba porque leía `useSearchParams`, y ahora lee `window.location`
+          y solo usa `usePathname`, que es seguro en rutas estáticas y no
+          obliga a renderizado dinámico. Ver `welcome-curtain.tsx`. */}
+      <WelcomeCurtain />
+
       <CatalogoChrome />
 
       <main className="w-full flex-1">{children}</main>

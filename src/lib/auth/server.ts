@@ -12,6 +12,8 @@ import {
   ROLES,
 } from "@/config/permissions"
 
+import { FOTO_PERFIL_PATH } from "./foto-perfil"
+import { CONTRASENA_MAX, CONTRASENA_MIN } from "./registro"
 import { assertJdhTenant, JDH_TENANT_ID } from "./tenant"
 
 function requireEnv(name: string): string {
@@ -215,16 +217,32 @@ const options = {
    * Cuentas de CLIENTE (externos). Los clientes no están en el tenant de
    * Entra, así que su ingreso es email + contraseña.
    *
-   * `disableSignUp: true` a propósito: el acceso de un cliente se habilita
-   * desde el panel de administración (que crea la cuenta y la vincula a su
-   * `clienteId` en el ERP), no por auto-registro — un auto-registro no puede
-   * verificar que quien se inscribe sea realmente ese cliente, y de ahí
-   * dependen los precios negociados.
+   * El auto-registro está ABIERTO (antes `disableSignUp: true`). La objeción
+   * original sigue siendo cierta —nadie puede demostrar en un formulario que
+   * es tal cliente del ERP— pero se resuelve donde de verdad importa, que es
+   * el PRECIO y no la existencia de la cuenta: una cuenta recién registrada
+   * nace sin `clienteId` ni `listaPrecioId` (ambos `input: false`, ver abajo),
+   * así que `getPriceContext()` la trata como público y ve exactamente la
+   * misma lista que un visitante anónimo. Vincularla a un cliente del ERP —y
+   * con ello abrirle los precios negociados— sigue siendo un acto exclusivo
+   * del panel de administración. Registrarse solo da identidad (favoritos,
+   * listas, pedidos), nunca precio.
+   *
+   * `minPasswordLength` es lo único que Better Auth sabe imponer; el resto de
+   * la política vive en `./registro.ts` y la aplica la Server Action de
+   * `./acciones.ts`. Este mínimo es la última línea: cubre también cualquier
+   * alta que no pase por ese formulario.
    */
   emailAndPassword: {
     enabled: true,
-    disableSignUp: true,
+    disableSignUp: false,
+    // Sin infraestructura de correo todavía (ver ARCHITECTURE.md): exigir
+    // verificación aquí dejaría a toda cuenta nueva sin poder entrar. Cuando
+    // exista el envío, esto pasa a `true` junto con `sendVerificationEmail`.
     requireEmailVerification: false,
+    autoSignIn: true,
+    minPasswordLength: CONTRASENA_MIN,
+    maxPasswordLength: CONTRASENA_MAX,
   },
   /** Cuentas de PERSONAL JDH (asesores y administradores) vía Entra ID. */
   socialProviders: {
@@ -233,6 +251,15 @@ const options = {
       clientSecret: requireEnv("AUTH_MICROSOFT_ENTRA_ID_SECRET"),
       tenantId: JDH_TENANT_ID,
       prompt: "select_account",
+      // Los scopes por defecto del proveedor ya son los concedidos en el App
+      // Registration (openid, profile, email, User.Read, offline_access), así
+      // que no hace falta declararlos: pedir uno de más provocaría una
+      // pantalla de consentimiento que el tenant no puede aprobar.
+      //
+      // Se deja en `true` a propósito. Better Auth traería la foto de Graph
+      // por su cuenta, pero la guarda como data URL en base64 dentro de
+      // `user.image`, y eso termina dentro de la cookie de sesión. Ver
+      // `./foto-perfil.ts` para el detalle y la alternativa que se usa.
       disableProfilePhoto: true,
       // Sin esto, un cambio de App Role en Entra solo se refleja tras
       // desvincular y volver a vincular la cuenta.
@@ -245,6 +272,10 @@ const options = {
           id: profile.oid,
           name: profile.name,
           email: profile.email ?? profile.preferred_username,
+          // Ruta fija, no los bytes: el handler resuelve la foto por sesión.
+          // El proveedor asigna `image: profile.picture` antes de mezclar lo
+          // que devuelve esta función, así que esto lo sobrescribe.
+          image: FOTO_PERFIL_PATH,
         }
       },
     },
@@ -257,6 +288,28 @@ const options = {
   },
   session: {
     cookieCache: { enabled: true, maxAge: 60 * 5 },
+  },
+  /**
+   * Límite de peticiones sobre los endpoints de identidad. Better Auth lo
+   * activa solo en producción por defecto; eso se respeta (en desarrollo un
+   * tope bajo estorba más de lo que protege), pero los caminos que aceptan
+   * una credencial reciben reglas mucho más estrictas que el global.
+   *
+   * `storage: "database"` y no el contador en memoria por defecto: en memoria
+   * el límite es POR PROCESO, así que con más de una instancia detrás de un
+   * balanceador el atacante multiplica sus intentos por el número de réplicas.
+   * La tabla `rateLimit` la crea `pnpm auth:migrate`.
+   */
+  rateLimit: {
+    storage: "database",
+    customRules: {
+      // 5 intentos por minuto: suficiente para quien se equivoca de
+      // contraseña, inservible para recorrer un diccionario.
+      "/sign-in/email": { window: 60, max: 5 },
+      "/sign-up/email": { window: 60, max: 3 },
+      "/forget-password": { window: 60, max: 3 },
+      "/reset-password": { window: 60, max: 5 },
+    },
   },
 } satisfies BetterAuthOptions
 

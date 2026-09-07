@@ -11,20 +11,26 @@ import { JdhInput } from "@/components/forms/jdh-input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { authClient } from "@/lib/auth/client"
 
-import { safeRedirectTo } from "./redirect-to"
+import { PasswordInput } from "./password-input"
+import {
+  conBienvenida,
+  DESTINO_TRAS_INGRESO,
+  safeRedirectTo,
+} from "./redirect-to"
 
 /**
  * Ingreso de CLIENTES (cuentas externas): email + contraseña contra Better
- * Auth. El personal JDH entra por Entra ID (`StaffSignInButton`) — son dos
+ * Auth. El personal JDH entra por Entra ID (`SocialSignIn`) — son dos
  * proveedores distintos porque los clientes no están en el tenant.
  *
- * Sin enlace de registro: `emailAndPassword.disableSignUp` está activo y las
- * cuentas se crean desde el panel de administración, que es lo único que puede
- * vincularlas al `clienteId` del ERP del que dependen los precios.
+ * La sesión llega como cookie httpOnly puesta por el servidor: `authClient` no
+ * devuelve ni guarda ningún token, y nada de esto pasa por `localStorage`.
  *
- * El mensaje de error es deliberadamente genérico ("credenciales inválidas")
- * y no distingue "usuario no existe" de "contraseña incorrecta: eso sería un
- * oráculo de enumeración de cuentas.
+ * El mensaje de error es deliberadamente genérico ("no pudimos validar esos
+ * datos") y no distingue "usuario no existe" de "contraseña incorrecta": eso
+ * sería un oráculo de enumeración de cuentas. La única excepción es el bloqueo
+ * por límite de peticiones (429), que sí se nombra — no revela nada sobre la
+ * cuenta y sin él el usuario no entiende por qué dejó de funcionar.
  */
 export function ClientSignInForm({
   redirectTo,
@@ -52,7 +58,9 @@ export function ClientSignInForm({
     if (signInError) {
       setLoading(false)
       setError(
-        "No pudimos validar esos datos. Revisa tu correo y contraseña e inténtalo de nuevo."
+        signInError.status === 429
+          ? "Demasiados intentos seguidos. Espera un minuto y vuelve a probar."
+          : "No pudimos validar esos datos. Revisa tu correo y contraseña e inténtalo de nuevo."
       )
       return
     }
@@ -60,7 +68,9 @@ export function ClientSignInForm({
     // `as Route`: con `typedRoutes` el destino se resuelve en runtime (viene
     // de un search param ya saneado), así que el tipado estático no puede
     // verificarlo. Mismo punto de fricción que los hrefs derivados del nav.
-    router.push(safeRedirectTo(redirectTo, "/productos") as Route)
+    router.push(
+      conBienvenida(safeRedirectTo(redirectTo, DESTINO_TRAS_INGRESO)) as Route
+    )
   }
 
   return (
@@ -83,9 +93,8 @@ export function ClientSignInForm({
       </Field>
 
       <Field label="Contraseña" required>
-        <JdhInput
+        <PasswordInput
           name="password"
-          type="password"
           autoComplete="current-password"
           required
         />

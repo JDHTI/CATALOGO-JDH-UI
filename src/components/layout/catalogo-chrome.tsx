@@ -11,6 +11,8 @@ import {
 
 import { cn } from "@/lib/utils"
 
+import { WelcomeBanner } from "@/components/auth/welcome-banner"
+
 import { AnnouncementBar } from "./announcement-bar"
 import { AppHeader } from "./app-header"
 import { ContactBar } from "./contact-bar"
@@ -137,9 +139,15 @@ export function CatalogoChrome() {
   return (
     <div className="sticky top-0 z-[var(--z-sticky)]">
       {bloqueSuperior}
+      {/* `WelcomeBanner` va DENTRO del bloque medido: aparece y se descarta
+          cambiando la altura del chrome, y el `ResizeObserver` de arriba
+          reajusta `--catalogo-chrome-height` solo, así que el primer slide de
+          la portada sigue midiendo exactamente hasta el pliegue. Fuera de aquí
+          habría que sumarle su altura a mano en `globals.css`. */}
       <div ref={staticRef}>
         <AppHeader />
         <MainNav />
+        <WelcomeBanner />
       </div>
     </div>
   )

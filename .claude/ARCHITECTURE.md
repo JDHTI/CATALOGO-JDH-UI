@@ -209,8 +209,6 @@ Dos de esas decisiones se subieron al `QueryClient` global (`src/lib/query-clien
 - **`images.remotePatterns` se DERIVA de `NEXT_PUBLIC_ASSETS_CDN_URL`** (`patronDelBucket()` en `next.config.ts`), en vez del comodín `{ protocol: "https", hostname: "**" }` que pasaba cualquier host. Así mover el bucket a un Custom Domain no exige recordar un segundo archivo — el fallo típico, con `/_next/image` devolviendo 400 sin explicación. Sin la variable se cae al comodín, para no dejar sin imágenes a un entorno a medio configurar. El pattern cubre también las imágenes de producto y los logos, que salen del mismo bucket.
 - **Verificado contra el bucket real** (R2, dominio público `pub-….r2.dev`, que sirve la RAÍZ del bucket sin su nombre en la ruta): las cinco piezas responden 200 en `image/webp` — `site/hero/home-desktop.webp` (399 KB) y `site/banners/home-{desktop,mobile}-{1,2}.webp`. Ojo con el orden del nombre: **el formato va ANTES del índice** (`home-desktop-1`, no `home-1-desktop`), que es lo contrario de lo que sugería la primera lectura del requisito. r2.dev no permite listar, así que un cambio de nombres solo se detecta porque la pieza deja de aparecer.
 - Descartado en el camino: extraer el transporte del API público (`apiGet`, `CatalogoApiError`) a `src/lib/api/`. Se hizo mientras esto iba contra un endpoint y se revirtió al desaparecer el segundo consumidor — `modules/catalogo/api/` queda como estaba.
-<<<<<<< Updated upstream
-=======
 
 ## 2026-09-03 — Cerrar el ciclo de autenticación: base propia, registro de clientes, foto de Entra y bienvenida
 
@@ -303,4 +301,3 @@ Dos de esas decisiones se subieron al `QueryClient` global (`src/lib/query-clien
 - **`/api/auth/jwks` es un endpoint público que lee la base.** Está cubierto por el rate limit global de Better Auth (activo solo en producción) y `jose` lo cachea en el cliente, pero es superficie nueva: no añadir ahí nada que no sea clave pública.
 - **Pendiente en el repo del API:** un guard de Nest que verifique el token contra el JWKS. `docs/despliegue.md` §9 lleva el contrato exacto (claims, `iss`, `aud`, algoritmo, variable de entorno). Mientras no exista, `backendFetch` no tiene a quién llamar — no lo llama nadie todavía.
 - **Cada entorno firma con su propia clave**, porque la tabla `jwks` vive en su base. Compartir `DATABASE_URL` entre preview y producción haría que un token de preview validara contra producción: es una razón más para que sean bases distintas, además de las sesiones.
->>>>>>> Stashed changes
