@@ -70,6 +70,9 @@ export interface Producto {
   sku: string
   nombre: string
   descripcion: string
+  /** Texto editorial plano; null mientras la ficha está pendiente. */
+  descripcionLarga: string | null
+  seo: { title: string | null; description: string | null }
   marca: string
   fabricante: string
   proveedor: Proveedor
@@ -82,6 +85,8 @@ export interface Producto {
    * según el tamaño del recuadro).
    */
   imagenUrl: string | null
+  /** Respaldo opcional enviado por el API; no se usa como imagen SEO. */
+  imagenUrlFallback: string | null
   /** Galería completa, primaria primero. Vacío si el producto no tiene fotos. */
   imagenes: ImagenProducto[]
 }

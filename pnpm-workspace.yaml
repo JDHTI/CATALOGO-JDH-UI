@@ -1,4 +1,6 @@
 allowBuilds:
+  # Transformación TS/TSX del runner de pruebas Vitest.
+  esbuild: true
   # Dependencias transitivas del CLI de Better Auth: no se usan en runtime,
   # así que no necesitan compilar binarios nativos.
   "@prisma/client": false

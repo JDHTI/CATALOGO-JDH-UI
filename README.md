@@ -41,7 +41,14 @@ pnpm format         # prettier --write .
 pnpm auth:migrate   # aplicar el esquema de Better Auth a Postgres
 ```
 
-No hay runner de pruebas configurado todavía.
+```bash
+pnpm test              # contrato, SEO, seguridad y estados de componentes (Vitest)
+pnpm test:watch        # pruebas en modo watch
+pnpm test:integration  # HTTP contra Next real y API temporal; no requiere backend ni credenciales
+```
+
+La integración HTTP levanta su propio servidor de desarrollo. Ejecutarla sin otro
+`next dev` abierto en este worktree (ambos usarían `.next/dev`).
 
 ## Estructura
 
@@ -58,6 +65,8 @@ src/
 Contrato de un módulo: `src/modules/README.md`.
 
 ## Documentación
+
+- **`docs/product-content.md`** — contrato editorial, fallbacks SEO, canonical y verificación.
 
 - **`.claude/DESIGN.md`** — sistema de diseño JDH (monocromo corporativo, tokens, componentes, WCAG 2.2 AA). Fuente de verdad visual.
 - **`.claude/ARCHITECTURE.md`** — registro de decisiones arquitectónicas: por qué el proyecto está así.

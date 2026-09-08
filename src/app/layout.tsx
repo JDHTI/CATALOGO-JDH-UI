@@ -8,9 +8,10 @@ import { ThemeProvider } from "@/components/providers/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { siteConfig } from "@/config/site"
+import { siteUrl } from "@/config/site-url"
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://catalogo.jdh.com.co"),
+  metadataBase: siteUrl,
   title: {
     default: siteConfig.name,
     template: `%s · ${siteConfig.name}`,

@@ -50,7 +50,10 @@ export function ProductoImagen({
   priority = false,
   variant = "card",
 }: {
-  producto: Pick<Producto, "nombre" | "marca" | "imagenUrl" | "imagenes">
+  producto: Pick<
+    Producto,
+    "nombre" | "marca" | "imagenUrl" | "imagenUrlFallback" | "imagenes"
+  >
   /** Imagen concreta a mostrar. Por defecto, la primaria del producto. */
   imagen?: ImagenProducto | null
   /** `sizes` de next/image acorde al layout del caller. */
@@ -65,24 +68,28 @@ export function ProductoImagen({
    * TODAS a la vez, primarias incluidas. Sin esto el catálogo entero pintaría
    * el ícono de imagen rota del navegador en vez del placeholder de diseño.
    *
-   * Se guarda la URL que falló en vez de un booleano: así, cuando cambia `src`
-   * —otro producto, u otra imagen de la galería— el estado deja de aplicar
-   * solo y se reintenta, sin `useEffect` de sincronización.
+   * Se guardan las URLs fallidas para avanzar por variante → imagenUrl →
+   * imagenUrlFallback → placeholder sin ciclos. Una URL nueva vuelve a
+   * intentarse sin efectos de sincronización.
    */
-  const [urlFallida, setUrlFallida] = useState<string | null>(null)
+  const [urlsFallidas, setUrlsFallidas] = useState<ReadonlySet<string>>(
+    () => new Set()
+  )
 
   const esMiniatura = variant === "miniatura"
   const elegida =
     imagen ??
     producto.imagenes.find((candidata) => candidata.esPrincipal) ??
     producto.imagenes[0]
-  const src =
+  const preferida =
     (variant === "miniatura"
       ? elegida?.thumbUrl
       : variant === "detalle"
         ? elegida?.fullUrl
         : elegida?.cardUrl) ?? producto.imagenUrl
-  const utilizable = src && src !== urlFallida
+  const src = [preferida, producto.imagenUrl, producto.imagenUrlFallback].find(
+    (url) => url && !urlsFallidas.has(url)
+  )
 
   return (
     <div
@@ -91,10 +98,12 @@ export function ProductoImagen({
         className
       )}
     >
-      {utilizable ? (
+      {src ? (
         <Image
           src={src}
-          onError={() => setUrlFallida(src)}
+          onError={() =>
+            setUrlsFallidas((previas) => new Set(previas).add(src))
+          }
           // El `alt` del API es descriptivo por imagen cuando existe; hoy llega
           // null en toda la galería, y ahí el nombre del producto es mejor que
           // un alt vacío.

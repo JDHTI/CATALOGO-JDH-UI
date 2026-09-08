@@ -18,7 +18,7 @@ export function ProductoCard({ producto }: { producto: Producto }) {
   return (
     <article className="group h-full overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] transition-[border-color,transform] duration-200 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:-translate-y-0.5 hover:border-[var(--color-border-strong)]">
       <Link
-        href={`/productos/${producto.id}` as Route}
+        href={`/productos/${encodeURIComponent(producto.id)}` as Route}
         aria-label={`Ver detalle de ${producto.nombre}`}
         className="flex h-full flex-col focus-visible:outline-none"
       >
@@ -53,6 +53,11 @@ export function ProductoCard({ producto }: { producto: Producto }) {
             <p className="text-xs text-muted-foreground tabular-nums">
               {producto.sku}
             </p>
+            {producto.seo.description ? (
+              <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                {producto.seo.description}
+              </p>
+            ) : null}
           </div>
 
           {/* SLOT DE PRECIO (oculto a propósito): sin precios definidos en el

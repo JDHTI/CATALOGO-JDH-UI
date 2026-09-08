@@ -3,9 +3,11 @@ import type { Metadata } from "next"
 
 import { CatalogoPage } from "@/components/layout/catalogo-page"
 import { CatalogoView, CatalogoViewFallback } from "@/modules/catalogo"
+import { siteUrl } from "@/config/site-url"
 
 export const metadata: Metadata = {
   title: "Productos",
+  alternates: { canonical: new URL("/productos", siteUrl).href },
   description:
     "Explora el portafolio JDH por categoría, marca o código de producto.",
 }

@@ -29,7 +29,8 @@ export function CatalogoViewFallback() {
   return (
     <div
       className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4"
-      aria-hidden="true"
+      role="status"
+      aria-label="Cargando productos"
     >
       {Array.from({ length: 8 }, (_, i) => (
         <ProductoCardSkeleton key={i} />
@@ -304,7 +305,7 @@ export function CatalogoView() {
             </div>
           )}
 
-          {meta ? (
+          {meta && !productos.isError && visibles.length > 0 ? (
             <Pagination
               page={meta.page}
               totalPages={meta.totalPages}

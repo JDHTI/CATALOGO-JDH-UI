@@ -319,3 +319,35 @@ Ambas llamadas **degradan solas** en `api/client.ts`: un 400 al `orderBy` reinte
 - **`imagenes[]` es una promesa de Postgres, no del bucket.** Auditadas las 122 filas contra R2 el 2026-09-08: las 35 primarias responden, pero **59 de 87 secundarias dan 404** (25 productos con TODAS sus secundarias rotas, 10 completos — nunca a medias). Por eso `ProductoGaleria` descarta la miniatura que falla en vez de pintar un recuadro vacío y clicable. Ese filtro es robustez permanente, no un parche a este incidente: un objeto puede faltar en el bucket por muchas razones y la ficha debe degradar a la foto que sí existe.
 - **`alt` viaja en el contrato pero siempre llega `null`** (0 de 122 filas) y el backend no piensa poblarlo — no hay fuente. La UI genera la etiqueta: el recuadro grande usa `alt` si existe y si no el nombre del producto; las miniaturas van con `alt=""` porque el botón ya se anuncia como "Ver imagen N de M". Repetir el nombre en las cuatro imágenes es ruido para un lector de pantalla.
 - **Pendiente:** verificar el orden nuevo y la vitrina de punta a punta — quedaron sin comprobar porque el API local servía un build anterior al merge. El código de la UI ya está enchufado y degradado, así que la verificación no bloquea nada.
+
+## 2026-09-08 — Servir contenido editorial y SEO desde el servidor
+
+**Contexto:** API PR #6 añade `descripcionLarga` y `seo` nullable a productos,
+listados y destacados. La ficha solo consultaba datos en cliente, por lo que
+su HTML inicial y metadatos no identificaban el producto.
+
+**Decisión:** el detalle pasa a una lectura pública en servidor compartida por
+la página y `generateMetadata` mediante `React.cache`, por request y con timeout.
+La galería conserva su interacción en cliente; el listado mantiene TanStack
+Query. Solo un 404 significa producto ausente; otros errores permiten reintentar
+con `retry`, la API de los boundaries de Next 16.3. Un fallo de consulta publica
+`noindex` aunque la respuesta ya haya empezado a transmitirse con HTTP 200.
+
+La descripción larga se renderiza como párrafos de texto escapado: el contrato
+del importador prohíbe HTML, por lo que no hace falta incorporar un sanitizador
+de HTML enriquecido. Los metadatos pendientes usan únicamente el nombre y el
+JSON-LD omite cualquier atributo sin fuente, incluidos precios y reseñas.
+`NEXT_PUBLIC_SITE_URL` centraliza el origen canónico existente y evita derivarlo
+de hosts temporales de preview.
+
+Se añaden Vitest 4 y React Testing Library, por la solicitud de pruebas de esta
+integración, y una prueba HTTP con Next real para comprobar SSR, metadatos y
+serialización. Vitest 4 satisface los peer ranges de Better Auth; los paquetes
+de prueba son dependencias de desarrollo. `server-only` se declara explícitamente
+para proteger y resolver los imports del nuevo módulo de consultas.
+
+**Consecuencias:** desplegar la UI antes del API no rompe productos antiguos;
+los nuevos campos ausentes se normalizan a `null`. Las fichas dependen de que
+el servidor de Next alcance el API público. No se incorporan credenciales ni
+precios negociados a esta lectura. Detalles operativos y comandos en
+`docs/product-content.md`.
