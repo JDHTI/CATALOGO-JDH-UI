@@ -57,12 +57,20 @@ export const productoDtoSchema = z.object({
   sku: z.string(),
   nombre: z.string(),
   descripcion: z.string().nullish(),
+  descripcionLarga: z.string().nullish(),
+  seo: z
+    .object({
+      title: z.string().nullish(),
+      description: z.string().nullish(),
+    })
+    .nullish(),
   marca: z.string().nullish(),
   fabricante: z.string().nullish(),
   proveedor: proveedorDtoSchema,
   categoria: categoriaDtoSchema.nullish(),
   subcategoria: categoriaDtoSchema.nullish(),
   imagenUrl: z.string().nullish(),
+  imagenUrlFallback: z.string().nullish(),
   imagenes: z.array(imagenProductoDtoSchema).nullish(),
 })
 
@@ -135,12 +143,18 @@ export function aProducto(dto: ProductoDto): Producto {
     sku: dto.sku,
     nombre: dto.nombre,
     descripcion: dto.descripcion ?? "",
+    descripcionLarga: dto.descripcionLarga?.trim() || null,
+    seo: {
+      title: dto.seo?.title?.trim() || null,
+      description: dto.seo?.description?.trim() || null,
+    },
     marca: dto.marca ?? "",
     fabricante: dto.fabricante ?? "",
     proveedor: aProveedor(dto.proveedor),
     categoria: dto.categoria ?? null,
     subcategoria: dto.subcategoria ?? null,
     imagenUrl: dto.imagenUrl ?? null,
+    imagenUrlFallback: dto.imagenUrlFallback ?? null,
     imagenes: (dto.imagenes ?? []).map(aImagenProducto),
   }
 }

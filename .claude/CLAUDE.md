@@ -33,7 +33,10 @@ pnpm format:check   # prettier --check .
 pnpm auth:migrate   # apply Better Auth's schema to Postgres (needs a real DATABASE_URL)
 ```
 
-There is no test runner configured yet — no framework, no script, no test files. Adding one is a decision to raise, not to assume.
+Tests use Vitest + React Testing Library (`pnpm test`, `pnpm test:watch`).
+`pnpm test:integration` runs HTTP checks against a real Next dev server and a
+temporary API with fixtures, without backend/auth credentials. Run it without
+another `next dev` in this worktree. See `docs/product-content.md`.
 
 To add a shadcn/ui component: `pnpm dlx shadcn@latest add <component>`. This regenerates files under `src/components/ui/`, which is why that directory is excluded from Prettier (`.prettierignore`) — reformatting it creates diff noise against the upstream CLI output. Don't hand-restructure files there; re-run the CLI (`--overwrite`) instead.
 

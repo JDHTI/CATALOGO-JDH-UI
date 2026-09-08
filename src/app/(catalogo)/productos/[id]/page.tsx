@@ -1,16 +1,42 @@
 import type { Metadata } from "next"
+import { notFound } from "next/navigation"
 
 import { CatalogoPage } from "@/components/layout/catalogo-page"
 import { ProductoDetalleView } from "@/modules/catalogo"
+import {
+  productoJsonLd,
+  productoMetadata,
+  serializarJsonLd,
+} from "@/modules/catalogo/seo"
+import { obtenerProductoPublico } from "@/modules/catalogo/server/queries"
 
-export const metadata: Metadata = {
-  title: "Detalle de producto",
-  description: "Ficha del producto en el catálogo JDH.",
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}): Promise<Metadata> {
+  const { id } = await params
+  let producto
+  try {
+    producto = await obtenerProductoPublico(id)
+  } catch {
+    // La página propaga el error al boundary; tampoco debe indexarse si
+    // el streaming ya envió HTTP 200 antes de que fallara la consulta.
+    return {
+      title: { absolute: "No pudimos cargar el producto" },
+      description: null,
+      robots: { index: false, follow: false },
+      alternates: { canonical: null },
+      openGraph: null,
+      twitter: null,
+    }
+  }
+  if (!producto) notFound()
+  return productoMetadata(producto)
 }
 
 /**
- * Ruta delgada: la data la resuelve el módulo en cliente (useProducto) —
- * el nombre real del producto se conoce ahí, por eso el título es genérico.
+ * Página y metadatos comparten la misma lectura pública en servidor.
  */
 export default async function ProductoDetallePage({
   params,
@@ -18,9 +44,14 @@ export default async function ProductoDetallePage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
+  const producto = await obtenerProductoPublico(id)
+  if (!producto) notFound()
   return (
     <CatalogoPage>
-      <ProductoDetalleView id={id} />
+      <script type="application/ld+json">
+        {serializarJsonLd(productoJsonLd(producto))}
+      </script>
+      <ProductoDetalleView producto={producto} />
     </CatalogoPage>
   )
 }

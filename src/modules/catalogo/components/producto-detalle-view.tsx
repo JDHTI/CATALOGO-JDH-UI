@@ -1,17 +1,13 @@
-"use client"
-
 import Link from "next/link"
-import { ArrowLeft, PackageX, RotateCcw } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs"
-import { EmptyState } from "@/components/common/empty-state"
 import { JdhButton } from "@/components/common/jdh-button"
 import { formatNombreComercial } from "@/lib/format"
 
-import { CatalogoApiError } from "../api/errors"
-import { useProducto } from "../hooks/use-productos"
 import type { Producto } from "../types"
 import { ProductoGaleria } from "./producto-galeria"
+import { ProductoDescripcion } from "./producto-descripcion"
 
 /**
  * Detalle de un producto real del API. El catálogo es referencia visual para
@@ -19,60 +15,7 @@ import { ProductoGaleria } from "./producto-galeria"
  * fabricante, proveedor) — SIN precio ni compra. Cuando el backend defina
  * precios, el slot va debajo del encabezado (ver comentario en el JSX).
  */
-export function ProductoDetalleView({ id }: { id: string }) {
-  const { data: producto, isPending, isError, error, refetch } = useProducto(id)
-
-  if (isPending) return <DetalleSkeleton />
-
-  if (isError) {
-    const esNoEncontrado =
-      error instanceof CatalogoApiError && error.statusCode === 404
-
-    return (
-      <div className="flex flex-col gap-6">
-        <Breadcrumbs
-          items={[
-            { label: "Inicio", href: "/" },
-            { label: "Productos", href: "/productos" },
-            { label: "Detalle" },
-          ]}
-        />
-        <EmptyState
-          icon={PackageX}
-          title={
-            esNoEncontrado
-              ? "Producto no encontrado"
-              : "No pudimos cargar el producto"
-          }
-          description={
-            esNoEncontrado
-              ? "El producto que buscas no existe o ya no está publicado en el catálogo."
-              : "Hubo un problema consultando el catálogo. Verifica tu conexión e inténtalo de nuevo."
-          }
-        >
-          <div className="flex flex-wrap justify-center gap-2">
-            {!esNoEncontrado ? (
-              <JdhButton
-                variant="secondary"
-                size="sm"
-                onClick={() => refetch()}
-              >
-                <RotateCcw aria-hidden="true" />
-                Reintentar
-              </JdhButton>
-            ) : null}
-            <JdhButton asChild variant="ghost" size="sm">
-              <Link href="/productos">
-                <ArrowLeft aria-hidden="true" />
-                Volver a productos
-              </Link>
-            </JdhButton>
-          </div>
-        </EmptyState>
-      </div>
-    )
-  }
-
+export function ProductoDetalleView({ producto }: { producto: Producto }) {
   return (
     <div className="flex flex-col gap-6">
       <Breadcrumbs
@@ -108,11 +51,7 @@ export function ProductoDetalleView({ id }: { id: string }) {
               definidos en el backend. Cuando existan, aquí va el bloque de
               precio según la audiencia del PriceContext — nunca antes. */}
 
-          {producto.descripcion ? (
-            <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
-              {producto.descripcion}
-            </p>
-          ) : null}
+          <ProductoDescripcion texto={producto.descripcionLarga} />
 
           <FichaTecnica producto={producto} />
 
@@ -134,6 +73,7 @@ export function ProductoDetalleView({ id }: { id: string }) {
 function FichaTecnica({ producto }: { producto: Producto }) {
   // Los nombres comerciales llegan del ERP en mayúsculas sostenidas.
   const filas: { termino: string; valor: string | null }[] = [
+    { termino: "Descripción ERP", valor: producto.descripcion || null },
     {
       termino: "Marca",
       valor: producto.marca ? formatNombreComercial(producto.marca) : null,
@@ -168,9 +108,14 @@ function FichaTecnica({ producto }: { producto: Producto }) {
 }
 
 /** Esqueleto del detalle mientras responde el API. */
-function DetalleSkeleton() {
+export function DetalleSkeleton() {
   return (
-    <div className="flex animate-pulse flex-col gap-6" aria-hidden="true">
+    <div
+      role="status"
+      aria-label="Cargando producto"
+      className="flex animate-pulse flex-col gap-6"
+    >
+      <span className="sr-only">Cargando producto…</span>
       <div className="h-4 w-64 rounded bg-[var(--color-surface-subtle)]" />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <div className="aspect-square rounded-[var(--jdh-radius-md)] bg-[var(--color-surface-subtle)]" />
