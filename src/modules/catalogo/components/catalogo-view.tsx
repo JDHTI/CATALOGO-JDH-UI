@@ -81,6 +81,9 @@ export function CatalogoView() {
     search: q || undefined,
     supplierId: proveedorId ?? undefined,
     brandId: marcaId ?? undefined,
+    // Los productos con foto van primero (ver `ProductosQueryParams.orderBy`).
+    // Tiene que resolverlo el backend: la paginación es del lado del servidor.
+    orderBy: "conImagen",
   })
   const proveedores = useProveedores()
   // Las marcas se acotan al proveedor elegido: con miles de productos, la

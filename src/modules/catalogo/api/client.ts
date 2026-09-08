@@ -41,6 +41,25 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1"
 
 /**
+ * Las degradaciones de abajo mantienen la página en pie cuando el API va por
+ * detrás de la UI, pero calladas son una trampa: el catálogo se ve "bien" y
+ * simplemente ignora lo que se le pidió. Ya pasó — se probó el orden por
+ * imagen contra un contenedor con el build anterior y el listado salió
+ * alfabético sin que nada lo dijera.
+ *
+ * Se avisa UNA vez por motivo (las queries se repiten en cada paginación y en
+ * cada tecla del buscador) y solo fuera de producción: al visitante no le
+ * sirve de nada, al que desarrolla le ahorra la hora de buscar el bug en la UI.
+ */
+const yaAvisado = new Set<string>()
+
+function avisarDegradacion(motivo: string, detalle: string) {
+  if (process.env.NODE_ENV === "production" || yaAvisado.has(motivo)) return
+  yaAvisado.add(motivo)
+  console.warn(`[catalogo] ${detalle} — API en ${API_BASE_URL}`)
+}
+
+/**
  * `signal` viene del `queryFn` de TanStack Query, que lo aborta cuando la
  * consulta queda obsoleta (el componente se desmonta, o llega un término de
  * búsqueda más nuevo). Sin él, teclear "coca cola" deja tres peticiones vivas
@@ -79,21 +98,97 @@ async function apiGet<Schema extends z.ZodType>(
   return schema.parse(await respuesta.json())
 }
 
-/** `GET /products` — listado paginado con búsqueda y filtro por proveedor. */
+/**
+ * `GET /products` — listado paginado con búsqueda y filtro por proveedor.
+ *
+ * `orderBy` es DEGRADABLE: un API anterior al ordenamiento por imagen responde
+ * 400 a un parámetro que no conoce, y eso dejaría el catálogo entero en blanco
+ * por una preferencia de orden. La UI y el API se despliegan por separado, así
+ * que ese desfase es un estado normal, no una avería: se reintenta sin el
+ * parámetro y el usuario ve el catálogo alfabético. Mismo criterio que el 404
+ * de `/brands` en `useMarcas`.
+ */
 export async function listarProductos(
   params: ProductosQueryParams = {},
   signal?: AbortSignal
 ): Promise<Paginado<Producto>> {
+  const query = {
+    page: params.page,
+    limit: params.limit,
+    search: params.search,
+    supplierId: params.supplierId,
+    brandId: params.brandId,
+  }
+
+  if (params.orderBy) {
+    try {
+      return aPaginaProductos(
+        await apiGet(
+          "/products",
+          paginaProductosDtoSchema,
+          { ...query, orderBy: params.orderBy },
+          signal
+        )
+      )
+    } catch (error) {
+      if (!(error instanceof CatalogoApiError) || error.statusCode !== 400) {
+        throw error
+      }
+      avisarDegradacion(
+        "orderBy",
+        `el API rechazó orderBy=${params.orderBy} (400): el listado sale alfabético, los productos con imagen NO van primero`
+      )
+    }
+  }
+
+  return aPaginaProductos(
+    await apiGet("/products", paginaProductosDtoSchema, query, signal)
+  )
+}
+
+/**
+ * `GET /products/destacados` — la vitrina de la home.
+ *
+ * Endpoint propio y no `listarProductos({ orderBy: "conImagen", limit: 8 })`
+ * porque el criterio necesita ver TODO el conjunto, no una página: el backend
+ * reparte por marca (round-robin con cupo) y rota con semilla del día en UTC.
+ * Con el simple "primeros 8 con imagen" la home mostraría siempre las mismas
+ * 8 referencias de una sola marca.
+ *
+ * Devuelve el mismo `{ data, meta }` que el listado — `meta` solo describe lo
+ * devuelto (`totalPages: 1`), no hay paginación aquí.
+ *
+ * Degradable igual que `orderBy`: contra un API que aún no publica el endpoint
+ * (404) se cae al listado ordenado por imagen. La vitrina pierde el reparto por
+ * marca y la rotación, pero la home conserva su carrusel en vez de mostrar el
+ * estado vacío por un endpoint que todavía no se desplegó.
+ */
+export async function listarDestacados(
+  limit?: number,
+  signal?: AbortSignal
+): Promise<Paginado<Producto>> {
+  try {
+    return await pedirDestacados(limit, signal)
+  } catch (error) {
+    if (error instanceof CatalogoApiError && error.statusCode === 404) {
+      avisarDegradacion(
+        "destacados",
+        "el API no publica GET /products/destacados (404): la vitrina cae al listado, sin reparto por marca ni rotación"
+      )
+      return listarProductos({ limit, orderBy: "conImagen" }, signal)
+    }
+    throw error
+  }
+}
+
+async function pedirDestacados(
+  limit?: number,
+  signal?: AbortSignal
+): Promise<Paginado<Producto>> {
   const dto = await apiGet(
-    "/products",
+    "/products/destacados",
     paginaProductosDtoSchema,
-    {
-      page: params.page,
-      limit: params.limit,
-      search: params.search,
-      supplierId: params.supplierId,
-      brandId: params.brandId,
-    },
+    { limit },
     signal
   )
   return aPaginaProductos(dto)
