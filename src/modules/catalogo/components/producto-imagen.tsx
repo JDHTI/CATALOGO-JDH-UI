@@ -1,3 +1,6 @@
+"use client"
+
+import { useState } from "react"
 import Image from "next/image"
 import { Package } from "lucide-react"
 
@@ -12,6 +15,16 @@ import type { ImagenProducto, Producto } from "../types"
  * será null para la mayoría de productos: el placeholder es parte del diseño,
  * no un estado de error — monocromo (DESIGN.md), sobre el mismo fondo sutil
  * en ambos estados.
+ *
+ * El placeholder cubre DOS caminos, no uno: que no haya URL (`imagenUrl: null`,
+ * el 99,9% del catálogo hoy) y que la URL responda 404. El segundo es real —
+ * las filas viven en Postgres y los objetos en el bucket, y pueden divergir —
+ * y es lo único que separa una recarga del bucket de un catálogo entero
+ * pintando el ícono de imagen rota del navegador.
+ *
+ * Es `"use client"` por ese `onError`. No cuesta bundle: todos sus consumidores
+ * (`ProductoCard`, `BusquedaSugerencias`, `ProductoGaleria`) ya viven dentro de
+ * componentes cliente.
  *
  * El caller define la relación de aspecto y el `sizes` (depende del grid).
  *
@@ -46,6 +59,18 @@ export function ProductoImagen({
   priority?: boolean
   variant?: "card" | "miniatura" | "detalle"
 }) {
+  /**
+   * Una URL de imagen puede responder 404: el objeto puede faltar en el bucket
+   * aunque la fila exista en Postgres, y durante una recarga del bucket faltan
+   * TODAS a la vez, primarias incluidas. Sin esto el catálogo entero pintaría
+   * el ícono de imagen rota del navegador en vez del placeholder de diseño.
+   *
+   * Se guarda la URL que falló en vez de un booleano: así, cuando cambia `src`
+   * —otro producto, u otra imagen de la galería— el estado deja de aplicar
+   * solo y se reintenta, sin `useEffect` de sincronización.
+   */
+  const [urlFallida, setUrlFallida] = useState<string | null>(null)
+
   const esMiniatura = variant === "miniatura"
   const elegida =
     imagen ??
@@ -57,6 +82,7 @@ export function ProductoImagen({
       : variant === "detalle"
         ? elegida?.fullUrl
         : elegida?.cardUrl) ?? producto.imagenUrl
+  const utilizable = src && src !== urlFallida
 
   return (
     <div
@@ -65,9 +91,10 @@ export function ProductoImagen({
         className
       )}
     >
-      {src ? (
+      {utilizable ? (
         <Image
           src={src}
+          onError={() => setUrlFallida(src)}
           // El `alt` del API es descriptivo por imagen cuando existe; hoy llega
           // null en toda la galería, y ahí el nombre del producto es mejor que
           // un alt vacío.
