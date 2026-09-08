@@ -4,6 +4,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
 import { CatalogoApiError } from "../api/errors"
 import {
+  listarDestacados,
   listarMarcas,
   listarProductos,
   listarProveedores,
@@ -26,6 +27,7 @@ export const catalogoKeys = {
   productos: (params: ProductosQueryParams) =>
     ["catalogo", "productos", params] as const,
   producto: (id: string) => ["catalogo", "producto", id] as const,
+  destacados: (limite: number) => ["catalogo", "destacados", limite] as const,
   proveedores: ["catalogo", "proveedores"] as const,
   marcas: (params: MarcasQueryParams) =>
     ["catalogo", "marcas", params] as const,
@@ -43,6 +45,22 @@ export function useProductos(params: ProductosQueryParams) {
     queryKey: catalogoKeys.productos(params),
     queryFn: ({ signal }) => listarProductos(params, signal),
     placeholderData: keepPreviousData,
+  })
+}
+
+/**
+ * Vitrina de la home. La rotación del backend usa semilla del DÍA, así que la
+ * respuesta es estable durante horas: no tiene sentido revalidarla al volver a
+ * la pestaña ni al remontar el carrusel, y con `staleTime` corto sería la
+ * consulta más repetida del sitio (la home es la ruta más visitada).
+ */
+const DESTACADOS_STALE_MS = 30 * 60 * 1000
+
+export function useDestacados(limite: number) {
+  return useQuery({
+    queryKey: catalogoKeys.destacados(limite),
+    queryFn: ({ signal }) => listarDestacados(limite, signal),
+    staleTime: DESTACADOS_STALE_MS,
   })
 }
 

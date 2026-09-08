@@ -11,7 +11,7 @@ import { formatNombreComercial } from "@/lib/format"
 import { CatalogoApiError } from "../api/errors"
 import { useProducto } from "../hooks/use-productos"
 import type { Producto } from "../types"
-import { ProductoImagen } from "./producto-imagen"
+import { ProductoGaleria } from "./producto-galeria"
 
 /**
  * Detalle de un producto real del API. El catálogo es referencia visual para
@@ -84,13 +84,10 @@ export function ProductoDetalleView({ id }: { id: string }) {
       />
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <ProductoImagen
-          producto={producto}
-          variant="detalle"
-          sizes="(min-width: 1024px) 50vw, 100vw"
-          priority
-          className="aspect-square rounded-[var(--jdh-radius-md)] border border-[var(--color-border)]"
-        />
+        {/* `key`: la galería guarda cuál miniatura está activa, y al navegar
+            de un producto a otro React reutilizaría la instancia con el índice
+            de la anterior. */}
+        <ProductoGaleria key={producto.id} producto={producto} />
 
         <div className="flex flex-col gap-6">
           <header className="flex flex-col gap-2">

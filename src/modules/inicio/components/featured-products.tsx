@@ -11,7 +11,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
-import { useProductos } from "@/modules/catalogo/hooks/use-productos"
+import { useDestacados } from "@/modules/catalogo/hooks/use-productos"
 import {
   ProductoCard,
   ProductoCardFantasma,
@@ -24,21 +24,23 @@ import { SECTION_EMPTY_COPY, SectionNota } from "./section-empty"
 const MUESTRA = 8
 
 /**
- * Muestra del portafolio en CARRUSEL, con productos REALES del API: la
- * primera página de `GET /products`. Arrastre nativo (embla) en móvil;
- * flechas en ≥sm a los costados. Usa la misma card que el listado
- * (`ProductoCard`) — sin precio y sin carrito, porque el catálogo es
- * referencia visual.
+ * Muestra del portafolio en CARRUSEL, con productos REALES del API:
+ * `GET /products/destacados`. Arrastre nativo (embla) en móvil; flechas en
+ * ≥sm a los costados. Usa la misma card que el listado (`ProductoCard`) — sin
+ * precio y sin carrito, porque el catálogo es referencia visual.
  *
- * Antes vivía de un dataset mockeado con precios y botón "Añadir": ambos
- * desaparecieron con los datos inventados.
+ * Antes pedía la primera página de `GET /products`, que alfabéticamente son
+ * productos sin foto: una vitrina de ocho placeholders. El endpoint propio
+ * existe porque el criterio necesita ver todo el conjunto — reparte por marca
+ * y rota con semilla del día, así que la home no queda clavada en las mismas
+ * ocho referencias de un solo proveedor.
  *
  * Sin datos la sección NO desaparece: conserva su encabezado y muestra un
  * `SectionEmpty`. Ocultarla dejaba la homepage sin cuerpo cuando el catálogo
  * está vacío, que es justo el estado en el que hoy vive el backend.
  */
 export function FeaturedProducts() {
-  const { data, isPending, isError } = useProductos({ limit: MUESTRA })
+  const { data, isPending, isError } = useDestacados(MUESTRA)
   const productos = data?.data ?? []
   const vacio = !isPending && productos.length === 0
 

@@ -111,6 +111,21 @@ export interface ProductosQueryParams {
   supplierId?: string
   /** Filtro por marca — va por id, no por nombre. */
   brandId?: string
+  /**
+   * Orden del listado. `nombre` (el default del backend, alfabético) o
+   * `conImagen` (primero los que tienen imagen primaria, luego alfabético).
+   * Cualquier otro valor es un 400.
+   *
+   * `conImagen` tiene que salir del backend: la paginación es del lado del
+   * servidor, así que reordenar en el cliente solo movería las cards DENTRO de
+   * la página ya recortada — con 35 productos con foto sobre 9.042 activos, la
+   * página 1 alfabética no trae ninguna y el reordenamiento no se vería.
+   *
+   * Se pide en explorar-catálogo, NO en las sugerencias del buscador: ahí el
+   * usuario ya escribió lo que busca y son 5 filas, así que tener foto no
+   * debería adelantar a una coincidencia de nombre más cercana.
+   */
+  orderBy?: "nombre" | "conImagen"
 }
 
 /** Parámetros de `GET /brands`: acota las marcas a un proveedor. */

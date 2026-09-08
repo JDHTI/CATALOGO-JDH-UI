@@ -4,7 +4,7 @@ import { Package } from "lucide-react"
 import { formatNombreComercial } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import type { Producto } from "../types"
+import type { ImagenProducto, Producto } from "../types"
 
 /**
  * Imagen de producto compartida por la card del listado, el detalle y la fila
@@ -24,15 +24,22 @@ import type { Producto } from "../types"
  *   de apoyo no se lee y solo ensucia la fila — el nombre y la marca ya van
  *   al lado, no hace falta repetirlos dentro del recuadro. Pide `thumbUrl`.
  * - `detalle`: el recuadro grande de la ficha de producto. Pide `fullUrl`.
+ *
+ * `imagen` fija CUÁL de la galería se pinta, en vez de la primaria. Solo lo usa
+ * `ProductoGaleria` (la tira de miniaturas del detalle); sin él el componente
+ * elige la primaria, que es lo que quieren la card y el buscador.
  */
 export function ProductoImagen({
   producto,
+  imagen,
   sizes,
   className,
   priority = false,
   variant = "card",
 }: {
   producto: Pick<Producto, "nombre" | "marca" | "imagenUrl" | "imagenes">
+  /** Imagen concreta a mostrar. Por defecto, la primaria del producto. */
+  imagen?: ImagenProducto | null
   /** `sizes` de next/image acorde al layout del caller. */
   sizes: string
   className?: string
@@ -40,15 +47,16 @@ export function ProductoImagen({
   variant?: "card" | "miniatura" | "detalle"
 }) {
   const esMiniatura = variant === "miniatura"
-  const principal =
-    producto.imagenes.find((imagen) => imagen.esPrincipal) ??
+  const elegida =
+    imagen ??
+    producto.imagenes.find((candidata) => candidata.esPrincipal) ??
     producto.imagenes[0]
   const src =
     (variant === "miniatura"
-      ? principal?.thumbUrl
+      ? elegida?.thumbUrl
       : variant === "detalle"
-        ? principal?.fullUrl
-        : principal?.cardUrl) ?? producto.imagenUrl
+        ? elegida?.fullUrl
+        : elegida?.cardUrl) ?? producto.imagenUrl
 
   return (
     <div
@@ -60,7 +68,10 @@ export function ProductoImagen({
       {src ? (
         <Image
           src={src}
-          alt={producto.nombre}
+          // El `alt` del API es descriptivo por imagen cuando existe; hoy llega
+          // null en toda la galería, y ahí el nombre del producto es mejor que
+          // un alt vacío.
+          alt={elegida?.alt?.trim() || producto.nombre}
           fill
           sizes={sizes}
           priority={priority}
