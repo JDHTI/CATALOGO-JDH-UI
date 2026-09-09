@@ -19,10 +19,19 @@ const MAX_VISIBLES = 30
 /** Celdas de la grilla fantasma: una fila y media, sin inflar la página. */
 const FANTASMAS = 10
 
+/**
+ * En MÓVIL (<`sm`) la grilla no crece hacia abajo: se fija en TRES FILAS y
+ * fluye por columnas, así que la vitrina mide 3×3 y se pagina con scroll
+ * horizontal. Con 30 marcas en 2 columnas eran 15 filas de logos — una pared
+ * que nadie recorre. Las columnas miden exactamente un tercio del scrollport
+ * (`auto-cols-[33.333%]`), y por eso el contenedor de la grilla TIENE que ser
+ * también el que desplaza: el porcentaje resuelve contra su ancho visible.
+ * Desde `sm` vuelve a fluir por filas (3 → 4 → 5 columnas).
+ */
 const CLASES_GRILLA =
-  "grid grid-cols-2 overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+  "no-scrollbar grid snap-x snap-mandatory auto-cols-[33.333%] grid-flow-col grid-rows-3 overflow-x-auto overscroll-x-contain rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] sm:auto-cols-auto sm:grid-flow-row sm:grid-cols-3 sm:grid-rows-none sm:overflow-hidden md:grid-cols-4 lg:grid-cols-5"
 const CLASES_CELDA =
-  "flex h-full min-h-[8.5rem] flex-col items-center justify-center gap-2 px-4 py-6 text-center shadow-[1px_0_0_0_var(--color-border),0_1px_0_0_var(--color-border)]"
+  "flex h-full min-h-[7rem] snap-start flex-col items-center justify-center gap-2 px-3 py-6 text-center shadow-[1px_0_0_0_var(--color-border),0_1px_0_0_var(--color-border)] sm:min-h-[8.5rem] sm:px-4"
 
 /**
  * Grilla de MARCAS del catálogo, con hairline-grid (gap-px sobre borde):
@@ -34,6 +43,9 @@ const CLASES_CELDA =
  * el `logoUrl` del backend, y si no hay, el monograma. El hueco mide igual
  * en ambos casos, así que la grilla ya está lista para recibir los logos sin
  * rehacerse.
+ *
+ * En móvil la misma grilla se lee como vitrina 3×3 paginada en horizontal —
+ * ver `CLASES_GRILLA`.
  *
  * La celda muestra SOLO logo y nombre: el conteo de productos por marca se
  * retiró de esta grilla a propósito. Es una vitrina de marcas, no un cuadro
@@ -73,7 +85,11 @@ export function BrandsSection() {
 
       {isPending || sinContenido || isError ? (
         <div className="flex flex-col gap-4">
-          <div className={CLASES_GRILLA} aria-hidden="true">
+          <div
+            className={CLASES_GRILLA}
+            aria-hidden="true"
+            data-lenis-prevent=""
+          >
             {Array.from({ length: FANTASMAS }, (_, i) => (
               <div key={i} className={CLASES_CELDA}>
                 <LogoComercialVacio className="size-12" />
@@ -92,9 +108,13 @@ export function BrandsSection() {
           ) : null}
         </div>
       ) : (
-        <Stagger staggerDelay={0.03} className={CLASES_GRILLA}>
+        <Stagger
+          staggerDelay={0.03}
+          className={CLASES_GRILLA}
+          data-lenis-prevent=""
+        >
           {marcas.map((marca) => (
-            <StaggerItem key={marca.id} className="h-full">
+            <StaggerItem key={marca.id} className="h-full snap-start">
               <Link
                 href={`/productos?marca=${marca.id}` as Route}
                 className={`transition-colors hover:bg-[var(--color-surface-subtle)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${CLASES_CELDA}`}
