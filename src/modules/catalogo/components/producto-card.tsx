@@ -13,6 +13,10 @@ import { ProductoImagen } from "./producto-imagen"
  * es solo referencia visual: identifica el producto (imagen, marca, nombre,
  * sku) y su proveedor, el eje principal de clasificación. Toda la card
  * navega al detalle.
+ *
+ * El contrato no publica un resumen editorial para tarjetas. La descripción
+ * SEO pertenece a los metadatos y la larga a la ficha; ninguna se reutiliza
+ * aquí para evitar llamadas comerciales y texto genérico en el listado.
  */
 export function ProductoCard({ producto }: { producto: Producto }) {
   return (
@@ -53,11 +57,6 @@ export function ProductoCard({ producto }: { producto: Producto }) {
             <p className="text-xs text-muted-foreground tabular-nums">
               {producto.sku}
             </p>
-            {producto.seo.description ? (
-              <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-                {producto.seo.description}
-              </p>
-            ) : null}
           </div>
 
           {/* SLOT DE PRECIO (oculto a propósito): sin precios definidos en el

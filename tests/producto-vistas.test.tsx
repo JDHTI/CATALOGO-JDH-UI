@@ -10,6 +10,7 @@ import Loading from "@/app/(catalogo)/productos/[id]/loading"
 import NotFound from "@/app/(catalogo)/productos/[id]/not-found"
 import ErrorView from "@/app/(catalogo)/productos/[id]/error"
 import { producto } from "./producto-fixture"
+import { productoMetadata } from "@/modules/catalogo/seo"
 
 describe("contenido visible y seguro", () => {
   it("renderiza párrafos de texto plano con saltos y caracteres españoles", () => {
@@ -77,9 +78,11 @@ describe("contenido visible y seguro", () => {
     expect(screen.getByText("Imagen próximamente")).toBeDefined()
   })
 
-  it("muestra solo el resumen editorial disponible en la card", () => {
+  it("mantiene la identificación de la card sin reutilizar el SEO ni la descripción larga", () => {
     const { rerender } = render(<ProductoCard producto={producto} />)
-    expect(screen.getByText(producto.seo.description!)).toBeDefined()
+    expect(screen.queryByText(producto.seo.description!)).toBeNull()
+    expect(screen.queryByText(/Primer párrafo editorial/)).toBeNull()
+    expect(screen.getByText(producto.sku)).toBeDefined()
     expect(screen.getByRole("link").getAttribute("href")).toBe("/productos/42")
     rerender(
       <ProductoCard
@@ -89,6 +92,36 @@ describe("contenido visible y seguro", () => {
     expect(screen.queryByText(producto.seo.description!)).toBeNull()
     expect(screen.queryByText("68450362")).toBeNull()
     expect(screen.getByText(producto.nombre)).toBeDefined()
+  })
+
+  it("mantiene los textos de Colpapel en detalle y metadatos, fuera de las tarjetas", () => {
+    const colpapel = {
+      ...producto,
+      nombre: "Dispensador Papel Higienico Scott 7689",
+      sku: "21945",
+      descripcionLarga:
+        "La referencia Dispensador de papel higiénico Scott 7689 de Scott corresponde a un sistema dispensador para organizar la entrega de insumos de higiene en baños y espacios institucionales.",
+      seo: {
+        title: "Dispensador de papel higiénico Scott 7689 | JDH",
+        description:
+          "Consulta Dispensador de papel higiénico Scott 7689 de Scott. dispensador para higiene institucional. Disponibilidad en JDH.",
+      },
+    }
+    const { container, unmount } = render(<ProductoCard producto={colpapel} />)
+    expect(container.textContent).not.toMatch(
+      /Consulta|Disponibilidad en JDH|La referencia/
+    )
+    expect(screen.getByText(colpapel.nombre)).toBeDefined()
+    expect(screen.getByText(colpapel.sku)).toBeDefined()
+    unmount()
+
+    render(<ProductoDetalleView producto={colpapel} />)
+    expect(screen.getByText(colpapel.descripcionLarga)).toBeDefined()
+    expect(productoMetadata(colpapel)).toMatchObject({
+      description: colpapel.seo.description,
+      openGraph: { description: colpapel.seo.description },
+      twitter: { description: colpapel.seo.description },
+    })
   })
 })
 
