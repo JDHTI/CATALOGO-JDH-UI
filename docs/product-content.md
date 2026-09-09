@@ -17,7 +17,11 @@ Un tipo incorrecto sigue siendo un error de contrato; no se fabrica contenido.
 
 La ficha omite la sección editorial pendiente. Conserva `descripcion` bajo
 «Descripción ERP» en la ficha técnica: puede ser un código operativo.
-Las cards del catálogo y la home muestran `seo.description` solo si existe.
+Las cards del catálogo y la home muestran únicamente la identificación del
+producto. `seo.description` se reserva para metadatos y `descripcionLarga`
+para la ficha individual. El contrato actual no incluye un resumen editorial
+breve para tarjetas; hasta que se publique uno, se omite ese párrafo sin
+fabricarlo a partir del código ERP ni recortar textos genéricos del detalle.
 Se conservan SKU, marca, fabricante, proveedor, categorías, `imagenUrl` y galería.
 Se transporta también `imagenUrlFallback` cuando el API lo envíe: el DTO del
 PR revisado todavía no lo publica. La imagen visible intenta variante,
