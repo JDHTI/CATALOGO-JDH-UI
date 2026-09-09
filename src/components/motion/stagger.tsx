@@ -13,14 +13,17 @@ const EASE = [0.2, 0, 0, 1] as const
  * contra el ancho visible). Se listan uno a uno en vez de esparcir
  * `ComponentProps<"div">`: `motion.div` redefine `onDrag`/`onAnimationStart`
  * y el spread ancho no tipa.
+ *
+ * NO incluye `data-lenis-prevent`. Marcar estas pistas rompía el scroll
+ * VERTICAL de la página: Lenis dejaba de suavizar el tramo que ocupan y el
+ * documento pasaba de scroll suave a nativo al cruzarlas, a saltos. Lenis va
+ * en vertical y nunca lee `deltaX`, así que el scroll horizontal de la pista
+ * no necesita que se lo saquen.
  */
 type AtributosContenedor = Pick<
   React.ComponentProps<"div">,
   "role" | "tabIndex" | "aria-label" | "aria-labelledby" | "aria-hidden"
-> & {
-  /** Saca la región de Lenis para que su scroll propio funcione. */
-  "data-lenis-prevent"?: string
-}
+>
 
 /**
  * Staggered container — animates its `StaggerItem` children in sequence WHEN

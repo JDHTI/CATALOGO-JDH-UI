@@ -27,11 +27,19 @@ const FANTASMAS = 10
  * (`auto-cols-[33.333%]`), y por eso el contenedor de la grilla TIENE que ser
  * también el que desplaza: el porcentaje resuelve contra su ancho visible.
  * Desde `sm` vuelve a fluir por filas (3 → 4 → 5 columnas).
+ *
+ * Las tres filas miden `--jdh-card-movil` cada una — la misma altura de
+ * tarjeta que las pistas de cobertura y proveedores, para que las tres
+ * secciones lleven el mismo ritmo al bajar por la portada. Con filas de `1fr`
+ * la altura la ponía el logo más alto y cada sección medía distinto.
+ *
+ * El scroll es LIBRE, sin `scroll-snap`, y `overflow-y-hidden` es obligatorio
+ * — las dos cosas por la misma razón que en `value-props.tsx`.
  */
 const CLASES_GRILLA =
-  "no-scrollbar grid snap-x snap-mandatory auto-cols-[33.333%] grid-flow-col grid-rows-3 overflow-x-auto overscroll-x-contain rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] sm:auto-cols-auto sm:grid-flow-row sm:grid-cols-3 sm:grid-rows-none sm:overflow-hidden md:grid-cols-4 lg:grid-cols-5"
+  "no-scrollbar grid auto-cols-[33.333%] grid-flow-col grid-rows-[repeat(3,var(--jdh-card-movil))] overflow-x-auto overflow-y-hidden overscroll-x-contain rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] sm:auto-cols-auto sm:grid-flow-row sm:grid-cols-3 sm:grid-rows-none sm:overflow-hidden md:grid-cols-4 lg:grid-cols-5"
 const CLASES_CELDA =
-  "flex h-full min-h-[7rem] snap-start flex-col items-center justify-center gap-2 px-3 py-6 text-center shadow-[1px_0_0_0_var(--color-border),0_1px_0_0_var(--color-border)] sm:min-h-[8.5rem] sm:px-4"
+  "flex h-full flex-col items-center justify-center gap-2 px-3 py-6 text-center shadow-[1px_0_0_0_var(--color-border),0_1px_0_0_var(--color-border)] sm:min-h-[8.5rem] sm:px-4"
 
 /**
  * Grilla de MARCAS del catálogo, con hairline-grid (gap-px sobre borde):
@@ -85,11 +93,7 @@ export function BrandsSection() {
 
       {isPending || sinContenido || isError ? (
         <div className="flex flex-col gap-4">
-          <div
-            className={CLASES_GRILLA}
-            aria-hidden="true"
-            data-lenis-prevent=""
-          >
+          <div className={CLASES_GRILLA} aria-hidden="true">
             {Array.from({ length: FANTASMAS }, (_, i) => (
               <div key={i} className={CLASES_CELDA}>
                 <LogoComercialVacio className="size-12" />
@@ -108,13 +112,9 @@ export function BrandsSection() {
           ) : null}
         </div>
       ) : (
-        <Stagger
-          staggerDelay={0.03}
-          className={CLASES_GRILLA}
-          data-lenis-prevent=""
-        >
+        <Stagger staggerDelay={0.03} className={CLASES_GRILLA}>
           {marcas.map((marca) => (
-            <StaggerItem key={marca.id} className="h-full snap-start">
+            <StaggerItem key={marca.id} className="h-full">
               <Link
                 href={`/productos?marca=${marca.id}` as Route}
                 className={`transition-colors hover:bg-[var(--color-surface-subtle)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${CLASES_CELDA}`}

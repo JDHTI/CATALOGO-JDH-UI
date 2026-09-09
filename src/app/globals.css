@@ -165,6 +165,19 @@
   --gutter: var(--space-6);
   --grid-columns: 12;
 
+  /* Altura de tarjeta en las pistas MÓVILES del homepage (cobertura,
+     proveedores y cada celda de la vitrina de marcas). Es un solo número a
+     propósito: con alturas propias, las tres secciones se leían como tres
+     carruseles ajenos al bajar por la portada. El ancho SÍ es de cada
+     sección — lo manda su contenido, no el ritmo.
+     El valor lo fija el caso más apretado, la card de cobertura: icono 40 +
+     título 24 + descripción a tres líneas 60, más dos gaps de 12 y el
+     padding de --space-6 = 196px. Al subirlo, revisar que la vitrina de
+     marcas (tres filas de esta altura) siga cabiendo en una pantalla.
+     Desde `sm` no aplica: ahí las tres vuelven a grilla y la altura la
+     igualan las filas. */
+  --jdh-card-movil: 12.5rem; /* 200px */
+
   /* Altura apilada del chrome del catálogo en el tope (ContactBar h-9 +
      AppHeader 72px + MainNav h-14). El primer slide del homepage llena el
      resto del viewport: `calc(100svh - var(--catalogo-chrome-height))`.

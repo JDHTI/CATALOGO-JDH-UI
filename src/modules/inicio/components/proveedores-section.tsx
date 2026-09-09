@@ -26,14 +26,20 @@ const MAX_VISIBLES = 10
  * tarjeta siguiente asome cortada por el borde: es la única señal de que hay
  * más, porque la barra de scroll va oculta (`no-scrollbar`).
  *
- * `scroll-pl-6` iguala al `px-6` de la sangría: sin él, `snap-mandatory`
- * alinea la primera tarjeta con el borde del scrollport y la canaleta
- * izquierda desaparece al soltar el gesto.
+ * El scroll es LIBRE, sin `scroll-snap`, y `overflow-y-hidden` es obligatorio
+ * — las dos cosas por la misma razón que en `value-props.tsx`.
  */
 const CLASES_PISTA =
-  "no-scrollbar -mx-6 flex snap-x snap-mandatory scroll-pl-6 gap-4 overflow-x-auto overscroll-x-contain px-6 sm:mx-0 sm:grid sm:snap-none sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3 xl:grid-cols-5"
-/** Ancho de tarjeta en la pista: dos visibles y la tercera asomando. */
-const CLASES_ITEM = "w-[46%] shrink-0 snap-start sm:w-auto"
+  "no-scrollbar -mx-6 flex gap-4 overflow-x-auto overflow-y-hidden overscroll-x-contain px-6 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3 xl:grid-cols-5"
+/**
+ * Ancho de tarjeta en la pista: dos visibles y la tercera asomando. La ALTURA
+ * es `--jdh-card-movil`, compartida con las otras dos pistas del homepage para
+ * que las tres secciones lleven el mismo ritmo al bajar. Va en el ITEM y no en
+ * `CLASES_CAJA` porque la caja conserva `h-full` para llenar a su padre — y en
+ * el mismo elemento las dos alturas competirían.
+ */
+const CLASES_ITEM =
+  "h-[var(--jdh-card-movil)] w-[46%] shrink-0 sm:h-full sm:w-auto"
 const CLASES_CAJA =
   "flex h-full flex-col gap-3 rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5"
 
@@ -96,18 +102,19 @@ export function ProveedoresSection() {
 
       {isPending || sinContenido || isError ? (
         <div className="flex flex-col gap-4">
-          <div
-            className={CLASES_PISTA}
-            aria-hidden="true"
-            data-lenis-prevent=""
-          >
+          <div className={CLASES_PISTA} aria-hidden="true">
+            {/* Mismo anidamiento que la rama con datos (item > caja): la
+                altura fija vive en el item y `h-full` en la caja, así que no
+                pueden compartir elemento. */}
             {Array.from({ length: MAX_VISIBLES }, (_, i) => (
-              <div key={i} className={`${CLASES_ITEM} ${CLASES_CAJA}`}>
-                <LogoComercialVacio className="size-12" />
-                <span className="flex flex-col gap-2">
-                  <span className="h-3.5 w-3/4 rounded bg-[var(--color-surface-subtle)]" />
-                  <span className="h-3 w-1/2 rounded bg-[var(--color-surface-subtle)]" />
-                </span>
+              <div key={i} className={CLASES_ITEM}>
+                <div className={CLASES_CAJA}>
+                  <LogoComercialVacio className="size-12" />
+                  <span className="flex flex-col gap-2">
+                    <span className="h-3.5 w-3/4 rounded bg-[var(--color-surface-subtle)]" />
+                    <span className="h-3 w-1/2 rounded bg-[var(--color-surface-subtle)]" />
+                  </span>
+                </div>
               </div>
             ))}
           </div>
@@ -122,13 +129,9 @@ export function ProveedoresSection() {
           ) : null}
         </div>
       ) : (
-        <Stagger
-          staggerDelay={0.05}
-          className={CLASES_PISTA}
-          data-lenis-prevent=""
-        >
+        <Stagger staggerDelay={0.05} className={CLASES_PISTA}>
           {destacados.map((proveedor) => (
-            <StaggerItem key={proveedor.id} className={`h-full ${CLASES_ITEM}`}>
+            <StaggerItem key={proveedor.id} className={CLASES_ITEM}>
               <Link
                 href={`/productos?proveedor=${proveedor.id}` as Route}
                 className={`group transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-[var(--color-border-strong)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none ${CLASES_CAJA}`}
