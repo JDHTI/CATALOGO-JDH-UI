@@ -36,11 +36,32 @@ import { ValueProps } from "./value-props"
  *
  * En MÓVIL las tres secciones que en desktop son grilla colapsan a scroll
  * horizontal en vez de apilarse: cobertura y proveedores como pista de una
- * fila, marcas como vitrina de tres filas paginada. Apiladas, las tres sumaban
- * más de veinte pantallas entre el hero y el CTA. Cada componente declara su
- * propia pista (`no-scrollbar` + `snap-x`); no hay wrapper compartido, y el
+ * fila, marcas como vitrina de tres filas. Apiladas, las tres sumaban más de
+ * veinte pantallas entre el hero y el CTA. Cada componente declara su propia
+ * pista (`no-scrollbar` + `overflow-x-auto`); no hay wrapper compartido, y el
  * marcado NO se duplica por breakpoint — es el mismo contenedor cambiando de
  * `flex`/`grid-flow-col` a grilla en `sm`.
+ *
+ * Las tres comparten UNA sola altura de tarjeta en móvil,
+ * `--jdh-card-movil` (`globals.css`) — la vitrina de marcas son tres filas de
+ * esa altura. El ancho no: lo manda el contenido de cada sección. Con alturas
+ * propias las tres se leían como carruseles ajenos entre sí.
+ *
+ * Y dos reglas que las tres pistas comparten, que NO son cosmética:
+ *
+ * 1. `overflow-y-hidden` junto al `overflow-x-auto`. Con el eje Y en
+ *    `visible`, la cascada de CSS Overflow (§3.2) lo sube a `auto` y la pista
+ *    se vuelve TAMBIÉN contenedor de scroll vertical: el arrastre del dedo
+ *    sobre ella se consumía ahí antes de encadenar a la página, y el scroll
+ *    de la portada daba un brinco cada vez que el gesto cruzaba una sección.
+ * 2. NADA de `scroll-snap` y NADA de `data-lenis-prevent`. El snap obligatorio
+ *    reevalúa su punto de anclaje mientras `Stagger` anima los `transform` de
+ *    las tarjetas al entrar en vista, y corregía el `scrollLeft` en cada
+ *    fotograma — tironeo horizontal durante la entrada. Y `data-lenis-prevent`
+ *    apagaba el suavizado de Lenis en el tramo vertical que ocupa la sección,
+ *    de modo que la página alternaba entre scroll suave y nativo. El scroll
+ *    libre con inercia nativa es lo que se siente fluido; Lenis va en vertical
+ *    y nunca lee `deltaX`, así que no le disputa el eje horizontal a la pista.
  */
 export function InicioView({
   hero,

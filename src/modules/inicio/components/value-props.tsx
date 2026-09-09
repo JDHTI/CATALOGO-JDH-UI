@@ -42,11 +42,15 @@ const VALUE_PROPS = [
  * mismo.
  *
  * En MÓVIL (<`sm`) las cards NO se apilan: el contenedor colapsa a una pista
- * deslizable horizontal con scroll-snap. Apiladas, la franja negra medía
+ * deslizable horizontal, de scroll LIBRE. Apiladas, la franja negra medía
  * cuatro pantallas justo debajo del hero y empujaba el resto del catálogo
  * fuera de la vista; en carrusel ocupa una. Desde `sm` el mismo contenedor
  * vuelve a ser la grilla (2 columnas, 4 en `lg`) sin duplicar el marcado:
  * `flex` → `sm:grid` y el ancho porcentual de las cards → `sm:w-auto`.
+ *
+ * La ALTURA en móvil es `--jdh-card-movil`, el mismo token que usan las otras
+ * dos pistas del homepage; esta card es el caso que fija su valor. Ver el
+ * token en `globals.css`.
  */
 export function ValueProps() {
   return (
@@ -65,23 +69,29 @@ export function ValueProps() {
         tabIndex={0}
         role="group"
         aria-label="Propuestas de valor"
-        data-lenis-prevent=""
-        // `scroll-pl-4` iguala al `px-4`: sin él, `snap-mandatory` alinea la
-        // primera card con el borde del scrollport y se come la canaleta
-        // izquierda en cuanto el usuario suelta el gesto.
-        className="mx-auto no-scrollbar flex w-full max-w-[var(--container-wide)] snap-x snap-mandatory scroll-pl-4 gap-4 overflow-x-auto overscroll-x-contain px-4 py-[var(--space-16)] sm:grid sm:snap-none sm:grid-cols-2 sm:overflow-visible sm:px-6 lg:grid-cols-4 lg:gap-6 lg:py-[var(--space-24)]"
+        // `overflow-y-hidden` NO es decorativo: `overflow-x: auto` deja el eje
+        // Y en `auto` por cascada (CSS Overflow §3.2), así que la pista se
+        // volvía también contenedor de scroll vertical y se comía el gesto de
+        // arrastre de la página antes de encadenarlo — el "brinco" al pasar
+        // el dedo por la franja. En `hidden` deja de ser desplazable por el
+        // usuario y el gesto vertical vuelve a la página. Ver `inicio-view`.
+        className="mx-auto no-scrollbar flex w-full max-w-[var(--container-wide)] gap-4 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 py-[var(--space-16)] sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-6 lg:grid-cols-4 lg:gap-6 lg:py-[var(--space-24)]"
       >
         {VALUE_PROPS.map(({ icon: Icon, title, description }) => (
           <StaggerItem
             key={title}
-            className="h-full w-[82%] shrink-0 snap-start sm:w-auto"
+            className="h-[var(--jdh-card-movil)] w-[82%] shrink-0 sm:h-full sm:w-auto"
           >
             <div className="flex h-full flex-col gap-3 rounded-[var(--jdh-radius-md)] border border-[var(--color-ink-border)] bg-[var(--color-ink)] p-6 text-[var(--color-on-ink)] transition-colors duration-[var(--duration-fast)] hover:bg-[var(--overlay-on-dark-04)] dark:border-[var(--color-paper-border)] dark:bg-[var(--color-paper)] dark:text-[var(--color-on-paper)] dark:hover:bg-[var(--color-paper-hover)]">
               <span className="flex size-10 items-center justify-center rounded-[var(--jdh-radius-sm)] bg-[var(--overlay-on-dark-08)] text-[var(--color-on-ink)] dark:bg-[var(--color-paper-hover)] dark:text-[var(--color-on-paper)]">
                 <Icon className="size-5" aria-hidden="true" />
               </span>
               <h2 className="text-base font-medium">{title}</h2>
-              <p className="text-sm text-[var(--color-on-ink-muted)] dark:text-[var(--color-on-paper-muted)]">
+              {/* `line-clamp-3` sostiene la altura fija de la pista: la card
+                  ya no crece con el copy, así que una descripción más larga
+                  que las de hoy se recortaría en vez de desbordar. Desde `sm`
+                  la fila iguala las alturas y el texto va completo. */}
+              <p className="line-clamp-3 text-sm text-[var(--color-on-ink-muted)] sm:line-clamp-none dark:text-[var(--color-on-paper-muted)]">
                 {description}
               </p>
             </div>
