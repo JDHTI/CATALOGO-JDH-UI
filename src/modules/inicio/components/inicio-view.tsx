@@ -33,6 +33,14 @@ import { ValueProps } from "./value-props"
  *
  * El texto institucional (copy del hero, cobertura, CTA) es propio y siempre
  * está presente.
+ *
+ * En MÓVIL las tres secciones que en desktop son grilla colapsan a scroll
+ * horizontal en vez de apilarse: cobertura y proveedores como pista de una
+ * fila, marcas como vitrina de tres filas paginada. Apiladas, las tres sumaban
+ * más de veinte pantallas entre el hero y el CTA. Cada componente declara su
+ * propia pista (`no-scrollbar` + `snap-x`); no hay wrapper compartido, y el
+ * marcado NO se duplica por breakpoint — es el mismo contenedor cambiando de
+ * `flex`/`grid-flow-col` a grilla en `sm`.
  */
 export function InicioView({
   hero,

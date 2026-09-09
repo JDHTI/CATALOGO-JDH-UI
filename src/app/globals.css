@@ -497,6 +497,28 @@
 }
 
 /* ==========================================================================
+   `no-scrollbar` — barra oculta en una región que SÍ se desplaza.
+   La usan las pistas horizontales del homepage (cobertura, proveedores,
+   marcas), que en móvil colapsan la grilla a un carrusel deslizable. Es la
+   misma decisión que ya se tomó para el documento (ver `html` en @layer base):
+   el gesto es táctil y una barra horizontal partiría el hairline de las
+   celdas. El scroll sigue siendo real — solo desaparece su indicador, así que
+   la pista debe dar su propia pista visual de que hay más (una tarjeta
+   asomando en el borde).
+   Va como @utility y no en @layer components para que la ordene Tailwind con
+   el resto de utilidades: así un `sm:overflow-visible` la desactiva sin pelear
+   por especificidad.
+   ========================================================================== */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ==========================================================================
    Z-index de portales — los componentes de shadcn/ui portalizan a <body> con
    la utilidad `z-50`, que queda por DEBAJO del chrome sticky (--z-sticky:1100).
    Se corrige por data-slot (sin editar ui/), respetando la escala nombrada de

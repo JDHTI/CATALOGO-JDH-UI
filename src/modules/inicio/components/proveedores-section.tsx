@@ -18,8 +18,22 @@ import { SECTION_EMPTY_COPY, SectionNota } from "./section-empty"
 /** Proveedores que caben en la grilla sin empujar la página. */
 const MAX_VISIBLES = 10
 
-const CLASES_GRILLA =
-  "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+/**
+ * Contenedor: PISTA deslizable en móvil, grilla desde `sm`. En una sola
+ * columna las 10 tarjetas medían varias pantallas y hundían el resto del
+ * homepage; en pista ocupan una. La pista SANGRA hasta el borde del viewport
+ * (`-mx-6 px-6`, contra el `px-6` del wrapper de `InicioView`) para que la
+ * tarjeta siguiente asome cortada por el borde: es la única señal de que hay
+ * más, porque la barra de scroll va oculta (`no-scrollbar`).
+ *
+ * `scroll-pl-6` iguala al `px-6` de la sangría: sin él, `snap-mandatory`
+ * alinea la primera tarjeta con el borde del scrollport y la canaleta
+ * izquierda desaparece al soltar el gesto.
+ */
+const CLASES_PISTA =
+  "no-scrollbar -mx-6 flex snap-x snap-mandatory scroll-pl-6 gap-4 overflow-x-auto overscroll-x-contain px-6 sm:mx-0 sm:grid sm:snap-none sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3 xl:grid-cols-5"
+/** Ancho de tarjeta en la pista: dos visibles y la tercera asomando. */
+const CLASES_ITEM = "w-[46%] shrink-0 snap-start sm:w-auto"
 const CLASES_CAJA =
   "flex h-full flex-col gap-3 rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5"
 
@@ -82,9 +96,13 @@ export function ProveedoresSection() {
 
       {isPending || sinContenido || isError ? (
         <div className="flex flex-col gap-4">
-          <div className={CLASES_GRILLA} aria-hidden="true">
+          <div
+            className={CLASES_PISTA}
+            aria-hidden="true"
+            data-lenis-prevent=""
+          >
             {Array.from({ length: MAX_VISIBLES }, (_, i) => (
-              <div key={i} className={CLASES_CAJA}>
+              <div key={i} className={`${CLASES_ITEM} ${CLASES_CAJA}`}>
                 <LogoComercialVacio className="size-12" />
                 <span className="flex flex-col gap-2">
                   <span className="h-3.5 w-3/4 rounded bg-[var(--color-surface-subtle)]" />
@@ -104,9 +122,13 @@ export function ProveedoresSection() {
           ) : null}
         </div>
       ) : (
-        <Stagger staggerDelay={0.05} className={CLASES_GRILLA}>
+        <Stagger
+          staggerDelay={0.05}
+          className={CLASES_PISTA}
+          data-lenis-prevent=""
+        >
           {destacados.map((proveedor) => (
-            <StaggerItem key={proveedor.id} className="h-full">
+            <StaggerItem key={proveedor.id} className={`h-full ${CLASES_ITEM}`}>
               <Link
                 href={`/productos?proveedor=${proveedor.id}` as Route}
                 className={`group transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-[var(--color-border-strong)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none ${CLASES_CAJA}`}
