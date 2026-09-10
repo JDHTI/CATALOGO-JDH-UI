@@ -15,11 +15,11 @@ export function ProductoDescripcion({ texto }: { texto: string | null }) {
       aria-label="Descripción del producto"
       className="flex flex-col gap-3"
     >
-      <h2 className="text-base font-medium">Descripción</h2>
+      <h2 className="text-lg font-medium">Descripción</h2>
       {parrafos.map((parrafo, indice) => (
         <p
           key={indice}
-          className="max-w-prose text-sm leading-relaxed whitespace-pre-line text-muted-foreground"
+          className="max-w-prose text-base leading-relaxed whitespace-pre-line text-muted-foreground"
         >
           {parrafo}
         </p>

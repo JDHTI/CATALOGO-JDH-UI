@@ -47,16 +47,24 @@ export function ProductoDetalleView({ producto }: { producto: Producto }) {
       />
 
       {/* En una sola columna (móvil/tablet) las dos filas se reparten el alto
-          en proporción fija, 45/55. Con `auto` en la fila del texto, una
-          descripción editorial larga se comía la pantalla y la foto llegaba a
-          quedar en 7px; con este reparto la galería tiene su parte garantizada
-          y es la descripción la que se desplaza dentro de su caja.
+          en proporción fija, 55/45 a favor de la galería. Con `auto` en la
+          fila del texto, una descripción editorial larga se comía la pantalla
+          y la foto llegaba a quedar en 7px; con este reparto la galería tiene
+          su parte garantizada y es el texto el que se desplaza por dentro.
+
+          Le toca la porción MAYOR, y con holgura, porque el marco es cuadrado
+          y su lado es el menor entre el ancho de la columna y el alto de la
+          fila. Con un reparto parejo mandaba el alto y quedaba un cuadrado
+          pequeño flotando en una fila ancha, con espacio muerto a los lados;
+          dándole 75 el que manda es el ancho, que es lo que se quiere en un
+          teléfono: una card grande. Al texto, que ya se desplaza por dentro
+          en móvil, solo le cuesta desplazamiento.
 
           `minmax(0,…)` y no `45fr`/`55fr` a secas porque un track `fr` tiene
           `min-height:auto` y se niega a bajar del tamaño de su contenido, que
           es justo lo que reintroduce el scroll. En `lg` vuelven a ser dos
           columnas en una sola fila. */}
-      <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,45fr)_minmax(0,55fr)] gap-6 lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)] lg:gap-8">
+      <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,75fr)_minmax(0,25fr)] gap-4 lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)] lg:gap-8">
         {/* `key`: la galería guarda cuál miniatura está activa, y al navegar
             de un producto a otro React reutilizaría la instancia con el índice
             de la anterior. */}
@@ -78,13 +86,13 @@ export function ProductoDetalleView({ producto }: { producto: Producto }) {
           data-lenis-prevent
           className="flex min-h-0 flex-col gap-4 overflow-y-auto"
         >
-          <header className="flex shrink-0 flex-col gap-1">
+          <header className="flex shrink-0 flex-col gap-1.5">
             {producto.marca ? (
-              <p className="text-xs font-medium tracking-wide text-muted-foreground">
+              <p className="text-sm font-medium tracking-wide text-muted-foreground">
                 {formatNombreComercial(producto.marca)}
               </p>
             ) : null}
-            <h1 className="text-xl font-bold tracking-tight text-balance sm:text-2xl">
+            <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">
               {producto.nombre}
             </h1>
           </header>
@@ -151,12 +159,12 @@ function FichaTecnica({ producto }: { producto: Producto }) {
       {filas.map(({ termino, valor, codigo }) => (
         <div
           key={termino}
-          className="flex flex-col gap-0.5 border-b border-[var(--color-border)] px-3 py-2 last:border-b-0 nth-last-2:border-b-0"
+          className="flex flex-col gap-0.5 border-b border-[var(--color-border)] px-4 py-2.5 last:border-b-0 nth-last-2:border-b-0"
         >
           <dt className="text-xs text-muted-foreground">{termino}</dt>
           <dd
             className={cn(
-              "truncate text-sm font-medium",
+              "truncate text-base font-medium",
               codigo && "tabular-nums"
             )}
             title={valor ?? undefined}
