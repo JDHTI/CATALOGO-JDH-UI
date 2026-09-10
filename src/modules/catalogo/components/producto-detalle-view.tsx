@@ -52,16 +52,20 @@ export function ProductoDetalleView({ producto }: { producto: Producto }) {
           foto sube al desplazar.
 
           `lg`: dos columnas en una sola fila, con la galería MÁS ESTRECHA que
-          el texto (11/13). El cuadrado se alinea a la izquierda contra el
+          el texto (10/14). El cuadrado se alinea a la izquierda contra el
           mismo margen del header, así que estrechar su columna acerca el
-          bloque descriptivo al margen izquierdo y ensancha la ficha técnica
-          sin robarle tamaño a la foto, que en estos anchos la limita el alto
-          y no la columna.
+          bloque descriptivo a la foto y ensancha la ficha técnica.
+
+          El hueco entre foto y texto no era el `gap`, era la columna: el
+          cuadrado se limita por el ALTO disponible, así que en anchos medios
+          sobraba columna vacía a su derecha (a 1280 el cuadrado medía 412 en
+          una columna de 546). Estrecharla se come ese vacío antes que la
+          foto.
 
           `minmax(0,…)` y no `11fr`/`13fr` a secas porque un track `fr` tiene
           `min-height:auto`, se niega a bajar del tamaño de su contenido y ahí
           reaparece el scroll. */}
-      <div className="grid grid-cols-1 gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,11fr)_minmax(0,13fr)] lg:grid-rows-[minmax(0,1fr)] lg:gap-10">
+      <div className="grid grid-cols-1 gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,10fr)_minmax(0,14fr)] lg:grid-rows-[minmax(0,1fr)] lg:gap-8">
         {/* `key`: la galería guarda cuál miniatura está activa, y al navegar
             de un producto a otro React reutilizaría la instancia con el índice
             de la anterior. */}
@@ -191,7 +195,7 @@ export function DetalleSkeleton() {
     >
       <span className="sr-only">Cargando producto…</span>
       <div className="h-4 w-64 shrink-0 rounded bg-[var(--color-surface-subtle)]" />
-      <div className="grid grid-cols-1 gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,11fr)_minmax(0,13fr)] lg:grid-rows-[minmax(0,1fr)] lg:gap-10">
+      <div className="grid grid-cols-1 gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,10fr)_minmax(0,14fr)] lg:grid-rows-[minmax(0,1fr)] lg:gap-8">
         <div className="flex flex-col gap-3 lg:min-h-0">
           {/* Mismo criterio que la galería real: cuadrado a ancho completo en
               móvil, y en `lg` el que cabe en el alto disponible. */}
