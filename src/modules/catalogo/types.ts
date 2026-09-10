@@ -69,7 +69,15 @@ export interface Producto {
   id: string
   sku: string
   nombre: string
-  descripcion: string
+  /**
+   * Código de referencia del ERP. El API lo envía en un campo llamado
+   * `descripcion`, pero NO es prosa: son códigos como "67303855" o "CO8413"
+   * — 6,6 caracteres de media, 34 de cada 40 solo dígitos y sin espacios
+   * (medido sobre el catálogo real). La descripción de verdad es
+   * `descripcionLarga`; tener las dos con nombres casi iguales fue lo que
+   * llevó a pintar el código como si fuera texto comercial.
+   */
+  referencia: string
   /** Texto editorial plano; null mientras la ficha está pendiente. */
   descripcionLarga: string | null
   seo: { title: string | null; description: string | null }

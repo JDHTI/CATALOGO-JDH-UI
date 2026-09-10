@@ -111,7 +111,11 @@ export function ProductoImagen({
           fill
           sizes={sizes}
           priority={priority}
-          className="object-cover"
+          // `contain` en el detalle: ahí el recuadro se estira al alto que
+          // sobra en la ficha, así que ya no es cuadrado como la foto y
+          // `cover` recortaría el producto por arriba y por abajo. En card y
+          // miniatura el recuadro sí es cuadrado y `cover` no recorta nada.
+          className={variant === "detalle" ? "object-contain" : "object-cover"}
         />
       ) : esMiniatura ? (
         <span className="absolute inset-0 flex items-center justify-center text-muted-foreground">

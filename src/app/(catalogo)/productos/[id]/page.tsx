@@ -47,7 +47,7 @@ export default async function ProductoDetallePage({
   const producto = await obtenerProductoPublico(id)
   if (!producto) notFound()
   return (
-    <CatalogoPage>
+    <CatalogoPage compacta>
       <script type="application/ld+json">
         {serializarJsonLd(productoJsonLd(producto))}
       </script>

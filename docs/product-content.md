@@ -15,8 +15,13 @@ El adaptador acepta campos ausentes durante el despliegue progresivo, `null`,
 SEO parcial y cadenas vacías. Normaliza contenido editorial vacío a `null`.
 Un tipo incorrecto sigue siendo un error de contrato; no se fabrica contenido.
 
-La ficha omite la sección editorial pendiente. Conserva `descripcion` bajo
-«Descripción ERP» en la ficha técnica: puede ser un código operativo.
+La ficha omite la sección editorial pendiente. El campo que el API llama
+`descripcion` se expone en el dominio como `referencia` y se muestra bajo
+«Referencia» en la ficha técnica, junto al código del producto: su contenido
+no es prosa sino códigos del ERP tipo `67303855` o `CO8413` —6,6 caracteres
+de media, casi siempre solo dígitos y sin espacios sobre el catálogo real—,
+y etiquetarlo «Descripción ERP» lo hacía pasar por texto comercial ahora que
+`descripcionLarga` sí trae una descripción de verdad.
 Las cards del catálogo y la home muestran únicamente la identificación del
 producto. `seo.description` se reserva para metadatos y `descripcionLarga`
 para la ficha individual. El contrato actual no incluye un resumen editorial
