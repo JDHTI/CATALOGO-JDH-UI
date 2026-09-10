@@ -50,7 +50,10 @@ describe("contenido visible y seguro", () => {
     )
     expect(html).toContain("Primer párrafo editorial.")
     expect(html).toContain("Segundo párrafo editorial.")
-    expect(html).toContain("Descripción ERP")
+    // El código del ERP se etiqueta «Referencia», no «Descripción ERP»: es un
+    // código, y ahora `descripcionLarga` ocupa el papel de la descripción.
+    expect(html).toContain("Referencia")
+    expect(html).not.toContain("Descripción ERP")
     expect(html).toContain("68450362")
     expect(html).toContain(producto.sku)
   })

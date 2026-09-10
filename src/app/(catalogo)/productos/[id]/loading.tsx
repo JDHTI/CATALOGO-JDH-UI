@@ -3,7 +3,9 @@ import { DetalleSkeleton } from "@/modules/catalogo/components/producto-detalle-
 
 export default function Loading() {
   return (
-    <CatalogoPage>
+    // `compacta` igual que la página: si el esqueleto creciera con su
+    // contenido, la barra de scroll aparecería y desaparecería al hidratar.
+    <CatalogoPage compacta>
       <DetalleSkeleton />
     </CatalogoPage>
   )

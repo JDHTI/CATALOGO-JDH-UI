@@ -13,8 +13,11 @@ afterEach(() => vi.unstubAllGlobals())
 
 describe("contrato editorial progresivo", () => {
   it("conserva los campos editoriales y todos los campos existentes", () => {
+    const { descripcion, ...dtoSinRenombrar } = productoDto
     expect(producto).toEqual({
-      ...productoDto,
+      ...dtoSinRenombrar,
+      // El DTO lo llama `descripcion`; el dominio, `referencia`.
+      referencia: descripcion,
       id: "42",
       proveedor: {
         id: "7",
@@ -43,7 +46,9 @@ describe("contrato editorial progresivo", () => {
     expect(result.descripcionLarga).toBeNull()
     expect(result.seo).toEqual({ title: null, description: null })
     expect(result.imagenUrlFallback).toBeNull()
-    expect(result.descripcion).toBe("68450362")
+    // El API lo envía como `descripcion`; el dominio lo expone como
+    // `referencia` porque su contenido es un código del ERP.
+    expect(result.referencia).toBe("68450362")
     expect(result.imagenes).toEqual(producto.imagenes)
   })
 

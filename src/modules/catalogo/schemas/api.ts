@@ -56,6 +56,9 @@ export const productoDtoSchema = z.object({
   id: idSchema,
   sku: z.string(),
   nombre: z.string(),
+  // `descripcion` es el nombre del API, pero su contenido es un código de
+  // referencia del ERP; el dominio lo expone como `referencia` para no
+  // confundirlo con `descripcionLarga`, que sí es texto editorial.
   descripcion: z.string().nullish(),
   descripcionLarga: z.string().nullish(),
   seo: z
@@ -142,7 +145,7 @@ export function aProducto(dto: ProductoDto): Producto {
     id: dto.id,
     sku: dto.sku,
     nombre: dto.nombre,
-    descripcion: dto.descripcion ?? "",
+    referencia: dto.descripcion ?? "",
     descripcionLarga: dto.descripcionLarga?.trim() || null,
     seo: {
       title: dto.seo?.title?.trim() || null,

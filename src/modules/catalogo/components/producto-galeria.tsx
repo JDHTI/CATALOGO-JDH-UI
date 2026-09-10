@@ -55,21 +55,25 @@ export function ProductoGaleria({ producto }: { producto: Producto }) {
     null
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      {/* `flex-1 min-h-0` en vez de `aspect-square`: la ficha se dimensiona al
+          viewport y no scrollea, así que el recuadro toma el alto que sobra
+          tras el texto y la tira. Con aspecto fijo, en un portátil de 720px
+          la foto sola medía 600px y empujaba el resto fuera de pantalla. */}
       <ProductoImagen
         producto={producto}
         imagen={seleccionada}
         variant="detalle"
         sizes="(min-width: 1024px) 50vw, 100vw"
         priority
-        className="aspect-square rounded-[var(--jdh-radius-md)] border border-[var(--color-border)]"
+        className="min-h-0 flex-1 rounded-[var(--jdh-radius-md)] border border-[var(--color-border)]"
       />
 
       {disponibles.length > 1 ? (
         <div
           role="group"
           aria-label={`Imágenes de ${producto.nombre}`}
-          className="flex flex-wrap gap-2"
+          className="flex shrink-0 flex-wrap gap-2"
         >
           {disponibles.map((imagen, indice) => {
             const esActiva = imagen === seleccionada
