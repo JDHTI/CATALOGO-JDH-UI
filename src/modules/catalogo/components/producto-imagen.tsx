@@ -111,11 +111,12 @@ export function ProductoImagen({
           fill
           sizes={sizes}
           priority={priority}
-          // `contain` en el detalle: ahí el recuadro se estira al alto que
-          // sobra en la ficha, así que ya no es cuadrado como la foto y
-          // `cover` recortaría el producto por arriba y por abajo. En card y
-          // miniatura el recuadro sí es cuadrado y `cover` no recorta nada.
-          className={variant === "detalle" ? "object-contain" : "object-cover"}
+          // `cover` en las tres variantes: el marco es cuadrado en todas y el
+          // API entrega las fotos sobre lienzo cuadrado, así que no recorta
+          // nada. Con un marco elástico haría falta `contain`, pero eso deja
+          // franjas grises a los lados — por eso el detalle conserva el
+          // cuadrado y lo dimensiona por el alto (ver `ProductoGaleria`).
+          className="object-cover"
         />
       ) : esMiniatura ? (
         <span className="absolute inset-0 flex items-center justify-center text-muted-foreground">

@@ -56,24 +56,38 @@ export function ProductoGaleria({ producto }: { producto: Producto }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
-      {/* `flex-1 min-h-0` en vez de `aspect-square`: la ficha se dimensiona al
-          viewport y no scrollea, así que el recuadro toma el alto que sobra
-          tras el texto y la tira. Con aspecto fijo, en un portátil de 720px
-          la foto sola medía 600px y empujaba el resto fuera de pantalla. */}
-      <ProductoImagen
-        producto={producto}
-        imagen={seleccionada}
-        variant="detalle"
-        sizes="(min-width: 1024px) 50vw, 100vw"
-        priority
-        className="min-h-0 flex-1 rounded-[var(--jdh-radius-md)] border border-[var(--color-border)]"
-      />
+      {/* El marco es CUADRADO y su lado es el MENOR entre el ancho de la
+          columna y el alto disponible — es decir, el cuadrado más grande que
+          cabe. Eso es exactamente `cqmin`, con el contenedor declarado como
+          contenedor de tamaño.
+
+          Las dos alternativas obvias fallan, y las dos se probaron:
+
+          - `aspect-square` a secas se estira al ancho de la columna, y en una
+            ficha que no scrollea ese cuadrado no cabe de alto.
+          - Marco elástico con `object-contain` deja dos franjas grises a los
+            lados de la foto. Rompe la estética por un problema de maquetación.
+
+          Y `h-full aspect-square max-w-full` tampoco: en cuanto el alto supera
+          al ancho (pasa en 1920x1080, donde la columna mide 680 y el alto
+          disponible 774) `max-w-full` recorta el ancho pero el alto se queda,
+          y el marco deja de ser cuadrado. `cqmin` no tiene ese borde. */}
+      <div className="[container-type:size] flex min-h-0 flex-1 items-center justify-center">
+        <ProductoImagen
+          producto={producto}
+          imagen={seleccionada}
+          variant="detalle"
+          sizes="(min-width: 1024px) 50vw, 100vw"
+          priority
+          className="size-[100cqmin] rounded-[var(--jdh-radius-md)] border border-[var(--color-border)]"
+        />
+      </div>
 
       {disponibles.length > 1 ? (
         <div
           role="group"
           aria-label={`Imágenes de ${producto.nombre}`}
-          className="flex shrink-0 flex-wrap gap-2"
+          className="flex shrink-0 flex-wrap justify-center gap-2"
         >
           {disponibles.map((imagen, indice) => {
             const esActiva = imagen === seleccionada
