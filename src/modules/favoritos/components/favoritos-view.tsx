@@ -14,8 +14,17 @@ import { ProductoCard, ProductoCardSkeleton } from "@/modules/catalogo"
 import { FavoritosNoDisponiblesError } from "../api/client"
 import { useFavoritosPagina } from "../hooks/use-favoritos"
 
-/** Mismo tamaño de página que el catálogo, para que el grid se comporte igual. */
+/**
+ * 12 favoritos por página, repartidos en 4 filas de 3.
+ *
+ * El grid se queda en 3 columnas también en pantallas grandes, a diferencia
+ * del catálogo, que sube a 4: con 4 columnas los mismos 12 productos caen en
+ * 3 filas. Aquí manda la forma pedida —12 por página en 4 filas—, y como la
+ * lista es corta y curada por el usuario, no hay nada que ganar apretando una
+ * columna más.
+ */
 const PAGE_SIZE = 12
+const GRID = "grid grid-cols-2 gap-4 md:grid-cols-3"
 
 /**
  * Página completa de favoritos.
@@ -125,7 +134,7 @@ export function FavoritosView() {
           isPlaceholderData ? "opacity-60 transition-opacity" : undefined
         }
       >
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+        <div className={GRID}>
           {isPending
             ? Array.from({ length: PAGE_SIZE }, (_, i) => (
                 <ProductoCardSkeleton key={i} />
