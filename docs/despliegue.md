@@ -1,6 +1,6 @@
 # Despliegue en Vercel
 
-Guía operativa de `jdh-catalogo-ui`. El *por qué* de cada decisión está en
+Guía operativa de `jdh-catalogo-ui`. El _por qué_ de cada decisión está en
 `.claude/ARCHITECTURE.md` (entrada del 2026-09-07); el detalle de cada variable,
 en `.env.example`. Aquí está lo que hay que hacer.
 
@@ -12,11 +12,11 @@ Vercel aloja **solo esta app**, y esta app es a la vez el catálogo y el
 
 Fuera de Vercel tienen que estar, accesibles por internet y por HTTPS:
 
-| Pieza                | Quién la consume                              | Estado                                                        |
-| -------------------- | --------------------------------------------- | ------------------------------------------------------------- |
-| Postgres `jdh_auth`  | Better Auth, desde las funciones de Vercel    | ❌ Solo `localhost:5435`. Sin él no hay ingreso; el catálogo público sí funciona |
-| API `jdh-catalogo-api` | El navegador y el servidor, vía `NEXT_PUBLIC_API_URL` | ✅ En Railway, pero **sin datos** (§7.2)          |
-| Bucket R2            | El navegador, y `next.config.ts` para `remotePatterns` | ✅ Dominio público de R2                             |
+| Pieza                  | Quién la consume                                       | Estado                                                                           |
+| ---------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| Postgres `jdh_auth`    | Better Auth, desde las funciones de Vercel             | ❌ Solo `localhost:5435`. Sin él no hay ingreso; el catálogo público sí funciona |
+| API `jdh-catalogo-api` | El navegador y el servidor, vía `NEXT_PUBLIC_API_URL`  | ✅ En Railway, pero **sin datos** (§7.2)                                         |
+| Bucket R2              | El navegador, y `next.config.ts` para `remotePatterns` | ✅ Dominio público de R2                                                         |
 
 Lo que hoy bloquea un despliegue útil está en §7.
 
@@ -25,18 +25,18 @@ Lo que hoy bloquea un despliegue útil está en §7.
 Marcar en el dashboard qué entornos recibe cada una. `NEXT_PUBLIC_*` se
 incrusta en el bundle **en tiempo de build**: cambiarla exige redespliegue.
 
-| Variable                            | Production            | Preview               | Notas                                                                 |
-| ----------------------------------- | --------------------- | --------------------- | --------------------------------------------------------------------- |
-| `AUTH_MICROSOFT_ENTRA_ID_ID`        | ✅                    | ✅                    | Obligatoria: el módulo la exige al importarse                          |
-| `AUTH_MICROSOFT_ENTRA_ID_SECRET`    | ✅ *(Sensitive)*      | ✅ *(Sensitive)*      | Rotarla en Azure obliga a actualizarla aquí                            |
-| `AUTH_MICROSOFT_ENTRA_ID_TENANT_ID` | ✅                    | ✅                    | El del tenant de JDH, nunca `common`                                   |
-| `BETTER_AUTH_SECRET`                | ✅ *(Sensitive)*      | ✅ *(Sensitive)*      | **Uno distinto por entorno.** Rotarlo invalida sesiones y exige `TRUNCATE TABLE jwks` (§4) |
-| `BETTER_AUTH_URL`                   | ✅ dominio real       | ❌ **dejar vacía**    | Ver §3                                                                 |
-| `DATABASE_URL`                      | ✅ *(Sensitive)*      | ✅ *(Sensitive)*      | Puerto del **pooler**, `sslmode=require`. Ver §4                       |
-| `NEXT_PUBLIC_API_URL`               | ✅ HTTPS              | ✅ HTTPS              | Con el prefijo `/api/v1`. Hoy: `https://catalogo-jdh-api-production.up.railway.app/api/v1` |
-| `NEXT_PUBLIC_ASSETS_CDN_URL`        | ✅                    | ✅                    | De aquí sale el host de `images.remotePatterns`                        |
-| `BACKEND_API_URL`                   | —                     | —                     | `backend-fetch.ts` existe pero nadie lo llama todavía                  |
-| `ALLOW_LOCAL_IMAGE_HOSTS`           | ❌ **nunca**          | ❌ **nunca**          | Solo para probar un build de producción en local                       |
+| Variable                            | Production       | Preview            | Notas                                                                                      |
+| ----------------------------------- | ---------------- | ------------------ | ------------------------------------------------------------------------------------------ |
+| `AUTH_MICROSOFT_ENTRA_ID_ID`        | ✅               | ✅                 | Obligatoria: el módulo la exige al importarse                                              |
+| `AUTH_MICROSOFT_ENTRA_ID_SECRET`    | ✅ _(Sensitive)_ | ✅ _(Sensitive)_   | Rotarla en Azure obliga a actualizarla aquí                                                |
+| `AUTH_MICROSOFT_ENTRA_ID_TENANT_ID` | ✅               | ✅                 | El del tenant de JDH, nunca `common`                                                       |
+| `BETTER_AUTH_SECRET`                | ✅ _(Sensitive)_ | ✅ _(Sensitive)_   | **Uno distinto por entorno.** Rotarlo invalida sesiones y exige `TRUNCATE TABLE jwks` (§4) |
+| `BETTER_AUTH_URL`                   | ✅ dominio real  | ❌ **dejar vacía** | Ver §3                                                                                     |
+| `DATABASE_URL`                      | ✅ _(Sensitive)_ | ✅ _(Sensitive)_   | Puerto del **pooler**, `sslmode=require`. Ver §4                                           |
+| `NEXT_PUBLIC_API_URL`               | ✅ HTTPS         | ✅ HTTPS           | Con el prefijo `/api/v1`. Hoy: `https://catalogo-jdh-api-production.up.railway.app/api/v1` |
+| `NEXT_PUBLIC_ASSETS_CDN_URL`        | ✅               | ✅                 | De aquí sale el host de `images.remotePatterns`                                            |
+| `BACKEND_API_URL`                   | —                | —                  | `backend-fetch.ts` existe pero nadie lo llama todavía                                      |
+| `ALLOW_LOCAL_IMAGE_HOSTS`           | ❌ **nunca**     | ❌ **nunca**       | Solo para probar un build de producción en local                                           |
 
 Las variables de sistema (`VERCEL_ENV`, `VERCEL_URL`,
 `VERCEL_PROJECT_PRODUCTION_URL`, `VERCEL_BRANCH_URL`) las inyecta Vercel; §3 y
@@ -190,6 +190,7 @@ Bloqueantes, en orden:
    una respuesta válida), lo cual no se distingue de un catálogo roto para quien
    lo abra. Habilitar el DWH en Railway (`DWH_HOST` y compañía) y correr la
    sincronización es lo que queda para que el despliegue sirva de algo.
+
 3. **Redirect URI de producción registrado en Entra** (§5).
 4. **Secretos nuevos para producción:** `BETTER_AUTH_SECRET` propio (no el de
    `.env.local`) y, si se comparte con el equipo, un client secret de Entra
@@ -212,7 +213,7 @@ host del bucket y los estilos en línea de Next.
 6. La foto de perfil se sirve por `/api/perfil/foto` (404 y avatar de iniciales
    es una respuesta válida), nunca como data URL.
 7. Un producto y un logo cargan por `/_next/image`. Un 400 `"url" parameter is
-   not allowed` significa que `NEXT_PUBLIC_ASSETS_CDN_URL` no coincide con el
+not allowed` significa que `NEXT_PUBLIC_ASSETS_CDN_URL` no coincide con el
    host real del bucket.
 8. `GET /api/auth/jwks` responde con una clave pública y **sin** el componente
    `d` (si aparece `d`, se está sirviendo la clave privada: parar y revisar).
@@ -223,14 +224,14 @@ El API **no** tiene credenciales de `jdh_auth` ni lee su esquema. Recibe la
 identidad en un JWT que firma esta app (`src/lib/auth/server.ts`, plugin `jwt`)
 y que `src/lib/api/backend-fetch.ts` reenvía como `Authorization: Bearer`.
 
-| Qué                | Valor                                                     |
-| ------------------ | --------------------------------------------------------- |
-| Algoritmo          | `EdDSA` (Ed25519), asimétrico                              |
-| JWKS               | `GET {origen de la UI}/api/auth/jwks` — solo clave pública |
-| `iss`              | `jdh-catalogo-ui`                                          |
-| `aud`              | `jdh-catalogo-api`                                         |
-| `sub`              | id del usuario                                             |
-| TTL                | 5 minutos                                                  |
+| Qué                | Valor                                                                 |
+| ------------------ | --------------------------------------------------------------------- |
+| Algoritmo          | `EdDSA` (Ed25519), asimétrico                                         |
+| JWKS               | `GET {origen de la UI}/api/auth/jwks` — solo clave pública            |
+| `iss`              | `jdh-catalogo-ui`                                                     |
+| `aud`              | `jdh-catalogo-api`                                                    |
+| `sub`              | id del usuario                                                        |
+| TTL                | 5 minutos                                                             |
 | Claims adicionales | `name`, `email`, `roles`, `permissions`, `clienteId`, `listaPrecioId` |
 
 Del lado de Nest, un guard con `jose` (ya es dependencia transitiva):
@@ -247,9 +248,26 @@ const { payload } = await jwtVerify(token, jwks, {
 ```
 
 `AUTH_JWKS_URL` es una variable **del API**, y apunta al origen de la UI del
-mismo entorno (`https://catalogo.jdh.com.co/api/auth/jwks` en producción). No se
-deriva del `iss` a propósito: `iss` es un identificador lógico estable, porque
-el host de la UI cambia en cada preview de Vercel.
+mismo entorno. No se deriva del `iss` a propósito: `iss` es un identificador
+lógico estable, porque el host de la UI cambia en cada preview de Vercel.
+
+> **Ojo con el origen: hoy NO es `catalogo.jdh.com.co`.** Ese es el dominio
+> propio PREVISTO y todavía **no resuelve en DNS** (verificado el 2026-09-10).
+> El origen que responde hoy es el de Vercel:
+>
+> ```
+> AUTH_JWKS_URL=https://catalogo-jdh.vercel.app/api/auth/jwks
+> ```
+>
+> Declarar el dominio previsto haría que el API no alcanzara el JWKS y
+> respondiera **503** en todas las rutas autenticadas, con un síntoma que
+> parece un fallo del guard y no de una variable. Ya estuvo a punto de pasar:
+> este documento daba el dominio propio como valor de producción y se pasó
+> como tal al equipo del API.
+>
+> Cuando el dominio propio se active, basta con cambiar esta variable y
+> `NEXT_PUBLIC_SITE_URL`. El `iss` sigue siendo `jdh-catalogo-ui` y no depende
+> de la URL, así que los tokens ya emitidos no se invalidan.
 
 Tres reglas al implementarlo:
 
