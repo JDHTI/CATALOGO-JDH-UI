@@ -21,22 +21,39 @@ import { ProductoImagen } from "./producto-imagen"
  */
 export function ProductoCard({ producto }: { producto: Producto }) {
   return (
-    <article className="group relative h-full overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] transition-[border-color,transform] duration-200 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:-translate-y-0.5 hover:border-[var(--color-border-strong)]">
-      {/* HERMANO del enlace, no hijo: la card entera navega al detalle, y un
-          botón dentro de un enlace es HTML inválido además de dejar el foco y
-          los lectores de pantalla en un estado ambiguo. Se superpone con
-          `absolute` y el propio botón detiene la propagación del clic. */}
+    /*
+     * El botón de favorito va FUERA del `<article>`, no dentro.
+     *
+     * El anillo de foco de la card es `focus-within`, así que lo dispara
+     * cualquier descendiente enfocado. Con el corazón dentro, marcarlo con el
+     * ratón rodeaba la card entera de un anillo negro (`--ring` es
+     * `--neutral-900`), que se leía como una selección accidental.
+     *
+     * Sacarlo a hermano lo resuelve por estructura y no por selector: el
+     * `focus-within` del artículo sigue haciendo lo único para lo que existe
+     * —señalar qué card tiene el foco al tabular— y el botón se señala solo,
+     * con el `:focus-visible` global. Se intentó antes acotarlo con
+     * `has-[a:focus-visible]`, que sí quitaba el anillo del botón pero
+     * tampoco lo pintaba al tabular al enlace: quitaba el problema y la
+     * función a la vez.
+     *
+     * Tampoco podía ir dentro del `<a>`: un botón anidado en un enlace es
+     * HTML inválido y deja el foco y los lectores de pantalla en un estado
+     * ambiguo.
+     */
+    <div className="relative h-full">
       <FavoritoBoton
         productoId={producto.id}
         nombreProducto={producto.nombre}
         className="absolute top-2 right-2 z-10"
       />
-      <Link
-        href={`/productos/${encodeURIComponent(producto.id)}` as Route}
-        aria-label={`Ver detalle de ${producto.nombre}`}
-        className="flex h-full flex-col focus-visible:outline-none"
-      >
-        {/* Recuadro CUADRADO, igual que el detalle y la miniatura del
+      <article className="group h-full overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] transition-[border-color,transform] duration-200 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:-translate-y-0.5 hover:border-[var(--color-border-strong)]">
+        <Link
+          href={`/productos/${encodeURIComponent(producto.id)}` as Route}
+          aria-label={`Ver detalle de ${producto.nombre}`}
+          className="flex h-full flex-col focus-visible:outline-none"
+        >
+          {/* Recuadro CUADRADO, igual que el detalle y la miniatura del
             buscador: el master de producto es 1:1 y las tres variantes que
             genera el API (`thumb`/`card`/`full`) son cuadradas con relleno
             blanco, así que aquí no se recorta nada. Con el `aspect-[4/3]`
@@ -45,43 +62,44 @@ export function ProductoCard({ producto }: { producto: Producto }) {
             alrededor del producto. Las tres siluetas de este archivo (real,
             fantasma y esqueleto) tienen que compartir esta relación o la
             card salta de alto al terminar de cargar. */}
-        <ProductoImagen
-          producto={producto}
-          sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
-          className="aspect-square w-full"
-        />
+          <ProductoImagen
+            producto={producto}
+            sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
+            className="aspect-square w-full"
+          />
 
-        <div className="flex flex-1 flex-col gap-2 p-4">
-          <div className="flex flex-col gap-1">
-            {/* La marca va SIN `uppercase`: el nombre real del ERP ya viene
+          <div className="flex flex-1 flex-col gap-2 p-4">
+            <div className="flex flex-col gap-1">
+              {/* La marca va SIN `uppercase`: el nombre real del ERP ya viene
                 en mayúsculas y puede traer forma jurídica ("NESTLE DE
                 COLOMBIA S.A."); forzarlas otra vez lo hace ilegible. */}
-            {producto.marca ? (
-              <p className="truncate text-xs font-medium tracking-wide text-muted-foreground">
-                {formatNombreComercial(producto.marca)}
+              {producto.marca ? (
+                <p className="truncate text-xs font-medium tracking-wide text-muted-foreground">
+                  {formatNombreComercial(producto.marca)}
+                </p>
+              ) : null}
+              <h3 className="text-sm font-medium text-balance">
+                {producto.nombre}
+              </h3>
+              <p className="text-xs text-muted-foreground tabular-nums">
+                {producto.sku}
               </p>
-            ) : null}
-            <h3 className="text-sm font-medium text-balance">
-              {producto.nombre}
-            </h3>
-            <p className="text-xs text-muted-foreground tabular-nums">
-              {producto.sku}
-            </p>
-          </div>
+            </div>
 
-          {/* SLOT DE PRECIO (oculto a propósito): sin precios definidos en el
+            {/* SLOT DE PRECIO (oculto a propósito): sin precios definidos en el
               backend todavía. Cuando existan, el bloque va aquí, encima del
               proveedor, resuelto vía PriceContext — nunca improvisado. */}
 
-          <p className="mt-auto flex items-center gap-1.5 border-t border-[var(--color-border)] pt-3 text-xs text-muted-foreground">
-            <Store className="size-3.5 shrink-0" aria-hidden="true" />
-            <span className="truncate">
-              {formatNombreComercial(producto.proveedor.nombre)}
-            </span>
-          </p>
-        </div>
-      </Link>
-    </article>
+            <p className="mt-auto flex items-center gap-1.5 border-t border-[var(--color-border)] pt-3 text-xs text-muted-foreground">
+              <Store className="size-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate">
+                {formatNombreComercial(producto.proveedor.nombre)}
+              </span>
+            </p>
+          </div>
+        </Link>
+      </article>
+    </div>
   )
 }
 
