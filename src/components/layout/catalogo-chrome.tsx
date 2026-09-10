@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { usePathname } from "next/navigation"
 import {
   motion,
   useMotionValueEvent,
@@ -74,6 +75,14 @@ const MD = "(min-width: 48rem)"
 export function CatalogoChrome() {
   const reduce = useReducedMotion()
   const { scrollY } = useScroll()
+  /**
+   * La franja de contacto vive SOLO en la homepage. En el resto del catálogo
+   * es una fila de datos que no ayuda a nadie a comprar: roba 37px del tope
+   * en todas las páginas y compite con el buscador y el menú, que sí son
+   * navegación. Teléfono, correo, WhatsApp e Instagram siguen en el footer, y
+   * en la homepage —donde el visitante llega a orientarse— se conserva.
+   */
+  const esHome = usePathname() === "/"
   // 1 en el tope → 0 al alejarse HIDE_DISTANCE px (valores suavizados por Lenis).
   const progress = useTransform(scrollY, [0, HIDE_DISTANCE], [1, 0])
   const height = useTransform(progress, [1, 0], [BAR_HEIGHT, 0])
@@ -93,9 +102,14 @@ export function CatalogoChrome() {
 
     const updateChromeHeight = () => {
       const medido = node.getBoundingClientRect().height
+      // `BAR_HEIGHT` solo cuando la franja EXISTE de verdad: desde `md` y solo
+      // en la homepage. Sumarlo fuera de ahí inflaría la variable en 37px y la
+      // ficha de producto —que calcula su alto como `100svh` menos esto— se
+      // quedaría corta, dejando un hueco muerto al pie.
+      const conFranja = mql.matches && esHome
       document.documentElement.style.setProperty(
         "--catalogo-chrome-height",
-        `${medido + (mql.matches ? BAR_HEIGHT : 0)}px`
+        `${medido + (conFranja ? BAR_HEIGHT : 0)}px`
       )
     }
 
@@ -107,7 +121,7 @@ export function CatalogoChrome() {
       observer.disconnect()
       mql.removeEventListener("change", updateChromeHeight)
     }
-  }, [])
+  }, [esHome])
 
   const bloqueSuperior = reduce ? (
     <div
@@ -136,7 +150,7 @@ export function CatalogoChrome() {
 
   return (
     <div className="sticky top-0 z-[var(--z-sticky)]">
-      {bloqueSuperior}
+      {esHome ? bloqueSuperior : null}
       <div ref={staticRef}>
         <AppHeader />
         <MainNav />
