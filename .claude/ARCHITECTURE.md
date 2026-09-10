@@ -351,3 +351,28 @@ los nuevos campos ausentes se normalizan a `null`. Las fichas dependen de que
 el servidor de Next alcance el API público. No se incorporan credenciales ni
 precios negociados a esta lectura. Detalles operativos y comandos en
 `docs/product-content.md`.
+
+---
+
+## 2026-09-10 — Favoritos: la primera superficie autenticada, vía route handlers
+
+**Contexto:** el usuario pidió que un cliente con sesión pueda guardar productos, verlos en una página propia y ver un contador en el header. Es la primera funcionalidad de la app que necesita **datos por usuario del catálogo**, y hasta ahora todo el tráfico de catálogo era público y anónimo.
+
+**Decisión:** los favoritos viven en el **API del catálogo**, no en la base de la UI. Son datos de catálogo (referencian productos) y `jdh_auth` es de autenticación; meter ahí una tabla que apunta a ids de otra base habría creado una relación entre dos Postgres que nadie puede garantizar. El API guarda el claim `sub` del JWT como string opaco y nunca consulta `jdh_auth`, que es justo lo que permite el token asimétrico.
+
+El navegador **no llama al API**. Llama a route handlers de esta app (`/api/favoritos/*`) que reenvían con `backendFetch`. Es el primer consumidor real de ese helper, que existía sin llamadores. La razón es de seguridad y está en `docs/despliegue.md` §9: el JWT es de vida corta y no debe llegar al cliente — hacia el navegador la autoridad es siempre la cookie de sesión. `src/app/api/favoritos/_backend.ts` es el único punto donde se cruzan las dos autoridades.
+
+Se descartó exponer el JWT al cliente para llamar al API directo (contradice el modelo de sesión) y usar Server Actions para las lecturas (TanStack Query necesita una consulta cacheable e invalidable; las mutaciones sí podrían ser acciones, pero mezclar dos transportes para la misma entidad complica la invalidación).
+
+**`GET /favorites/ids` devuelve ids + total en una sola petición** en lugar de un endpoint de conteo y otro de comprobación por producto. De ahí salen las dos cosas que la UI necesita a la vez: el contador del header y qué corazones van marcados en un grid de 12 cards. Con endpoints separados serían 13 peticiones por página y, peor, el contador y los corazones podrían contradecirse.
+
+**Consecuencias:**
+
+- **El API necesita un guard JWT que hoy no existe**, y debe ser **opt-in por ruta**: `/products`, `/suppliers` y `/brands` son públicos y la UI los consume sin sesión. Un guard global rompería el catálogo anónimo entero.
+- **Degrada como el resto del catálogo.** Sin `BACKEND_API_URL`, o con el API sin publicar favoritos, los handlers responden 501 y la UI esconde corazones y contador en vez de romper el header. Verificado: visitante anónimo ve el catálogo intacto y `/favoritos` redirige a `/ingreso`.
+- **El corazón no se pinta para quien no puede usarlo** — anónimo, sin permiso `favoritos:read`, o endpoint ausente. Un corazón que al pulsarlo manda a iniciar sesión es una promesa rota.
+- **En la card va como HERMANO del enlace, no dentro.** La card entera es un `<a>` al detalle; un `<button>` anidado en un `<a>` es HTML inválido y deja el foco y los lectores de pantalla en un estado ambiguo. Se superpone con `absolute` y detiene la propagación del clic.
+- **El toggle es optimista** sobre la caché de ids, con reversión al valor exacto anterior. Por eso el alta y la baja del API tienen que ser **idempotentes**: un doble clic o un reintento no pueden producir un error que el usuario no pueda resolver.
+- **El badge crece a lo ancho** (`min-w-4` + `px-1`) para que quepa "99+", y está posicionado en absoluto: el ícono y el área táctil no cambian de tamaño con el número. El recorte a "99+" es visual — la etiqueta accesible lleva el número exacto.
+- **Los tests de card y ficha necesitan `QueryClientProvider`.** `tests/render-con-providers.tsx` lo aporta, porque `FavoritoBoton` usa TanStack Query igual que en la app; renderizar esos componentes pelados probaba un árbol que no existe en ninguna parte.
+- **Pendiente:** todo el camino autenticado está sin verificar de punta a punta — no hay endpoint todavía ni `BACKEND_API_URL` configurada en local. Lo verificado es la degradación y el comportamiento anónimo.

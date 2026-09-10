@@ -1,10 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { Heart, ShoppingCart } from "lucide-react"
+import { ShoppingCart } from "lucide-react"
 
 import { Logo } from "@/components/common/logo"
 import { ThemeSwitcher } from "@/components/common/theme-switcher"
+import { FavoritosNavLink } from "@/modules/favoritos/components/favoritos-nav-link"
 
 import { AuthActions } from "./auth-actions"
 import { IconNavLink } from "./icon-nav-link"
@@ -47,7 +48,20 @@ export function AppHeader() {
         logo y acciones arriba, buscador a lo ancho debajo—, que además es
         donde el buscador se usa mejor con el pulgar.
       */}
-      <div className="mx-auto grid max-w-[var(--container-wide)] grid-cols-[auto_1fr] items-center gap-x-4 gap-y-3 px-4 py-3 sm:px-6 lg:h-[72px] lg:grid-cols-[1fr_2fr_1fr] lg:py-0">
+      {/*
+        La tercera columna es `minmax(max-content, 1fr)` y no `1fr` a secas.
+        Con `1fr` fijo, el clúster de cuenta —que es `shrink-0`— se desborda
+        hacia la IZQUIERDA cuando no cabe, y se mete debajo del buscador: con
+        un nombre de usuario largo el ícono de Favoritos quedaba tapado por el
+        campo blanco (medido: ícono en 1007–1043, buscador hasta 1030). Es el
+        mismo fallo que documenta el comentario del buscador para el
+        `ThemeSwitcher`, pero por el otro lado.
+
+        Con `minmax(max-content, 1fr)` la columna nunca baja de lo que ocupa
+        su contenido, y solo crece a `1fr` cuando sobra sitio — así se
+        conserva la simetría con el logo mientras el nombre sea corto.
+      */}
+      <div className="mx-auto grid max-w-[var(--container-wide)] grid-cols-[auto_1fr] items-center gap-x-4 gap-y-3 px-4 py-3 sm:px-6 lg:h-[72px] lg:grid-cols-[1fr_2fr_minmax(max-content,1fr)] lg:py-0">
         <Link
           href="/"
           aria-label="Ir al inicio"
@@ -71,7 +85,7 @@ export function AppHeader() {
         <ProductSearchBar className="order-last col-span-2 w-full min-w-0 lg:order-none lg:col-span-1 lg:max-w-2xl lg:min-w-0 lg:justify-self-center" />
 
         <div className="flex min-w-0 shrink-0 items-center gap-1 justify-self-end">
-          <IconNavLink href="/favoritos" icon={Heart} label="Favoritos" />
+          <FavoritosNavLink />
           <IconNavLink
             href="/carrito"
             icon={ShoppingCart}

@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from "vitest"
-import { fireEvent, render, screen } from "@testing-library/react"
-import { renderToStaticMarkup } from "react-dom/server"
+// Con providers: la card y la ficha montan `FavoritoBoton`, que usa TanStack
+// Query igual que en la app. Ver `render-con-providers`.
+import {
+  fireEvent,
+  render,
+  renderToStaticMarkup,
+  screen,
+} from "./render-con-providers"
 
 import { ProductoDescripcion } from "@/modules/catalogo/components/producto-descripcion"
 import { ProductoCard } from "@/modules/catalogo/components/producto-card"
