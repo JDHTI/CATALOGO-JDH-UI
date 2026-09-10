@@ -11,8 +11,6 @@ import { PERMISSIONS } from "@/config/permissions"
 import { useCurrentUser } from "@/hooks/use-current-user"
 
 import {
-  FavoritosNoDisponiblesError,
-  NoAutenticadoError,
   agregarFavorito,
   listarFavoritos,
   obtenerFavoritosIds,
@@ -62,14 +60,20 @@ export function useFavoritosIds() {
     staleTime: 60 * 1000,
   })
 
-  const noDisponible = query.error instanceof FavoritosNoDisponiblesError
-  const sinSesion = query.error instanceof NoAutenticadoError
-
   return {
     ids: query.data?.ids ?? [],
     total: query.data?.total ?? 0,
-    /** Hay que pintar la interacción de favoritos en esta sesión. */
-    activo: habilitada && !noDisponible && !sinSesion,
+    /**
+     * Hay que pintar la interacción de favoritos en esta sesión.
+     *
+     * Exige que la consulta haya ido bien, no solo que no sea uno de los dos
+     * fallos conocidos: si falla por cualquier otra causa —el API responde
+     * 503 cuando no alcanza nuestro JWKS, por ejemplo— `ids` llega vacío y
+     * los corazones se pintarían TODOS vacíos, afirmando que no hay nada
+     * guardado cuando en realidad no lo sabemos. Ante la duda, no se ofrece
+     * la interacción.
+     */
+    activo: habilitada && !query.isError,
     isPending: query.isPending && habilitada,
   }
 }
@@ -115,10 +119,12 @@ export function useAlternarFavorito() {
         const ids = esFavorito
           ? previo.ids.filter((id) => id !== productoId)
           : [...previo.ids, productoId]
-        queryClient.setQueryData(favoritosKeys.ids, {
-          ids,
-          total: ids.length,
-        })
+        // El total se AJUSTA en ±1; no se recalcula como `ids.length`. El API
+        // recorta `ids` a 1000 pero `total` es el conteo real, así que con
+        // 1500 favoritos llegan 1000 ids y `total: 1500`: derivar el total de
+        // la longitud dejaría el contador en 1001 tras marcar uno.
+        const total = Math.max(0, previo.total + (esFavorito ? -1 : 1))
+        queryClient.setQueryData(favoritosKeys.ids, { ids, total })
       }
 
       return { previo }
