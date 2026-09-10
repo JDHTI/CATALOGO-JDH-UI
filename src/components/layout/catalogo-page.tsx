@@ -11,11 +11,16 @@ export function CatalogoPage({
 }: {
   children: React.ReactNode
   /**
-   * La página se dimensiona al VIEWPORT en vez de crecer con su contenido
-   * (hoy solo la ficha de producto). El alto sale de `100svh` menos el chrome
-   * pegado arriba, usando la misma variable que el primer slide del homepage
-   * — `CatalogoChrome` la mide en vivo con un ResizeObserver, así que no hay
-   * ningún número a mano que se rompa cuando cambie la barra.
+   * De `lg` hacia arriba la página se dimensiona al VIEWPORT en vez de crecer
+   * con su contenido (hoy solo la ficha de producto). El alto sale de
+   * `100svh` menos el chrome pegado arriba, con la misma variable que el
+   * primer slide del homepage — `CatalogoChrome` la mide en vivo con un
+   * ResizeObserver, así que no hay ningún número a mano que se rompa cuando
+   * cambie la barra.
+   *
+   * Por DEBAJO de `lg` no se aplica: en un teléfono, meter foto, descripción
+   * y ficha técnica en una pantalla deja el texto en una franja inservible.
+   * Ahí la página scrollea como cualquier otra y la foto sube al desplazar.
    *
    * Requiere que la ruta oculte el footer (ver `SiteFooter`): con él, el
    * shell suma su alto y la página scrollea igual.
@@ -25,9 +30,12 @@ export function CatalogoPage({
   return (
     <div
       className={cn(
-        "mx-auto w-full max-w-[var(--container-wide)] px-6",
+        // `px-4` en móvil como el header (que usa `px-4 sm:px-6`), para que la
+        // foto de producto llegue casi al borde y el breadcrumb quede a plomo
+        // con el logo.
+        "mx-auto w-full max-w-[var(--container-wide)] px-4 sm:px-6",
         compacta
-          ? "flex h-[calc(100svh-var(--catalogo-chrome-height))] flex-col overflow-hidden py-4"
+          ? "py-8 pb-24 md:pb-8 lg:flex lg:h-[calc(100svh-var(--catalogo-chrome-height))] lg:flex-col lg:overflow-hidden lg:py-4"
           : "py-8 pb-24 md:pb-8"
       )}
     >

@@ -16,28 +16,30 @@ import { ProductoDescripcion } from "./producto-descripcion"
  * fabricante, proveedor) — SIN precio ni compra. Cuando el backend defina
  * precios, el slot va debajo del encabezado (ver comentario en el JSX).
  *
- * La ficha se dimensiona al VIEWPORT y NO scrollea: la galería completa,
- * incluida la tira de miniaturas, tiene que verse sin mover la página. El
- * alto lo fija `CatalogoPage compacta`; aquí solo se reparte con flex y grid,
- * y lo que absorbe la diferencia es el recuadro de la imagen. Por eso no hay
- * `aspect-square` en este árbol y cada contenedor intermedio lleva `min-h-0`:
- * sin él, un hijo flex se niega a encoger por debajo de su contenido y
- * reaparece el scroll.
+ * La ficha tiene DOS comportamientos según el ancho, y la diferencia es
+ * deliberada:
  *
- * La ÚNICA zona que puede desplazarse por dentro es la columna de texto, y
- * solo cuando no cabe: el largo de la descripción editorial no lo controlamos
- * —es texto redactado por producto— y en un móvil no entra junto a la ficha
- * técnica. La página nunca se mueve y la galería siempre se ve entera, que es
- * el requisito; recortar el texto habría escondido contenido sin que el
- * usuario tuviera forma de leerlo. De portátil hacia arriba no aparece barra
- * porque todo cabe.
+ * - De `lg` hacia arriba se dimensiona al VIEWPORT y NO scrollea: la galería
+ *   completa, incluida la tira de miniaturas, se ve sin mover la página. El
+ *   alto lo fija `CatalogoPage compacta`; aquí solo se reparte con flex y
+ *   grid, y lo que absorbe la diferencia es el recuadro de la imagen. Por eso
+ *   cada contenedor intermedio lleva `lg:min-h-0`: sin él, un hijo flex se
+ *   niega a encoger por debajo de su contenido y reaparece el scroll.
+ * - Por debajo de `lg` la página scrollea con normalidad y la foto sube al
+ *   desplazar. Encajarlo todo en una pantalla de teléfono dejaba el texto en
+ *   una franja inservible: la foto ocupa el ancho completo y la descripción
+ *   se lee bajando, que es como se lee una ficha en el móvil.
+ *
+ * En `lg` la columna de texto puede desplazarse por dentro si no cabe: el
+ * largo de la descripción editorial no lo controlamos, es texto redactado por
+ * producto. En la práctica no aparece barra porque a esos anchos entra.
  *
  * Cuando se añada el carrusel de destacados al pie habrá que revisar esto: o
  * deja de ser compacta, o el carrusel entra en el reparto.
  */
 export function ProductoDetalleView({ producto }: { producto: Producto }) {
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex flex-col gap-4 lg:h-full lg:min-h-0">
       <Breadcrumbs
         items={[
           { label: "Inicio", href: "/" },
@@ -46,25 +48,20 @@ export function ProductoDetalleView({ producto }: { producto: Producto }) {
         ]}
       />
 
-      {/* En una sola columna (móvil/tablet) las dos filas se reparten el alto
-          en proporción fija, 55/45 a favor de la galería. Con `auto` en la
-          fila del texto, una descripción editorial larga se comía la pantalla
-          y la foto llegaba a quedar en 7px; con este reparto la galería tiene
-          su parte garantizada y es el texto el que se desplaza por dentro.
+      {/* Móvil/tablet: una columna en flujo normal, la página scrollea y la
+          foto sube al desplazar.
 
-          Le toca la porción MAYOR, y con holgura, porque el marco es cuadrado
-          y su lado es el menor entre el ancho de la columna y el alto de la
-          fila. Con un reparto parejo mandaba el alto y quedaba un cuadrado
-          pequeño flotando en una fila ancha, con espacio muerto a los lados;
-          dándole 75 el que manda es el ancho, que es lo que se quiere en un
-          teléfono: una card grande. Al texto, que ya se desplaza por dentro
-          en móvil, solo le cuesta desplazamiento.
+          `lg`: dos columnas en una sola fila, con la galería MÁS ESTRECHA que
+          el texto (11/13). El cuadrado se alinea a la izquierda contra el
+          mismo margen del header, así que estrechar su columna acerca el
+          bloque descriptivo al margen izquierdo y ensancha la ficha técnica
+          sin robarle tamaño a la foto, que en estos anchos la limita el alto
+          y no la columna.
 
-          `minmax(0,…)` y no `45fr`/`55fr` a secas porque un track `fr` tiene
-          `min-height:auto` y se niega a bajar del tamaño de su contenido, que
-          es justo lo que reintroduce el scroll. En `lg` vuelven a ser dos
-          columnas en una sola fila. */}
-      <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,75fr)_minmax(0,25fr)] gap-4 lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)] lg:gap-8">
+          `minmax(0,…)` y no `11fr`/`13fr` a secas porque un track `fr` tiene
+          `min-height:auto`, se niega a bajar del tamaño de su contenido y ahí
+          reaparece el scroll. */}
+      <div className="grid grid-cols-1 gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,11fr)_minmax(0,13fr)] lg:grid-rows-[minmax(0,1fr)] lg:gap-10">
         {/* `key`: la galería guarda cuál miniatura está activa, y al navegar
             de un producto a otro React reutilizaría la instancia con el índice
             de la anterior. */}
@@ -77,6 +74,9 @@ export function ProductoDetalleView({ producto }: { producto: Producto }) {
             no debe exigir scroll— y todo lo demás se alcanza dentro. En
             pantallas de portátil y más no aparece barra: el contenido cabe.
 
+            Solo desde `lg`: en móvil la página scrollea y esta columna va en
+            flujo normal, sin zona desplazable propia.
+
             `data-lenis-prevent` NO es decorativo: Lenis se queda con el evento
             de rueda de toda la página y sin esto la columna no se movía ni un
             píxel teniendo contenido de sobra (medido: la rueda dejaba
@@ -84,7 +84,7 @@ export function ProductoDetalleView({ producto }: { producto: Producto }) {
             Es la convención que documenta `LenisProvider`. */}
         <div
           data-lenis-prevent
-          className="flex min-h-0 flex-col gap-4 overflow-y-auto"
+          className="flex flex-col gap-4 lg:min-h-0 lg:overflow-y-auto"
         >
           <header className="flex shrink-0 flex-col gap-1.5">
             {producto.marca ? (
@@ -159,7 +159,7 @@ function FichaTecnica({ producto }: { producto: Producto }) {
       {filas.map(({ termino, valor, codigo }) => (
         <div
           key={termino}
-          className="flex flex-col gap-0.5 border-b border-[var(--color-border)] px-4 py-2.5 last:border-b-0 nth-last-2:border-b-0"
+          className="flex flex-col gap-1 border-b border-[var(--color-border)] px-5 py-3.5 last:border-b-0 nth-last-2:border-b-0"
         >
           <dt className="text-xs text-muted-foreground">{termino}</dt>
           <dd
@@ -178,23 +178,24 @@ function FichaTecnica({ producto }: { producto: Producto }) {
 }
 
 /**
- * Esqueleto del detalle mientras responde el API. Reparte el alto igual que
- * la ficha real (`flex-1` en el recuadro, no `aspect-square`): con aspecto
- * fijo desbordaba el contenedor compacto y la página daba un salto al llegar
- * los datos.
+ * Esqueleto del detalle mientras responde el API. Copia la silueta de la
+ * ficha real en los dos modos —cuadrado a ancho completo en móvil, repartido
+ * por alto en `lg`— para que la página no dé un salto al llegar los datos.
  */
 export function DetalleSkeleton() {
   return (
     <div
       role="status"
       aria-label="Cargando producto"
-      className="flex h-full min-h-0 animate-pulse flex-col gap-4"
+      className="flex animate-pulse flex-col gap-4 lg:h-full lg:min-h-0"
     >
       <span className="sr-only">Cargando producto…</span>
       <div className="h-4 w-64 shrink-0 rounded bg-[var(--color-surface-subtle)]" />
-      <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_auto] gap-6 lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)] lg:gap-8">
-        <div className="flex min-h-0 flex-col gap-3">
-          <div className="min-h-0 flex-1 rounded-[var(--jdh-radius-md)] bg-[var(--color-surface-subtle)]" />
+      <div className="grid grid-cols-1 gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,11fr)_minmax(0,13fr)] lg:grid-rows-[minmax(0,1fr)] lg:gap-10">
+        <div className="flex flex-col gap-3 lg:min-h-0">
+          {/* Mismo criterio que la galería real: cuadrado a ancho completo en
+              móvil, y en `lg` el que cabe en el alto disponible. */}
+          <div className="aspect-square w-full rounded-[var(--jdh-radius-md)] bg-[var(--color-surface-subtle)] lg:aspect-auto lg:min-h-0 lg:flex-1" />
           <div className="flex shrink-0 gap-2">
             {Array.from({ length: 4 }, (_, i) => (
               <div
@@ -204,11 +205,11 @@ export function DetalleSkeleton() {
             ))}
           </div>
         </div>
-        <div className="flex min-h-0 flex-col gap-4">
+        <div className="flex flex-col gap-4 lg:min-h-0">
           <div className="h-3 w-24 shrink-0 rounded bg-[var(--color-surface-subtle)]" />
-          <div className="h-7 w-3/4 shrink-0 rounded bg-[var(--color-surface-subtle)]" />
-          <div className="min-h-0 flex-1 rounded bg-[var(--color-surface-subtle)]" />
-          <div className="h-40 w-full shrink-0 rounded-[var(--jdh-radius-md)] bg-[var(--color-surface-subtle)]" />
+          <div className="h-8 w-3/4 shrink-0 rounded bg-[var(--color-surface-subtle)]" />
+          <div className="h-20 shrink-0 rounded bg-[var(--color-surface-subtle)] lg:min-h-0 lg:flex-1" />
+          <div className="h-48 w-full shrink-0 rounded-[var(--jdh-radius-md)] bg-[var(--color-surface-subtle)]" />
         </div>
       </div>
     </div>
