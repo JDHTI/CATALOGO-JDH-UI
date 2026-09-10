@@ -1,6 +1,8 @@
 import type { ReactNode } from "react"
 import { beforeEach, expect, it, vi } from "vitest"
-import { fireEvent, render, screen } from "@testing-library/react"
+// Con providers: la card monta `FavoritoBoton`, que usa TanStack Query igual
+// que en la app. Ver `render-con-providers`.
+import { fireEvent, render, screen } from "./render-con-providers"
 
 import {
   CatalogoView,

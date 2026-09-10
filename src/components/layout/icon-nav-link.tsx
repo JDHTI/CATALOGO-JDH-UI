@@ -4,11 +4,14 @@ import type { LucideIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+/** A partir de aquí el badge muestra "99+" en vez del número exacto. */
+const TOPE_BADGE = 99
+
 interface IconNavLinkProps {
   href: `/${string}`
   icon: LucideIcon
   label: string
-  /** Contador mockeado (favoritos/carrito no tienen estado real todavía). */
+  /** Favoritos lo alimenta de verdad; carrito sigue sin estado. */
   count?: number
   className?: string
 }
@@ -17,6 +20,11 @@ interface IconNavLinkProps {
  * Botón-ícono de la segunda barra (favoritos, carrito): ícono + badge de
  * conteo opcional, sin fondo hasta el hover. `count` en 0 no dibuja el badge
  * — así queda visualmente "vacío" en vez de mostrar un cero engañoso.
+ *
+ * El badge crece a lo ANCHO (`min-w-4` + `px-1`) en vez de tener lado fijo,
+ * para que "99+" quepa sin recortarse. El ícono y el área táctil no cambian
+ * de tamaño con el contador: el badge está posicionado en absoluto, así que
+ * queda fuera del flujo y la barra no se mueve cuando el número crece.
  */
 export function IconNavLink({
   href,
@@ -25,11 +33,17 @@ export function IconNavLink({
   count = 0,
   className,
 }: IconNavLinkProps) {
+  // El badge es `aria-hidden` (es decoración de un dato que ya se anuncia),
+  // así que el conteo tiene que viajar en la etiqueta o un lector de pantalla
+  // nunca se entera de que hay algo guardado. Aquí va el número EXACTO, no
+  // el "99+": el recorte es una restricción de espacio visual, no del dato.
+  const etiqueta = count > 0 ? `${label} (${count})` : label
+
   return (
     <Link
       href={href as Route}
-      aria-label={label}
-      title={label}
+      aria-label={etiqueta}
+      title={etiqueta}
       className={cn(
         "relative inline-flex size-9 items-center justify-center rounded-lg text-[var(--color-on-ink)] transition-colors hover:bg-[var(--overlay-on-dark-08)]",
         className
@@ -42,9 +56,9 @@ export function IconNavLink({
           // Badge invertido (blanco sobre negro) a propósito: `bg-primary`
           // en tema claro suele mapear al mismo negro del chrome y el
           // contador se volvería invisible sobre esta barra.
-          className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-[var(--color-on-ink)] text-[10px] font-medium text-[var(--color-ink)]"
+          className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-on-ink)] px-1 text-[10px] font-medium text-[var(--color-ink)] tabular-nums"
         >
-          {count > 9 ? "9+" : count}
+          {count > TOPE_BADGE ? `${TOPE_BADGE}+` : count}
         </span>
       ) : null}
     </Link>

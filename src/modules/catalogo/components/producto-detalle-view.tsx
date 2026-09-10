@@ -5,6 +5,7 @@ import { Breadcrumbs } from "@/components/navigation/breadcrumbs"
 import { JdhButton } from "@/components/common/jdh-button"
 import { formatNombreComercial } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import { FavoritoBoton } from "@/modules/favoritos/components/favorito-boton"
 
 import type { Producto } from "../types"
 import { ProductoGaleria } from "./producto-galeria"
@@ -90,15 +91,25 @@ export function ProductoDetalleView({ producto }: { producto: Producto }) {
           data-lenis-prevent
           className="flex flex-col gap-4 lg:min-h-0 lg:overflow-y-auto"
         >
-          <header className="flex shrink-0 flex-col gap-1.5">
-            {producto.marca ? (
-              <p className="text-sm font-medium tracking-wide text-muted-foreground">
-                {formatNombreComercial(producto.marca)}
-              </p>
-            ) : null}
-            <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">
-              {producto.nombre}
-            </h1>
+          <header className="flex shrink-0 items-start justify-between gap-4">
+            <div className="flex min-w-0 flex-col gap-1.5">
+              {producto.marca ? (
+                <p className="text-sm font-medium tracking-wide text-muted-foreground">
+                  {formatNombreComercial(producto.marca)}
+                </p>
+              ) : null}
+              <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">
+                {producto.nombre}
+              </h1>
+            </div>
+            {/* Junto al título y no sobre la foto: aquí la card no es un
+                enlace, así que el corazón puede ir en el flujo, y al lado del
+                nombre queda claro QUÉ se está guardando. */}
+            <FavoritoBoton
+              productoId={producto.id}
+              nombreProducto={producto.nombre}
+              className="mt-0.5 shrink-0"
+            />
           </header>
 
           {/* SLOT DE PRECIO (oculto a propósito): los precios aún no están

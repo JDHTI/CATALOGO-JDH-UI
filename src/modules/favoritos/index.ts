@@ -1,2 +1,5 @@
 export { favoritosModule } from "./favoritos.module"
 export { FavoritosView } from "./components/favoritos-view"
+export { FavoritoBoton } from "./components/favorito-boton"
+export { FavoritosNavLink } from "./components/favoritos-nav-link"
+export { useFavoritosIds, useEsFavorito } from "./hooks/use-favoritos"

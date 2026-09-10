@@ -3,6 +3,7 @@ import type { Route } from "next"
 import { Package, Store } from "lucide-react"
 
 import { formatNombreComercial } from "@/lib/format"
+import { FavoritoBoton } from "@/modules/favoritos/components/favorito-boton"
 
 import type { Producto } from "../types"
 import { ProductoImagen } from "./producto-imagen"
@@ -20,7 +21,16 @@ import { ProductoImagen } from "./producto-imagen"
  */
 export function ProductoCard({ producto }: { producto: Producto }) {
   return (
-    <article className="group h-full overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] transition-[border-color,transform] duration-200 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:-translate-y-0.5 hover:border-[var(--color-border-strong)]">
+    <article className="group relative h-full overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] transition-[border-color,transform] duration-200 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:-translate-y-0.5 hover:border-[var(--color-border-strong)]">
+      {/* HERMANO del enlace, no hijo: la card entera navega al detalle, y un
+          botón dentro de un enlace es HTML inválido además de dejar el foco y
+          los lectores de pantalla en un estado ambiguo. Se superpone con
+          `absolute` y el propio botón detiene la propagación del clic. */}
+      <FavoritoBoton
+        productoId={producto.id}
+        nombreProducto={producto.nombre}
+        className="absolute top-2 right-2 z-10"
+      />
       <Link
         href={`/productos/${encodeURIComponent(producto.id)}` as Route}
         aria-label={`Ver detalle de ${producto.nombre}`}

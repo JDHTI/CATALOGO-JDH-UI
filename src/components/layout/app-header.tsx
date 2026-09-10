@@ -1,10 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { Heart, ShoppingCart } from "lucide-react"
+import { ShoppingCart } from "lucide-react"
 
 import { Logo } from "@/components/common/logo"
 import { ThemeSwitcher } from "@/components/common/theme-switcher"
+import { FavoritosNavLink } from "@/modules/favoritos/components/favoritos-nav-link"
 
 import { AuthActions } from "./auth-actions"
 import { IconNavLink } from "./icon-nav-link"
@@ -71,7 +72,7 @@ export function AppHeader() {
         <ProductSearchBar className="order-last col-span-2 w-full min-w-0 lg:order-none lg:col-span-1 lg:max-w-2xl lg:min-w-0 lg:justify-self-center" />
 
         <div className="flex min-w-0 shrink-0 items-center gap-1 justify-self-end">
-          <IconNavLink href="/favoritos" icon={Heart} label="Favoritos" />
+          <FavoritosNavLink />
           <IconNavLink
             href="/carrito"
             icon={ShoppingCart}
