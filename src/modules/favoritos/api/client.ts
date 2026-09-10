@@ -43,7 +43,7 @@ export class ProductoNoDisponibleError extends Error {}
  * baja.
  */
 async function pedir(
-  path: `/${string}`,
+  path: "" | `/${string}` | `?${string}`,
   init: RequestInit | undefined,
   esLectura: boolean
 ) {
@@ -92,9 +92,12 @@ export async function listarFavoritos(
   const query = new URLSearchParams()
   if (params.page) query.set("page", String(params.page))
   if (params.limit) query.set("limit", String(params.limit))
-  const sufijo = query.toString() ? `?${query}` : ""
+  // SIN barra final: `/api/favoritos/` provoca un 308 a `/api/favoritos`.
+  // Con GET `fetch` sigue la redirección y funciona igual, pero es un ida y
+  // vuelta de más en cada carga de la página de favoritos.
+  const sufijo = query.toString() ? (`?${query}` as const) : ""
 
-  const respuesta = await pedir(`/${sufijo}`, { signal }, true)
+  const respuesta = await pedir(sufijo, { signal }, true)
   return aPaginaProductos(
     paginaProductosDtoSchema.parse(await respuesta.json())
   )
