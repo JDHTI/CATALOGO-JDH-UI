@@ -45,11 +45,13 @@ export function IconNavLink({
       aria-label={etiqueta}
       title={etiqueta}
       className={cn(
-        "relative inline-flex size-9 items-center justify-center rounded-lg text-[var(--color-on-ink)] transition-colors hover:bg-[var(--overlay-on-dark-08)]",
+        "group/icon-link relative inline-flex size-9 items-center justify-center rounded-lg text-[var(--color-on-ink)] transition-colors hover:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-on-ink)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-ink)]",
         className
       )}
     >
-      <Icon className="size-5" />
+      <Icon
+        className="size-5 transition-[transform,filter,color] duration-200 ease-out group-hover/icon-link:scale-[1.12] group-hover/icon-link:drop-shadow-[0_0_7px_var(--color-on-ink-muted)] group-focus-visible/icon-link:scale-[1.08] motion-reduce:transition-none motion-reduce:transform-none"
+      />
       {count > 0 ? (
         <span
           aria-hidden

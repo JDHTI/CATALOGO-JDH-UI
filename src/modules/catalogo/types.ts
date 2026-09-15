@@ -121,6 +121,8 @@ export interface ProductosQueryParams {
   page?: number
   limit?: number
   search?: string
+  /** Modo explícito para el buscador de listas; omitido conserva el histórico. */
+  searchMode?: "name" | "skuExact" | "nameOrSkuExact"
   supplierId?: string
   /** Filtro por marca — va por id, no por nombre. */
   brandId?: string

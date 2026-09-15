@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   ChevronDown,
-  ClipboardList,
   LayoutDashboard,
   LogOut,
   UserRound,
@@ -76,7 +75,7 @@ export function UserMenu() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex h-9 items-center gap-2 rounded-lg px-1.5 text-left transition-colors outline-none hover:bg-[var(--overlay-on-dark-08)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus-on-ink)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-ink)]"
+          className="flex h-9 max-w-40 items-center gap-2 rounded-lg px-1.5 text-left transition-colors outline-none hover:bg-[var(--overlay-on-dark-08)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus-on-ink)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-ink)]"
         >
           <InitialsAvatar
             name={user.name}
@@ -111,12 +110,6 @@ export function UserMenu() {
           <Link href="/cuenta">
             <UserRound />
             Mi cuenta
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/listas">
-            <ClipboardList />
-            Mis listas
           </Link>
         </DropdownMenuItem>
         {puedeAdministrar ? (

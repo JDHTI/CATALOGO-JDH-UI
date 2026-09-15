@@ -40,10 +40,14 @@ const CLASIFICACION_STALE_MS = 5 * 60 * 1000
 /** Listado paginado. `keepPreviousData` evita el "flash" de skeleton al
  *  cambiar de página o filtro: la página anterior queda visible (atenuada
  *  por la vista vía `isPlaceholderData`) mientras llega la nueva. */
-export function useProductos(params: ProductosQueryParams) {
+export function useProductos(
+  params: ProductosQueryParams,
+  options: { enabled?: boolean } = {}
+) {
   return useQuery({
     queryKey: catalogoKeys.productos(params),
     queryFn: ({ signal }) => listarProductos(params, signal),
+    enabled: options.enabled ?? true,
     placeholderData: keepPreviousData,
   })
 }
