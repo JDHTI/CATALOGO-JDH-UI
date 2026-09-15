@@ -116,6 +116,7 @@ export async function listarProductos(
     page: params.page,
     limit: params.limit,
     search: params.search,
+    searchMode: params.searchMode,
     supplierId: params.supplierId,
     brandId: params.brandId,
   }

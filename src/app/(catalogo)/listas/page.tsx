@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import type { Metadata } from "next"
 
 import { CatalogoPage } from "@/components/layout/catalogo-page"
@@ -16,7 +17,16 @@ export default async function ListasPage() {
   await requirePermissions([PERMISSIONS.listas.read])
   return (
     <CatalogoPage>
-      <ListasView />
+      <Suspense
+        fallback={
+          <div
+            className="h-96 animate-pulse rounded-[var(--jdh-radius-md)] bg-[var(--color-surface-subtle)]"
+            aria-label="Cargando listas"
+          />
+        }
+      >
+        <ListasView />
+      </Suspense>
     </CatalogoPage>
   )
 }

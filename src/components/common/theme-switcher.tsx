@@ -47,7 +47,7 @@ export function ThemeSwitcher({
           className={cn(
             jdhButtonVariants({ variant: "ghost", size: "icon" }),
             variant === "on-ink" &&
-              "text-[var(--color-on-ink)] hover:bg-[var(--overlay-on-dark-08)]",
+              "group/theme-trigger text-[var(--color-on-ink)] hover:bg-transparent focus-visible:ring-[var(--color-focus-on-ink)] focus-visible:ring-offset-[var(--color-ink)] [&_svg]:transition-[transform,filter] [&_svg]:duration-200 [&_svg]:ease-out [&:hover_svg]:rotate-[-12deg] [&:hover_svg]:scale-110 [&:hover_svg]:drop-shadow-[0_0_7px_var(--color-on-ink-muted)]",
             className
           )}
         >
