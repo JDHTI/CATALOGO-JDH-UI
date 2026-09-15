@@ -44,7 +44,7 @@ export default function CatalogoLayout({
 
       <main className="w-full flex-1">{children}</main>
 
-      {/* Footer oculto en /productos (ver SiteFooter). */}
+      {/* Footer oculto en /productos y /listas (ver SiteFooter). */}
       <SiteFooter />
       <MobileBottomNav />
     </div>

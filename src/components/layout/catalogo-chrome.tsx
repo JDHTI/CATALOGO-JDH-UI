@@ -73,12 +73,6 @@ const MD = "(min-width: 48rem)"
  * medición (SSR / pre-hidratación).
  */
 export function CatalogoChrome() {
-  const pathname = usePathname()
-  if (pathname === "/listas") return null
-  return <VisibleCatalogoChrome />
-}
-
-function VisibleCatalogoChrome() {
   const reduce = useReducedMotion()
   const { scrollY } = useScroll()
   /**

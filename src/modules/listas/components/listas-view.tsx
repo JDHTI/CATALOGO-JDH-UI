@@ -50,7 +50,7 @@ import type { ListaPedidoItem } from "../types"
 
 const MAX_LISTAS = 10
 const SEARCH_LIMIT = 8
-const ITEMS_LIMIT = 10
+const ITEMS_LIMIT = 5
 
 /** Editor de borradores privados, con listas a la izquierda y el borrador activo a la derecha. */
 export function ListasView() {
@@ -86,6 +86,14 @@ function ListasEditor() {
   const activeId = active?.id
   const [itemPage, setItemPage] = React.useState(1)
   const items = useListaItems(activeId)
+  // Los primeros agregados pasan antes a las páginas siguientes.
+  // La fecha de creación conserva la posición al editar cantidades.
+  const orderedItems = React.useMemo(
+    () => [...(items.data?.data ?? [])].sort((a, b) =>
+      b.createdAt.localeCompare(a.createdAt) || b.productId.localeCompare(a.productId)
+    ),
+    [items.data?.data]
+  )
   const totalPages = Math.max(1, Math.ceil((items.data?.data.length ?? 0) / ITEMS_LIMIT))
   const visiblePage = Math.min(itemPage, totalPages)
   const [dialogOpen, setDialogOpen] = React.useState(false)
@@ -331,14 +339,15 @@ function ListasEditor() {
 
               <ProductPicker
                 items={items.data?.data ?? []}
-                onAdded={(productoId) =>
-                  setQuantity.mutateAsync({ listaId: active.id, productoId, quantity: 1 })
-                }
+                onAdded={async (productoId, quantity) => {
+                  await setQuantity.mutateAsync({ listaId: active.id, productoId, quantity })
+                  setItemPage(1)
+                }}
                 adding={setQuantity.isPending || items.isPending || items.isError}
               />
 
               <ListItems
-                items={items.data?.data.slice((visiblePage - 1) * ITEMS_LIMIT, visiblePage * ITEMS_LIMIT) ?? []}
+                items={orderedItems.slice((visiblePage - 1) * ITEMS_LIMIT, visiblePage * ITEMS_LIMIT)}
                 pending={items.isPending}
                 error={items.isError}
                 quantityDrafts={quantityDrafts}
@@ -407,10 +416,11 @@ function ProductPicker({
   adding,
 }: {
   items: ListaPedidoItem[]
-  onAdded: (productId: string) => Promise<unknown>
+  onAdded: (productId: string, quantity: number) => Promise<unknown>
   adding: boolean
 }) {
   const [search, setSearch] = React.useState("")
+  const [quantities, setQuantities] = React.useState<Record<string, string>>({})
   const [page, setPage] = React.useState(1)
   const inputRef = React.useRef<HTMLInputElement>(null)
   const [debouncedSearch, setDebouncedSearch] = React.useState("")
@@ -421,8 +431,11 @@ function ProductPicker({
   const productos = useBusquedaProductos(debouncedSearch, { pagina: page, limite: SEARCH_LIMIT, habilitada: Boolean(search.trim()) })
 
   async function addProduct(productId: string) {
+    const quantity = Number(quantities[productId] ?? "1")
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 2147483647 || adding) return
     try {
-      await onAdded(productId)
+      await onAdded(productId, quantity)
+      setQuantities({})
       setSearch("")
       setDebouncedSearch("")
       setPage(1)
@@ -500,6 +513,8 @@ function ProductPicker({
           <div className="mt-5 divide-y divide-[var(--color-border)] rounded-lg border border-[var(--color-border)]">
             {productos.data?.data.map((producto) => {
               const estaIncluido = included.has(producto.id)
+              const quantity = Number(quantities[producto.id] ?? "1")
+              const validQuantity = Number.isInteger(quantity) && quantity >= 1 && quantity <= 2147483647
               return (
                 <div key={producto.id} className="flex items-center gap-3 p-3">
                   <ProductoImagen
@@ -514,10 +529,25 @@ function ProductPicker({
                       SKU {producto.sku} · {formatNombreComercial(producto.proveedor.nombre)}
                     </p>
                   </div>
+                  {!estaIncluido ? (
+                    <Input
+                      type="number"
+                      min={1}
+                      max={2147483647}
+                      step={1}
+                      inputMode="numeric"
+                      value={quantities[producto.id] ?? "1"}
+                      onChange={(event) => setQuantities((previous) => ({ ...previous, [producto.id]: event.target.value }))}
+                      disabled={adding}
+                      aria-label={`Cantidad para agregar ${producto.nombre}`}
+                      aria-invalid={!validQuantity}
+                      className="h-9 w-16 shrink-0 sm:w-20"
+                    />
+                  ) : null}
                   <JdhButton
                     variant={estaIncluido ? "ghost" : "secondary"}
                     size="sm"
-                    disabled={estaIncluido || adding || productos.isPlaceholderData || search !== debouncedSearch}
+                    disabled={estaIncluido || adding || !validQuantity || productos.isPlaceholderData || search !== debouncedSearch}
                     onClick={() => void addProduct(producto.id)}
                   >
                     {estaIncluido ? <Check aria-hidden="true" /> : <Plus aria-hidden="true" />}
