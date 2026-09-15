@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
+  buscarProductos,
   listarDestacados,
   listarProductos,
   obtenerProducto,
@@ -10,6 +11,34 @@ import { aProducto, productoDtoSchema } from "@/modules/catalogo/schemas/api"
 import { paginaDto, producto, productoDto } from "./producto-fixture"
 
 afterEach(() => vi.unstubAllGlobals())
+
+describe("búsqueda unificada por nombre o SKU", () => {
+  it("prioriza el SKU exacto y conserva ceros iniciales y separadores", async () => {
+    const fetch = vi.fn().mockResolvedValue(Response.json(paginaDto))
+    vi.stubGlobal("fetch", fetch)
+    expect((await buscarProductos({ search: " 001-A/02 " })).data).toEqual([producto])
+    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(fetch.mock.calls[0][0].searchParams.get("search")).toBe("001-A/02")
+    expect(fetch.mock.calls[0][0].searchParams.get("searchMode")).toBe("skuExact")
+  })
+
+  it("busca por nombre cuando no hay coincidencia exacta y conserva la página", async () => {
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(Response.json({ ...paginaDto, data: [], meta: { ...paginaDto.meta, total: 0 } }))
+      .mockResolvedValueOnce(Response.json(paginaDto))
+    vi.stubGlobal("fetch", fetch)
+    expect((await buscarProductos({ search: "arroz", page: 2, limit: 8 })).data).toEqual([producto])
+    expect(fetch.mock.calls[1][0].searchParams.get("searchMode")).toBe("name")
+    expect(fetch.mock.calls[1][0].searchParams.get("page")).toBe("2")
+  })
+
+  it("no trata un fallo del API como ausencia del SKU", async () => {
+    const fetch = vi.fn().mockResolvedValue(Response.json({ message: "No disponible" }, { status: 503 }))
+    vi.stubGlobal("fetch", fetch)
+    await expect(buscarProductos({ search: "001" })).rejects.toThrow()
+    expect(fetch).toHaveBeenCalledTimes(1)
+  })
+})
 
 describe("contrato editorial progresivo", () => {
   it("conserva los campos editoriales y todos los campos existentes", () => {

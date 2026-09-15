@@ -29,9 +29,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import {
-  useMarcas,
-  useProductos,
-  useProveedores,
+  useBusquedaProductos,
 } from "@/modules/catalogo/hooks/use-productos"
 import { ProductoImagen } from "@/modules/catalogo/components/producto-imagen"
 import { formatNombreComercial } from "@/lib/format"
@@ -52,7 +50,7 @@ import type { ListaPedidoItem } from "../types"
 
 const MAX_LISTAS = 10
 const SEARCH_LIMIT = 8
-const ITEMS_LIMIT = 100
+const ITEMS_LIMIT = 10
 
 /** Editor de borradores privados, con listas a la izquierda y el borrador activo a la derecha. */
 export function ListasView() {
@@ -169,6 +167,9 @@ function ListasEditor() {
 
   return (
     <div className="space-y-8">
+      <Link href="/productos" className="inline-flex text-sm text-muted-foreground hover:text-foreground hover:underline">
+        Volver al catálogo
+      </Link>
       <PageHeader
         title="Mis listas"
         description="Guarda borradores de pedido para retomarlos cuando estés listo."
@@ -209,7 +210,7 @@ function ListasEditor() {
         </EmptyState>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[minmax(15rem,0.78fr)_minmax(0,2fr)]">
-          <aside className="rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+          <aside className="self-start rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
             <div className="flex items-center justify-between px-2 pb-3">
               <div>
                 <p className="text-sm font-semibold">Borradores</p>
@@ -331,7 +332,7 @@ function ListasEditor() {
               <ProductPicker
                 items={items.data?.data ?? []}
                 onAdded={(productoId) =>
-                  setQuantity.mutate({ listaId: active.id, productoId, quantity: 1 })
+                  setQuantity.mutateAsync({ listaId: active.id, productoId, quantity: 1 })
                 }
                 adding={setQuantity.isPending || items.isPending || items.isError}
               />
@@ -406,27 +407,30 @@ function ProductPicker({
   adding,
 }: {
   items: ListaPedidoItem[]
-  onAdded: (productId: string) => void
+  onAdded: (productId: string) => Promise<unknown>
   adding: boolean
 }) {
   const [search, setSearch] = React.useState("")
-  const [searchMode, setSearchMode] = React.useState<"name" | "skuExact">("name")
-  const [supplierId, setSupplierId] = React.useState("")
-  const [brandId, setBrandId] = React.useState("")
   const [page, setPage] = React.useState(1)
-  const proveedores = useProveedores()
-  const marcas = useMarcas(supplierId ? { supplierId } : {})
-  const productos = useProductos(
-    {
-      search: search.trim() || undefined,
-      searchMode,
-      supplierId: supplierId || undefined,
-      brandId: brandId || undefined,
-      page,
-      limit: SEARCH_LIMIT,
-    },
-    { enabled: search.trim().length >= (searchMode === "skuExact" ? 1 : 2) }
-  )
+  const inputRef = React.useRef<HTMLInputElement>(null)
+  const [debouncedSearch, setDebouncedSearch] = React.useState("")
+  React.useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 220)
+    return () => clearTimeout(timer)
+  }, [search])
+  const productos = useBusquedaProductos(debouncedSearch, { pagina: page, limite: SEARCH_LIMIT, habilitada: Boolean(search.trim()) })
+
+  async function addProduct(productId: string) {
+    try {
+      await onAdded(productId)
+      setSearch("")
+      setDebouncedSearch("")
+      setPage(1)
+      inputRef.current?.focus()
+    } catch {
+      // Conservar la búsqueda para reintentar; el editor muestra el error.
+    }
+  }
   const included = React.useMemo(
     () => new Set(items.map((item) => item.productId)),
     [items]
@@ -439,21 +443,22 @@ function ProductPicker({
         <div>
           <h3 className="text-sm font-semibold">Agregar productos</h3>
           <p className="text-xs text-muted-foreground">
-            Busca por nombre o por SKU exacto y filtra por proveedor o marca.
+            Escribe el nombre o el SKU exacto del producto.
           </p>
         </div>
       </div>
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_10rem]">
-        <label className="relative">
+      <div>
+        <label className="relative block">
           <span className="sr-only">Buscar productos</span>
           <Input
+            ref={inputRef}
             value={search}
             maxLength={200}
             onChange={(event) => {
               setSearch(event.target.value)
               setPage(1)
             }}
-            placeholder={searchMode === "skuExact" ? "SKU exacto" : "Nombre del producto"}
+            placeholder="Nombre o SKU exacto"
             className="h-10 pr-9"
           />
           {search ? (
@@ -467,61 +472,11 @@ function ProductPicker({
             </button>
           ) : null}
         </label>
-        <select
-          value={searchMode}
-          onChange={(event) => {
-            setSearchMode(event.target.value as "name" | "skuExact")
-            setPage(1)
-          }}
-          className="h-10 rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-          aria-label="Modo de búsqueda"
-        >
-          <option value="name">Por nombre</option>
-          <option value="skuExact">SKU exacto</option>
-        </select>
-      </div>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        <select
-          value={supplierId}
-          onChange={(event) => {
-            setSupplierId(event.target.value)
-            setBrandId("")
-            setPage(1)
-          }}
-          className="h-10 rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-          aria-label="Filtrar por proveedor"
-        >
-          <option value="">Todos los proveedores</option>
-          {proveedores.data?.map((proveedor) => (
-            <option key={proveedor.id} value={proveedor.id}>
-              {formatNombreComercial(proveedor.nombre)}
-            </option>
-          ))}
-        </select>
-        <select
-          value={brandId}
-          onChange={(event) => {
-            setBrandId(event.target.value)
-            setPage(1)
-          }}
-          disabled={marcas.isPending}
-          className="h-10 rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
-          aria-label="Filtrar por marca"
-        >
-          <option value="">
-            Todas las marcas
-          </option>
-          {marcas.data?.map((marca) => (
-            <option key={marca.id} value={marca.id}>
-              {formatNombreComercial(marca.nombre)}
-            </option>
-          ))}
-        </select>
       </div>
 
-      {search.trim().length < (searchMode === "skuExact" ? 1 : 2) ? (
+      {!search.trim() ? (
         <p className="mt-5 rounded-lg bg-[var(--color-surface-subtle)] px-4 py-5 text-center text-sm text-muted-foreground">
-          {searchMode === "skuExact" ? "Escribe el SKU completo para buscar." : "Escribe al menos 2 caracteres para buscar."}
+          Escribe un nombre o SKU para buscar.
         </p>
       ) : productos.isError ? (
         <div className="mt-5 flex items-center justify-between gap-3 rounded-lg bg-[var(--color-surface-subtle)] px-4 py-4 text-sm">
@@ -562,8 +517,8 @@ function ProductPicker({
                   <JdhButton
                     variant={estaIncluido ? "ghost" : "secondary"}
                     size="sm"
-                    disabled={estaIncluido || adding || productos.isPlaceholderData}
-                    onClick={() => onAdded(producto.id)}
+                    disabled={estaIncluido || adding || productos.isPlaceholderData || search !== debouncedSearch}
+                    onClick={() => void addProduct(producto.id)}
                   >
                     {estaIncluido ? <Check aria-hidden="true" /> : <Plus aria-hidden="true" />}
                     <span className="hidden sm:inline">{estaIncluido ? "En la lista" : "Agregar"}</span>

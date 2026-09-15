@@ -108,6 +108,19 @@ async function apiGet<Schema extends z.ZodType>(
  * parámetro y el usuario ve el catálogo alfabético. Mismo criterio que el 404
  * de `/brands` en `useMarcas`.
  */
+export async function buscarProductos(
+  params: ProductosQueryParams,
+  signal?: AbortSignal
+): Promise<Paginado<Producto>> {
+  const search = params.search?.trim()
+  // Buscar el SKU antes de paginar por nombre evita que una coincidencia
+  // exacta quede fuera de las primeras sugerencias. No convertir a número:
+  // los ceros iniciales y los separadores forman parte del código.
+  const exactos = await listarProductos({ ...params, search, searchMode: "skuExact" }, signal)
+  if (exactos.meta.total > 0) return exactos
+  return listarProductos({ ...params, search, searchMode: "name" }, signal)
+}
+
 export async function listarProductos(
   params: ProductosQueryParams = {},
   signal?: AbortSignal

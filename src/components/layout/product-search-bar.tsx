@@ -199,7 +199,8 @@ function FormularioBusqueda({
     habilitada: abierto,
     limite: LIMITE_SUGERENCIAS,
   })
-  const productos = sugerencias.data?.data ?? []
+  const actualizando = sugerencias.isPlaceholderData || valor.trim() !== terminoDiferido
+  const productos = actualizando ? [] : sugerencias.data?.data ?? []
 
   // El resaltado del teclado no sobrevive a un cambio de término: el producto
   // que estaba en la posición 3 ya no es el mismo. Estado derivado durante el
@@ -314,8 +315,8 @@ function FormularioBusqueda({
           }}
           onFocus={() => setAbiertoManual(true)}
           onKeyDown={onKeyDown}
-          placeholder="Buscar productos por nombre…"
-          aria-label="Buscar productos por nombre"
+          placeholder="Buscar por nombre o SKU…"
+          aria-label="Buscar productos por nombre o SKU"
           className="min-w-0 flex-1 bg-transparent px-4 text-sm text-[var(--color-on-paper)] outline-none placeholder:text-[var(--color-on-paper-muted)] [&::-webkit-search-cancel-button]:appearance-none"
         />
 
@@ -345,7 +346,7 @@ function FormularioBusqueda({
       {abierto ? (
         <BusquedaSugerencias
           productos={productos}
-          cargando={sugerencias.isFetching && productos.length === 0}
+          cargando={actualizando || (sugerencias.isFetching && productos.length === 0)}
           error={sugerencias.isError}
           atenuado={sugerencias.isPlaceholderData}
           termino={terminoDiferido}

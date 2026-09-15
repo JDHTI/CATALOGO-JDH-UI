@@ -4,6 +4,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
 import { CatalogoApiError } from "../api/errors"
 import {
+  buscarProductos,
   listarDestacados,
   listarMarcas,
   listarProductos,
@@ -69,7 +70,7 @@ export function useDestacados(limite: number) {
 }
 
 /** Mínimo de caracteres antes de consultar el API desde el buscador. */
-export const MIN_CARACTERES_BUSQUEDA = 2
+export const MIN_CARACTERES_BUSQUEDA = 1
 
 /** Sugerencias por consulta. Son las que caben en el panel sin scroll. */
 export const LIMITE_SUGERENCIAS = 5
@@ -119,18 +120,15 @@ const SUGERENCIAS_GC_MS = 30 * 60 * 1000
  */
 export function useBusquedaProductos(
   termino: string,
-  { habilitada = true, limite = LIMITE_SUGERENCIAS } = {}
+  { habilitada = true, limite = LIMITE_SUGERENCIAS, pagina = 1 } = {}
 ) {
-  // Normaliza el espaciado para que "arroz  diana" y "arroz diana " sean UNA
-  // entrada de caché y UNA URL. No se toca la caja: si el backend distingue
-  // mayúsculas, bajarla cambiaría los resultados — y los nombres del ERP
-  // vienen en alta sostenida.
-  const search = termino.trim().replace(/\s+/g, " ")
-  const params: ProductosQueryParams = { search, limit: limite }
+  // Solo recorta los extremos: no modifica los caracteres internos del SKU.
+  const search = termino.trim()
+  const params: ProductosQueryParams = { search, limit: limite, page: pagina, searchMode: "nameOrSkuExact" }
 
   return useQuery({
     queryKey: catalogoKeys.productos(params),
-    queryFn: ({ signal }) => listarProductos(params, signal),
+    queryFn: ({ signal }) => buscarProductos(params, signal),
     enabled: habilitada && search.length >= MIN_CARACTERES_BUSQUEDA,
     staleTime: SUGERENCIAS_STALE_MS,
     gcTime: SUGERENCIAS_GC_MS,
