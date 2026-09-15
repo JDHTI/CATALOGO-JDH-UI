@@ -10,14 +10,14 @@ import { cn } from "@/lib/utils"
 
 import { MegaMenu } from "./mega-menu"
 
-const MAX_ACCESOS = 9
+const MAX_ACCESOS = 8
 
-/** Nueve marcas destacadas alineadas con el buscador; deslizables si no caben. */
+/** Ocho marcas destacadas alineadas con el buscador; deslizables si no caben. */
 export function MainNav({ className }: { className?: string }) {
   const { data: marcas } = useMarcas()
 
   // Las de mayor catálogo primero: con cientos de marcas, el orden
-  // alfabético del API no dice nada en una barra de 9 accesos.
+  // alfabético del API no dice nada en una barra de 8 accesos.
   const destacados = (marcas ?? [])
     .slice()
     .sort((a, b) => (b.totalProductos ?? 0) - (a.totalProductos ?? 0))
