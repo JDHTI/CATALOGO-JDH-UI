@@ -15,6 +15,31 @@ import { cn } from "@/lib/utils"
 
 import { jdhButtonVariants } from "./jdh-button"
 
+/** Alterna el tema visible, incluido el que se haya resuelto desde el sistema. */
+export function ThemeToggle({ className }: { className?: string }) {
+  const { setThemeWithTransition } = useThemeTransition()
+
+  return (
+    <button
+      type="button"
+      aria-label="Cambiar entre tema claro y oscuro"
+      className={cn(
+        jdhButtonVariants({ variant: "ghost", size: "icon" }),
+        className
+      )}
+      onClick={(event) => {
+        const next = document.documentElement.classList.contains("dark")
+          ? "light"
+          : "dark"
+        setThemeWithTransition(next, event.currentTarget)
+      }}
+    >
+      <Moon aria-hidden="true" className="dark:hidden" />
+      <Sun aria-hidden="true" className="hidden dark:block" />
+    </button>
+  )
+}
+
 /**
  * Theme switcher (Claro / Oscuro / Sistema) as a shadcn dropdown. The trigger
  * icon swaps via the `dark:` variant (no hydration mismatch); the active radio
