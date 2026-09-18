@@ -1,11 +1,10 @@
 /**
- * Datos de contacto mostrados en la franja superior del header (y,
- * eventualmente, en el footer). Valores de MARCADOR DE POSICIÓN — sustituir
- * por los reales de la compañía antes de producción.
+ * Datos compartidos por la franja superior y el footer.
+ * Email y WhatsApp siguen pendientes de confirmación comercial.
  */
 export const contactConfig = {
-  phone: "+57 604 000 0000",
-  phoneHref: "tel:+576040000000",
+  phone: "(604) 4448018",
+  phoneHref: "tel:+576044448018",
   /** Email de soporte comercial mostrado en la barra de contacto del header. */
   email: "ventas@jdhdistribuciones.com",
   emailHref: "mailto:ventas@jdhdistribuciones.com",
@@ -17,6 +16,7 @@ export const contactConfig = {
   whatsappUrl:
     "https://wa.me/573000000000?text=Hola%20JDH%2C%20quiero%20informaci%C3%B3n%20sobre%20el%20cat%C3%A1logo",
   /** Sede destacada en el header; el listado completo vive en `siteConfig.sedes`. */
-  location: "Medellín, Colombia",
-  instagramUrl: "https://www.instagram.com/jdhdistribuciones",
+  location: "Itagüí, Antioquia",
+  address: "Cra 42 #54 A 155 Int C Oficina 501",
+  instagramUrl: "https://www.instagram.com/juand.hoyosdistribuciones",
 } as const

@@ -1,4 +1,5 @@
 import { Logo } from "@/components/common/logo"
+import { contactConfig } from "@/config/contact.config"
 import { footerConfig } from "@/config/footer.config"
 import { siteConfig } from "@/config/site"
 
@@ -21,6 +22,30 @@ export function AppFooter() {
           <p className="max-w-[40ch] text-sm text-[var(--color-on-ink-muted)] dark:text-[var(--color-on-paper-muted)]">
             {siteConfig.description}
           </p>
+          <address
+            id="contacto"
+            className="scroll-mt-[calc(var(--catalogo-chrome-height)+1rem)] space-y-3 text-sm not-italic"
+          >
+            <p>
+              <span className="block font-medium">Dirección principal</span>
+              <span className="block">{contactConfig.address}</span>
+              <span className="block">{contactConfig.location}</span>
+            </p>
+            <a
+              href={contactConfig.phoneHref}
+              className="block w-fit underline-offset-4 hover:underline"
+            >
+              Teléfono: {contactConfig.phone}
+            </a>
+            <a
+              href={contactConfig.instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-fit underline-offset-4 hover:underline"
+            >
+              Instagram
+            </a>
+          </address>
         </div>
 
         {footerConfig.columns.map((column) => (
