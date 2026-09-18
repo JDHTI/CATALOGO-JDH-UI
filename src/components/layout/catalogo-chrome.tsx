@@ -153,7 +153,7 @@ export function CatalogoChrome() {
       {esHome ? bloqueSuperior : null}
       <div ref={staticRef}>
         <AppHeader />
-        <MainNav />
+        <MainNav className="hidden md:block" />
       </div>
     </div>
   )
