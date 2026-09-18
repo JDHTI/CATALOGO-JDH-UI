@@ -33,7 +33,7 @@ export default function CatalogoLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex min-h-svh flex-col">
+    <div className="flex min-h-svh flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
       {/* Cortina de llegada tras ingresar. Ya no necesita `Suspense`: lo
           llevaba porque leía `useSearchParams`, y ahora lee `window.location`
           y solo usa `usePathname`, que es seguro en rutas estáticas y no
