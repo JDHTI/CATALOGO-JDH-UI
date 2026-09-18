@@ -15,7 +15,7 @@ import { ProductSearchBar } from "./product-search-bar"
 export function AppHeader() {
   return (
     <header className="border-b border-[var(--color-ink-border)] bg-[var(--color-ink)] text-[var(--color-on-ink)]">
-      <div className="mx-auto grid max-w-[var(--container-wide)] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-3 px-4 py-3 sm:gap-x-4 sm:px-6 lg:h-[72px] lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_22rem] lg:py-0">
+      <div className="mx-auto grid max-w-[var(--container-wide)] grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-3 px-4 py-3 sm:gap-x-4 sm:px-6 md:grid-cols-[minmax(0,1fr)_auto] lg:h-[72px] lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_22rem] lg:py-0">
         <Link
           href="/"
           aria-label="Ir al inicio"
@@ -26,20 +26,20 @@ export function AppHeader() {
             tone="white"
             height={32}
             priority
-            className="sm:hidden"
+            className="md:hidden"
           />
           <Logo
             variant="lockup"
             tone="white"
             height={32}
             priority
-            className="hidden sm:inline-flex"
+            className="hidden md:inline-flex"
           />
         </Link>
 
-        <ProductSearchBar className="order-last col-span-2 w-full min-w-0 lg:order-none lg:col-span-1 lg:max-w-2xl lg:min-w-0 lg:justify-self-center" />
+        <ProductSearchBar className="w-full min-w-0 md:order-last md:col-span-2 lg:order-none lg:col-span-1 lg:max-w-2xl lg:min-w-0 lg:justify-self-center" />
 
-        <div className="flex min-w-0 shrink-0 items-center gap-1 justify-self-end">
+        <div className="hidden min-w-0 shrink-0 items-center gap-1 justify-self-end md:flex">
           <div className="hidden items-center gap-1 md:flex">
             <FavoritosNavLink />
             <IconNavLink
