@@ -90,6 +90,7 @@
   --overlay-on-dark-64: rgba(255, 255, 255, 0.64);
   --overlay-on-light-04: rgba(29, 29, 27, 0.04);
   --overlay-on-light-08: rgba(29, 29, 27, 0.08);
+  --overlay-on-light-16: rgba(29, 29, 27, 0.16);
 
   /* Tipografía — Centrale Sans se carga en los @font-face de arriba; el resto
      de la pila queda como fallback mientras los .woff2 hacen swap. */
@@ -251,7 +252,7 @@
   --color-focus: var(--neutral-900);
   --color-focus-on-ink: var(--neutral-0);
   --color-focus-on-paper: var(--neutral-900);
-  --color-selection: var(--overlay-on-light-08);
+  --color-selection: var(--overlay-on-light-16);
 
   /* Tinte semántico para alertas (tema claro). Ampliación consciente de la
      excepción de color de DESIGN.md — solo para feedback (JdhAlert); siempre

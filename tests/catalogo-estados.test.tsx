@@ -108,3 +108,15 @@ it("muestra error con reintento y oculta paginación anterior", () => {
   fireEvent.click(screen.getByRole("button", { name: /Reintentar/ }))
   expect(mocks.refetch).toHaveBeenCalledOnce()
 })
+
+it("restaura selecciones multiples desde la URL", () => {
+  mocks.query = "proveedor=1,2&marca=3&marca=4&pagina=2"
+  render(<CatalogoView />)
+  expect(mocks.useProductos).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      supplierIds: ["1", "2"],
+      brandIds: ["3", "4"],
+      page: 2,
+    })
+  )
+})

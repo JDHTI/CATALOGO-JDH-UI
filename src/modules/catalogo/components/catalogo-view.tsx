@@ -57,8 +57,22 @@ export function CatalogoView() {
   const searchParams = useSearchParams()
 
   const q = searchParams.get("q")?.trim() ?? ""
-  const proveedorId = searchParams.get("proveedor")
-  const marcaId = searchParams.get("marca")
+  const proveedorIds = [
+    ...new Set(
+      searchParams
+        .getAll("proveedor")
+        .flatMap((v) => v.split(","))
+        .filter(Boolean)
+    ),
+  ]
+  const marcaIds = [
+    ...new Set(
+      searchParams
+        .getAll("marca")
+        .flatMap((v) => v.split(","))
+        .filter(Boolean)
+    ),
+  ]
   const pagina = Math.max(1, Number(searchParams.get("pagina")) || 1)
 
   const actualizarParams = useCallback(
@@ -80,8 +94,8 @@ export function CatalogoView() {
     page: pagina,
     limit: PAGE_SIZE,
     search: q || undefined,
-    supplierId: proveedorId ?? undefined,
-    brandId: marcaId ?? undefined,
+    supplierIds: proveedorIds.length ? proveedorIds : undefined,
+    brandIds: marcaIds.length ? marcaIds : undefined,
     // Los productos con foto van primero (ver `ProductosQueryParams.orderBy`).
     // Tiene que resolverlo el backend: la paginación es del lado del servidor.
     orderBy: "conImagen",
@@ -89,7 +103,9 @@ export function CatalogoView() {
   const proveedores = useProveedores()
   // Las marcas se acotan al proveedor elegido: con miles de productos, la
   // lista global de marcas no ayuda a refinar dentro de un proveedor.
-  const marcas = useMarcas(proveedorId ? { supplierId: proveedorId } : {})
+  const marcas = useMarcas(
+    proveedorIds.length ? { supplierIds: proveedorIds } : {}
+  )
 
   const gridRef = useRef<HTMLDivElement>(null)
   const asideRef = useRef<HTMLElement>(null)
@@ -152,7 +168,7 @@ export function CatalogoView() {
 
   const meta = productos.data?.meta
   const visibles = productos.data?.data ?? []
-  const hayFiltrosActivos = Boolean(q || proveedorId || marcaId)
+  const hayFiltrosActivos = Boolean(q || proveedorIds.length || marcaIds.length)
   const inicio = meta && meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0
   const fin = meta ? Math.min(meta.page * meta.limit, meta.total) : 0
 
@@ -192,20 +208,24 @@ export function CatalogoView() {
             proveedoresPending={proveedores.isPending}
             proveedoresError={proveedores.isError}
             onRetryProveedores={() => proveedores.refetch()}
-            proveedorId={proveedorId}
+            proveedorIds={proveedorIds}
             // Cambiar de proveedor invalida la marca elegida: puede no
             // existir en el proveedor nuevo.
             onProveedorChange={(id) =>
-              actualizarParams({ proveedor: id, marca: null, pagina: null })
+              actualizarParams({
+                proveedor: id.join(","),
+                marca: null,
+                pagina: null,
+              })
             }
             marcas={marcas.data}
             marcasPending={marcas.isPending}
             marcasError={marcas.isError}
             marcasNoImplementado={marcas.noImplementado}
             onRetryMarcas={() => marcas.refetch()}
-            marcaId={marcaId}
+            marcaIds={marcaIds}
             onMarcaChange={(id) =>
-              actualizarParams({ marca: id, pagina: null })
+              actualizarParams({ marca: id.join(","), pagina: null })
             }
             onLimpiar={limpiarFiltros}
             scrollRef={filtrosScrollRef}

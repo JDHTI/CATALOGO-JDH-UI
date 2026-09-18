@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useSyncExternalStore } from "react"
 import {
+  Check,
   ChevronDown,
   RotateCcw,
   Search,
@@ -18,28 +19,7 @@ import { cn } from "@/lib/utils"
 
 import type { Marca, Proveedor } from "../types"
 
-/**
- * Panel de filtros del catálogo. Dos ejes, los únicos que existen en los
- * datos reales: PROVEEDOR y MARCA (las categorías del esquema aún no tienen
- * datos). Ambos son selección única porque el API acepta un `supplierId` y
- * un `brandId`, y se aplican al instante — sin borrador ni botón "Aplicar".
- *
- * Diseñado para la escala real (cientos de proveedores): cada eje tiene
- * búsqueda local sobre la lista completa que ya trajo el API y solo pinta
- * los primeros `MAX_VISIBLES` resultados, para no meter cientos de nodos en
- * el DOM. Las marcas se acotan al proveedor seleccionado.
- *
- * Mantiene el lenguaje visual del panel original: bloque NEGRO con el
- * contenido en blanco fijo (no alterna con el tema) y scroll solo en el
- * centro.
- *
- * ES COLAPSABLE, y ahí está la diferencia entre escritorio y móvil: en
- * pantallas anchas nace abierto (hay sitio de sobra en la columna lateral) y
- * en móvil nace cerrado, porque desplegado empujaría la lista de productos
- * fuera de la pantalla y el usuario llegó a ver productos, no filtros. El
- * encabezado es el disparador y muestra cuántos filtros hay puestos, así que
- * incluso cerrado se sabe si la lista está acotada.
- */
+/** Filtros múltiples: OR dentro de cada eje, AND entre proveedor y marca. */
 
 const MAX_VISIBLES = 50
 
@@ -71,9 +51,9 @@ export interface CatalogFiltersProps {
   proveedoresPending: boolean
   proveedoresError: boolean
   onRetryProveedores: () => void
-  /** `supplierId` activo — null = todos. */
-  proveedorId: string | null
-  onProveedorChange: (supplierId: string | null) => void
+  /** Proveedores activos; vacío = todos. */
+  proveedorIds: string[]
+  onProveedorChange: (supplierId: string[]) => void
 
   marcas: Marca[] | undefined
   marcasPending: boolean
@@ -81,9 +61,9 @@ export interface CatalogFiltersProps {
   /** El backend todavía no publica `/brands`: se oculta el eje marca. */
   marcasNoImplementado: boolean
   onRetryMarcas: () => void
-  /** `brandId` activo — null = todas. */
-  marcaId: string | null
-  onMarcaChange: (brandId: string | null) => void
+  /** Marcas activas; vacío = todas. */
+  marcaIds: string[]
+  onMarcaChange: (brandId: string[]) => void
 
   onLimpiar: () => void
   /** Ref al contenedor scrolleable (para el wheel-hijack del aside). */
@@ -95,14 +75,14 @@ export function CatalogFilters({
   proveedoresPending,
   proveedoresError,
   onRetryProveedores,
-  proveedorId,
+  proveedorIds,
   onProveedorChange,
   marcas,
   marcasPending,
   marcasError,
   marcasNoImplementado,
   onRetryMarcas,
-  marcaId,
+  marcaIds,
   onMarcaChange,
   onLimpiar,
   scrollRef,
@@ -118,7 +98,7 @@ export function CatalogFilters({
   // `null` = nadie ha tocado el disclosure, así que manda el viewport.
   const [forzado, setForzado] = useState<boolean | null>(null)
   const abierto = forzado ?? esEscritorio
-  const activos = (proveedorId ? 1 : 0) + (marcaId ? 1 : 0)
+  const activos = proveedorIds.length + marcaIds.length
 
   return (
     <div
@@ -127,7 +107,7 @@ export function CatalogFilters({
         // La altura solo se limita cuando hay algo desplegado; cerrado, el
         // panel es una barra y no debe reservar 60vh de nada.
         abierto &&
-          "max-h-[70vh] lg:max-h-[calc(100vh-var(--catalogo-chrome-height)-2rem)]"
+          "max-h-[70dvh] lg:max-h-[calc(100dvh-var(--catalogo-chrome-height)-2rem)]"
       )}
     >
       {/* ENCABEZADO = disparador del disclosure. */}
@@ -163,7 +143,7 @@ export function CatalogFilters({
       <div
         id="panel-filtros"
         className={cn(
-          "min-h-0 flex-1 overflow-hidden bg-[var(--color-surface)]",
+          "flex min-h-0 flex-col overflow-hidden bg-[var(--color-surface)]",
           // Clase de Tailwind y no el atributo `hidden`: cualquier `display`
           // explícito del elemento ganaría sobre `[hidden] { display: none }`.
           !abierto && "hidden"
@@ -171,27 +151,10 @@ export function CatalogFilters({
       >
         <div
           ref={scrollRef}
-          // `overscroll-contain`: al llegar al tope de la lista el scroll se
-          // queda aquí en vez de arrastrar la página, que es lo que hacía
-          // sentir el panel como no desplazable.
-          // `scrollbar-gutter` solo desde `lg`: en móvil la barra de scroll
-          // se superpone al contenido, así que reservarle sitio solo roba
-          // ancho a las filas.
-          // `overflow-x-hidden`: aquí solo se scrollea en vertical. Cualquier
-          // hijo que se pase un par de píxeles (un anillo de foco, la sombra
-          // de un input) creaba una barra horizontal en un panel donde no
-          // hay nada que ver a los lados; los nombres largos se recortan con
-          // `truncate`, que es lo que debe pasar.
-          //
-          // `contain: content` aísla este subárbol del layout de la página.
-          // Sin él, la lista interna (casi 4.000 px con los dos ejes
-          // desplegados) se filtraba al `scrollHeight` de los ancestros pese
-          // al `overflow`, y la página de productos dejaba seguir bajando
-          // ~600 px por debajo del paginador, con la pantalla ya en blanco.
-          className="max-h-[60vh] overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-2 [contain:content] lg:max-h-[calc(100vh-var(--catalogo-chrome-height)-7rem)] lg:[scrollbar-gutter:stable]"
+          data-lenis-prevent
+          className="min-h-0 [scrollbar-gutter:stable] overflow-x-hidden overflow-y-auto overscroll-contain px-3 pt-2 pb-5"
         >
           <EjeFiltro
-            grupo="proveedor"
             icono={Store}
             titulo="Proveedores"
             etiquetaTodos="Todos los proveedores"
@@ -200,7 +163,7 @@ export function CatalogFilters({
             isPending={!montado || proveedoresPending}
             isError={montado && proveedoresError}
             onRetry={onRetryProveedores}
-            seleccionado={proveedorId}
+            seleccionado={proveedorIds}
             onSeleccionar={onProveedorChange}
           />
 
@@ -208,7 +171,6 @@ export function CatalogFilters({
               antes de montar cambiaría la estructura respecto al SSR. */}
           {montado && marcasNoImplementado ? null : (
             <EjeFiltro
-              grupo="marca"
               icono={Tags}
               titulo="Marcas"
               etiquetaTodos="Todas las marcas"
@@ -217,14 +179,14 @@ export function CatalogFilters({
               isPending={!montado || marcasPending}
               isError={montado && marcasError}
               onRetry={onRetryMarcas}
-              seleccionado={marcaId}
+              seleccionado={marcaIds}
               onSeleccionar={onMarcaChange}
               // Con proveedor elegido, el API acota tanto la lista como el
               // conteo de cada marca; el copy lo dice para que el número no
               // se lea como el total del catálogo.
               nota={
-                proveedorId
-                  ? "Marcas y conteos del proveedor seleccionado."
+                proveedorIds.length > 0
+                  ? "Marcas y conteos de los proveedores seleccionados."
                   : undefined
               }
             />
@@ -262,14 +224,13 @@ interface ItemEje {
 }
 
 /**
- * Un eje de clasificación: título, búsqueda local y lista de radios. La
+ * Un eje de clasificación: título, búsqueda local y lista de opciones múltiples. La
  * búsqueda filtra en cliente sobre la lista completa (el API la devuelve
  * entera, sin paginar) y solo se pintan `MAX_VISIBLES` resultados; el resto
  * se alcanza refinando el término, que es más rápido que un scroll de
  * cientos de filas.
  */
 function EjeFiltro({
-  grupo,
   icono: Icono,
   titulo,
   etiquetaTodos,
@@ -282,7 +243,6 @@ function EjeFiltro({
   onSeleccionar,
   nota,
 }: {
-  grupo: string
   icono: typeof Store
   titulo: string
   etiquetaTodos: string
@@ -291,8 +251,8 @@ function EjeFiltro({
   isPending: boolean
   isError: boolean
   onRetry: () => void
-  seleccionado: string | null
-  onSeleccionar: (id: string | null) => void
+  seleccionado: string[]
+  onSeleccionar: (id: string[]) => void
   nota?: string
 }) {
   const [filtro, setFiltro] = useState("")
@@ -396,23 +356,27 @@ function EjeFiltro({
             {/* "Todos" solo tiene sentido sin búsqueda activa. */}
             {filtro.trim() === "" ? (
               <FilaEje
-                grupo={grupo}
                 label={etiquetaTodos}
-                checked={seleccionado === null}
-                onSelect={() => onSeleccionar(null)}
+                checked={seleccionado.length === 0}
+                onSelect={() => onSeleccionar([])}
               />
             ) : null}
 
             {visibles.map((item) => (
               <FilaEje
                 key={item.id}
-                grupo={grupo}
                 // Se muestra formateado, pero la búsqueda de arriba corre
                 // sobre el nombre crudo del ERP, que es el dato real.
                 label={formatNombreComercial(item.nombre)}
                 count={item.totalProductos}
-                checked={seleccionado === item.id}
-                onSelect={() => onSeleccionar(item.id)}
+                checked={seleccionado.includes(item.id)}
+                onSelect={() =>
+                  onSeleccionar(
+                    seleccionado.includes(item.id)
+                      ? seleccionado.filter((id) => id !== item.id)
+                      : [...seleccionado, item.id]
+                  )
+                }
               />
             ))}
           </fieldset>
@@ -434,43 +398,50 @@ function EjeFiltro({
   )
 }
 
-/** Fila de radio — claro fijo (no alterna con el tema), aplica al instante. */
+/** Cada fila se alterna sin modificar las demás selecciones. */
 function FilaEje({
-  grupo,
   label,
   count,
   checked,
   onSelect,
 }: {
-  grupo: string
   label: string
-  /** `totalProductos` del API — sin conteo en la fila "Todos". */
   count?: number
   checked: boolean
   onSelect: () => void
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-3 py-1.5 hover:bg-[var(--color-surface-subtle)]">
-      <input
-        type="radio"
-        name={`filtro-${grupo}`}
-        checked={checked}
-        onChange={onSelect}
-        className="size-4 shrink-0 border-[var(--color-border-strong)] accent-[var(--color-ink)]"
-      />
+    <button
+      type="button"
+      aria-pressed={checked}
+      onClick={onSelect}
+      className={cn(
+        "flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors hover:bg-[var(--color-surface-subtle)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring",
+        checked && "bg-[var(--color-surface-subtle)]"
+      )}
+    >
       <span
         className={cn(
-          "min-w-0 flex-1 truncate text-sm text-foreground",
+          "min-w-0 flex-1 text-sm break-words text-foreground",
           checked && "font-medium"
         )}
       >
         {label}
       </span>
       {count != null ? (
-        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+        <span className="shrink-0 text-xs text-[var(--color-text-secondary)] tabular-nums">
           {count}
         </span>
       ) : null}
-    </label>
+      <span
+        aria-hidden="true"
+        className={cn(
+          "flex size-5 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-strong)]",
+          checked && "border-foreground bg-foreground text-background"
+        )}
+      >
+        {checked ? <Check className="size-3.5" /> : null}
+      </span>
+    </button>
   )
 }
