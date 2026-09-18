@@ -116,7 +116,10 @@ export async function buscarProductos(
   // Buscar el SKU antes de paginar por nombre evita que una coincidencia
   // exacta quede fuera de las primeras sugerencias. No convertir a número:
   // los ceros iniciales y los separadores forman parte del código.
-  const exactos = await listarProductos({ ...params, search, searchMode: "skuExact" }, signal)
+  const exactos = await listarProductos(
+    { ...params, search, searchMode: "skuExact" },
+    signal
+  )
   if (exactos.meta.total > 0) return exactos
   return listarProductos({ ...params, search, searchMode: "name" }, signal)
 }
@@ -131,6 +134,8 @@ export async function listarProductos(
     search: params.search,
     searchMode: params.searchMode,
     supplierId: params.supplierId,
+    supplierIds: params.supplierIds?.join(","),
+    brandIds: params.brandIds?.join(","),
     brandId: params.brandId,
   }
 
@@ -246,7 +251,10 @@ export async function listarMarcas(
   const dto = await apiGet(
     "/brands",
     marcasDtoSchema,
-    { supplierId: params.supplierId },
+    {
+      supplierId: params.supplierId,
+      supplierIds: params.supplierIds?.join(","),
+    },
     signal
   )
   return dto.map(aMarca)

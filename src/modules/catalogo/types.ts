@@ -123,8 +123,10 @@ export interface ProductosQueryParams {
   search?: string
   /** Modo explícito para el buscador de listas; omitido conserva el histórico. */
   searchMode?: "name" | "skuExact" | "nameOrSkuExact"
+  supplierIds?: string[]
   supplierId?: string
   /** Filtro por marca — va por id, no por nombre. */
+  brandIds?: string[]
   brandId?: string
   /**
    * Orden del listado. `nombre` (el default del backend, alfabético) o
@@ -145,5 +147,6 @@ export interface ProductosQueryParams {
 
 /** Parámetros de `GET /brands`: acota las marcas a un proveedor. */
 export interface MarcasQueryParams {
+  supplierIds?: string[]
   supplierId?: string
 }

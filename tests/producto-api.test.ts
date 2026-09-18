@@ -148,3 +148,13 @@ describe("lecturas reales a través del adaptador", () => {
     await expect(obtenerProducto("42")).rejects.toBeInstanceOf(CatalogoApiError)
   })
 })
+
+it("envia todos los filtros multiples y conserva la paginacion", async () => {
+  const fetch = vi.fn().mockResolvedValue(Response.json(paginaDto))
+  vi.stubGlobal("fetch", fetch)
+  await listarProductos({ supplierIds: ["1", "2"], brandIds: ["3", "4"], page: 2 })
+  const params = fetch.mock.calls[0][0].searchParams
+  expect(params.get("supplierIds")).toBe("1,2")
+  expect(params.get("brandIds")).toBe("3,4")
+  expect(params.get("page")).toBe("2")
+})
