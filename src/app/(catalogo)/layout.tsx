@@ -1,4 +1,5 @@
 import { WelcomeCurtain } from "@/components/auth/welcome-curtain"
+import { ThemeSwitcher } from "@/components/common/theme-switcher"
 import { CatalogoChrome } from "@/components/layout/catalogo-chrome"
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav"
 import { SiteFooter } from "@/components/layout/site-footer"
@@ -46,6 +47,9 @@ export default function CatalogoLayout({
 
       {/* Footer oculto en /productos y /listas (ver SiteFooter). */}
       <SiteFooter />
+      <div className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] left-4 z-[var(--z-sticky)] md:hidden">
+        <ThemeSwitcher className="size-11 rounded-full border border-border bg-background text-foreground shadow-lg" />
+      </div>
       <MobileBottomNav />
     </div>
   )
