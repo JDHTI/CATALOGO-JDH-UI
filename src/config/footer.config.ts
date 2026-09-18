@@ -49,7 +49,7 @@ export const footerConfig: FooterConfig = {
       links: [
         { label: "Privacidad", href: "/privacidad" },
         { label: "Términos y condiciones", href: "/terminos" },
-        { label: "Contacto", href: "/contacto" },
+        { label: "Contacto", href: "/#contacto" },
       ],
     },
   ],
