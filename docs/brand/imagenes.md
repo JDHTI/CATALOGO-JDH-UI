@@ -103,10 +103,13 @@ monitor de 1920×1080, 1920 × 916.
 - **ENCUADRE, que sí condiciona la composición:** `object-cover` recorta.
   - **Escritorio (`md`+):** anclado al CENTRO. Con la caja más apaisada que el
     16:9 del master (1920×916 ≈ 2.1:1) se recorta arriba y abajo.
-  - **Móvil (<768px):** anclado a la DERECHA (`object-right`). El viewport es
-    angosto y alto, así que se ve una franja vertical del **lado derecho** de
-    la pieza, completa. **Pon ahí el motivo principal**; el lado izquierdo es
-    lo primero que se pierde en móvil.
+  - **Móvil (<768px):** se ve una franja vertical de **apenas un tercio del
+    master a lo ancho**. Qué tercio lo decide cada pieza, con su propio
+    `encuadreMovil` en `src/modules/inicio/placements.ts` — no hay un valor
+    que sirva para todas. Hoy: `home-desktop-1` va a `62%` (ahí está el
+    camión) y `home-desktop-2` a `object-right` (ahí está el equipo).
+    **Al entregar una pieza nueva, di dónde queda el motivo**: si nadie ajusta
+    ese valor, el recorte por defecto se lo puede comer entero.
 - **Ubicación: la carpeta `site/hero/` del bucket**, con los slugs
   **`home-desktop-1`** y **`home-desktop-2`**:
 
@@ -114,7 +117,7 @@ monitor de 1920×1080, 1920 × 916.
   pnpm site-images:upload -- --categoria=hero --slug=home-desktop-1 --archivo=./hero.png
   ```
 
-  La UI publica **todas** las de `HERO_SLUGS` que estén subidas
+  La UI publica **todas** las de `PIEZAS_HERO` que estén subidas
   (`src/modules/inicio/placements.ts`) y las **rota** en ese orden, cada 7s,
   igual que los banners. Una que falte se omite; con una sola, el carrusel se
   queda quieto y no se dibujan los dots. El slug viejo `home-desktop` (la pieza
