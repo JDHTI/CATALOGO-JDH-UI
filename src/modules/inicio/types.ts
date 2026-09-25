@@ -17,6 +17,17 @@ export interface ImagenSitio {
 }
 
 /**
+ * Una pieza del hero ya resuelta: la declaración de `placements.ts` más la URL
+ * del bucket. Lleva su propio encuadre de móvil porque cada fotografía compuso
+ * el motivo en un sitio distinto y en un viewport angosto solo se ve un tercio
+ * del master — ver `PiezaHeroDeclarada`.
+ */
+export interface PiezaHero extends ImagenSitio {
+  /** Clase de `object-position` para móvil (`<md`). */
+  encuadreMovil: string
+}
+
+/**
  * Una pieza publicitaria del homepage. `escritorio` es obligatoria (es la que
  * se recorta si falta la otra) y `movil` opcional — misma regla que ya
  * documenta `docs/brand/imagenes.md`.

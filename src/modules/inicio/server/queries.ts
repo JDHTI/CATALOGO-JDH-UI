@@ -2,8 +2,8 @@ import "server-only"
 
 import { resolverImagenSitio } from "@/lib/site-assets"
 
-import { HERO_SLUGS, PLACEMENTS_BANNER } from "../placements"
-import type { BannerSitio, ImagenSitio } from "../types"
+import { PIEZAS_HERO, PLACEMENTS_BANNER } from "../placements"
+import type { BannerSitio, PiezaHero } from "../types"
 
 /**
  * Resolución de las imágenes del homepage, en el SERVIDOR.
@@ -27,26 +27,24 @@ import type { BannerSitio, ImagenSitio } from "../types"
  */
 
 /**
- * Las piezas del hero: todas las de `HERO_SLUGS` que estén subidas, en el
- * orden declarado. Lista vacía si no hay ninguna — el hero se dibuja entonces
- * como una banda negra con el copy encima, que sigue siendo legible.
+ * Las piezas del hero: todas las de `PIEZAS_HERO` que estén subidas, en el
+ * orden declarado y con su encuadre de móvil. Lista vacía si no hay ninguna —
+ * el hero se dibuja entonces como una banda negra con el copy encima, que
+ * sigue siendo legible.
  *
  * Van en PARALELO: el hero rota entre todas, así que ya no hay una "primera
  * que acierta casi siempre" cuya respuesta ahorre las demás peticiones, y
  * encadenarlas sumaría sus latencias al primer byte de la portada.
  */
-export async function obtenerHero(): Promise<ImagenSitio[]> {
+export async function obtenerHero(): Promise<PiezaHero[]> {
   const resueltas = await Promise.all(
-    // El tipo de retorno se anota para que el `slug` no se estreche al literal
-    // de `HERO_SLUGS` (`as const`) y el filtro de abajo siga hablando de
-    // `ImagenSitio`, que es lo que la vista consume.
-    HERO_SLUGS.map(async (slug): Promise<ImagenSitio | null> => {
-      const url = await resolverImagenSitio("hero", slug)
-      return url ? { slug, url } : null
+    PIEZAS_HERO.map(async (pieza): Promise<PiezaHero | null> => {
+      const url = await resolverImagenSitio("hero", pieza.slug)
+      return url ? { ...pieza, url } : null
     })
   )
 
-  return resueltas.filter((imagen): imagen is ImagenSitio => imagen !== null)
+  return resueltas.filter((pieza): pieza is PiezaHero => pieza !== null)
 }
 
 /**

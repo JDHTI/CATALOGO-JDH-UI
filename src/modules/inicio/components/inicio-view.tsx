@@ -1,4 +1,4 @@
-import type { BannerSitio, ImagenSitio } from "../types"
+import type { BannerSitio, PiezaHero } from "../types"
 
 import { BrandsSection } from "./brands-section"
 import { CtaSection } from "./cta-section"
@@ -67,7 +67,7 @@ export function InicioView({
   hero,
   banners,
 }: {
-  hero: ImagenSitio[]
+  hero: PiezaHero[]
   banners: BannerSitio[]
 }) {
   return (
