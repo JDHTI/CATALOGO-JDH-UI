@@ -28,9 +28,11 @@ import type { PiezaHero } from "../types"
  * corrige desplegando, se reflowea por breakpoint, lo lee un lector de
  * pantalla y lo indexa el buscador.
  *
- * El tamaño del titular se escala con el VIEWPORT (`min(7vw, 6.5rem)`) en vez
- * de por breakpoints: el arte original lo tenía en ~4.8% del ancho y con pasos
- * fijos se quedaba chico en monitores grandes.
+ * El tamaño del titular se escala con el VIEWPORT (`min(5.8vw, 5.25rem)`) en
+ * vez de por breakpoints: el arte original lo tenía en ~4.8% del ancho y con
+ * pasos fijos se quedaba chico en monitores grandes. El tope está por debajo
+ * de esa proporción a propósito — a tamaño completo el titular competía con el
+ * resto de la portada.
  *
  * El `h1` es el único de la página —el resto de las secciones abre en `h2`— y
  * ahora sí es visible. Las FOTOS pasan a ser decorativas (`alt=""`): su
@@ -172,10 +174,10 @@ export function HeroSection({ imagenes }: { imagenes: PiezaHero[] }) {
             el copy a ~5% del borde. Metido en el contenedor arrancaba a 13.75%
             en un monitor de 1920 y el titular se leía pequeño y desplazado. */}
         <div className="w-full px-6 md:px-[5vw]">
-          <h1 className="max-w-[17ch] text-[2.75rem] leading-[0.95] font-bold tracking-[-0.02em] text-[var(--color-on-ink)] sm:text-[3.5rem] md:text-[min(7vw,6.5rem)]">
+          <h1 className="max-w-[17ch] text-[2.75rem] leading-[0.95] font-bold tracking-[-0.02em] text-[var(--color-on-ink)] sm:text-[3.5rem] md:text-[min(5.8vw,5.25rem)]">
             Acompañar en todo momento a nuestros clientes,
           </h1>
-          <p className="mt-[var(--space-6)] max-w-[34ch] text-lg leading-[1.5] text-[var(--color-on-ink)] md:text-[min(2.6vw,2.25rem)]">
+          <p className="mt-[var(--space-6)] max-w-[34ch] text-lg leading-[1.5] text-[var(--color-on-ink)] md:text-[min(2.2vw,1.875rem)]">
             Y garantizar un servicio con los mejores estándares,{" "}
             <strong className="font-bold">
               ha sido y será nuestra mayor promesa.
