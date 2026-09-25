@@ -92,11 +92,14 @@ monitor de 1920×1080, 1920 × 916.
 | ------ | --------------- | -------- |
 | Master | **2560 × 1440** | 16:9     |
 
-- **El componente NO pone texto encima.** Hasta ahora reservaba el 45%
-  izquierdo para un eyebrow, un titular y dos botones; se retiraron, porque el
-  arte se cambia sin desplegar y cualquier copy del código puede contradecir la
-  pieza vigente. **Todo el mensaje va horneado en el arte**, y ya no hay zona
-  segura que respetar por el copy — la pieza se ve completa.
+- **El componente SÍ pone texto encima, y el arte va SIN tipografía.** El copy
+  (titular + bajada) vive en `hero-section.tsx`, sobre un velo oscuro. Se
+  volvió a texto porque horneado no se podía corregir sin reexportar la imagen
+  y, peor, en móvil el recorte se comía la columna donde estaba escrito. Una
+  pieza con letras encima haría que se lean dos mensajes superpuestos.
+- **Zona segura del copy:** deja limpio el **45% izquierdo en escritorio** y la
+  **mitad superior en móvil** — ahí cae el texto. El velo es
+  izquierda→derecha desde `md` y arriba→abajo por debajo.
 - **ENCUADRE, que sí condiciona la composición:** `object-cover` recorta.
   - **Escritorio (`md`+):** anclado al CENTRO. Con la caja más apaisada que el
     16:9 del master (1920×916 ≈ 2.1:1) se recorta arriba y abajo.
@@ -104,29 +107,32 @@ monitor de 1920×1080, 1920 × 916.
     angosto y alto, así que se ve una franja vertical del **lado derecho** de
     la pieza, completa. **Pon ahí el motivo principal**; el lado izquierdo es
     lo primero que se pierde en móvil.
-- **Ubicación: la carpeta `site/hero/` del bucket**, con el slug
-  **`home-desktop`**:
+- **Ubicación: la carpeta `site/hero/` del bucket**, con los slugs
+  **`home-desktop-1`** y **`home-desktop-2`**:
 
   ```bash
-  pnpm site-images:upload -- --categoria=hero --slug=home-desktop --archivo=./hero.png
+  pnpm site-images:upload -- --categoria=hero --slug=home-desktop-1 --archivo=./hero.png
   ```
 
-  La UI publica el primer slug de `HERO_SLUGS` que exista
-  (`src/modules/inicio/placements.ts`; hoy `home-desktop` y, como alternativa,
-  `home`). Se puede dejar el arte de la próxima campaña subido con otro nombre
-  y activarlo cuando toque renombrándolo.
+  La UI publica **todas** las de `HERO_SLUGS` que estén subidas
+  (`src/modules/inicio/placements.ts`) y las **rota** en ese orden, cada 7s,
+  igual que los banners. Una que falte se omite; con una sola, el carrusel se
+  queda quieto y no se dibujan los dots. El slug viejo `home-desktop` (la pieza
+  con el copy quemado) sigue en el bucket pero ya **no** está en la lista.
 
-- El hero es **una sola pieza** para todos los anchos, solo cambia el anclaje
-  del recorte. Aunque el slug diga `-desktop`, no hay un `home-mobile` en uso;
-  si el recorte a la derecha no basta para móvil, la salida es una pieza propia
-  y una segunda `<Image>` con `md:hidden`, como ya hacen los banners.
+- Cada hueco es **una sola pieza** para todos los anchos, solo cambia el
+  anclaje del recorte. Aunque el slug diga `-desktop`, no hay un `home-mobile`
+  en uso; si el recorte a la derecha no basta para móvil, la salida es una
+  pieza propia y una segunda `<Image>` con `md:hidden`, como ya hacen los
+  banners.
 
-- **No hay respaldo local.** Sin pieza subida la sección se dibuja sin imagen
-  (el copy es negro sobre fondo claro, sigue legible y con el mismo alto). El
-  antiguo `public/photos/hero-alimentos.png` se retira del repo junto con los
-  demás assets que pasan al bucket, así que el hero **depende** de que esta
-  pieza exista.
-- Peso objetivo: ≤ 400 KB. La pieza actual pesa 399 KB — justo en el límite.
+- **No hay respaldo local.** Sin ninguna pieza subida la sección se dibuja como
+  una banda negra del mismo alto, con el copy blanco encima: legible, sin
+  imagen rota. El antiguo `public/photos/hero-alimentos.png` se retira del repo
+  junto con los demás assets que pasan al bucket.
+- Peso objetivo: ≤ 400 KB. **Las dos piezas actuales pesan 1.065 KB y 158 KB**:
+  la primera se pasa del objetivo con holgura y conviene reexportarla más
+  comprimida (el comando reencoda, pero no reduce dimensiones).
 
 ## 4. Imágenes de producto
 

@@ -21,24 +21,32 @@ import type { BannerSitio, ImagenSitio } from "../types"
  * PRERENDERIZADA y se refresca sola.
  *
  * Ningún fallo se propaga: `resolverImagenSitio` devuelve `null` ante un error
- * de red o sin bucket configurado, así que el hero cae a la foto del repo y
- * los banners no se dibujan. El homepage es institucional y no puede caerse
- * porque falte una foto.
+ * de red o sin bucket configurado, así que el hero se queda sin foto (banda
+ * negra con su copy) y los banners no se dibujan. El homepage es institucional
+ * y no puede caerse porque falte una foto.
  */
 
 /**
- * La pieza del hero: el primer slug de `HERO_SLUGS` que esté subido. `null`
- * si no hay ninguno — el hero cae entonces a la foto del repo.
+ * Las piezas del hero: todas las de `HERO_SLUGS` que estén subidas, en el
+ * orden declarado. Lista vacía si no hay ninguna — el hero se dibuja entonces
+ * como una banda negra con el copy encima, que sigue siendo legible.
  *
- * Las comprobaciones van en SERIE a propósito: son dos, la primera acierta
- * casi siempre, y en el caso normal esto hace UNA petición en vez de dos.
+ * Van en PARALELO: el hero rota entre todas, así que ya no hay una "primera
+ * que acierta casi siempre" cuya respuesta ahorre las demás peticiones, y
+ * encadenarlas sumaría sus latencias al primer byte de la portada.
  */
-export async function obtenerHero(): Promise<ImagenSitio | null> {
-  for (const slug of HERO_SLUGS) {
-    const url = await resolverImagenSitio("hero", slug)
-    if (url) return { slug, url }
-  }
-  return null
+export async function obtenerHero(): Promise<ImagenSitio[]> {
+  const resueltas = await Promise.all(
+    // El tipo de retorno se anota para que el `slug` no se estreche al literal
+    // de `HERO_SLUGS` (`as const`) y el filtro de abajo siga hablando de
+    // `ImagenSitio`, que es lo que la vista consume.
+    HERO_SLUGS.map(async (slug): Promise<ImagenSitio | null> => {
+      const url = await resolverImagenSitio("hero", slug)
+      return url ? { slug, url } : null
+    })
+  )
+
+  return resueltas.filter((imagen): imagen is ImagenSitio => imagen !== null)
 }
 
 /**

@@ -15,17 +15,20 @@
  */
 
 /**
- * Candidatos del hero, EN ORDEN DE PRIORIDAD: se publica el primero que esté
- * subido. Es lo más cerca que se puede estar de "la primera pieza de la
- * carpeta" sin un endpoint que liste el bucket, y da el mismo efecto útil —
- * dejar el arte de la próxima campaña subido con otro nombre y activarlo
- * renombrándolo.
+ * Las piezas del hero, EN ORDEN DE ROTACIÓN: se publican TODAS las que estén
+ * subidas y el hero las alterna solo. Antes era una lista de candidatos y se
+ * publicaba solo la primera que existiera; ahora el hueco es un carrusel, así
+ * que un slug que falte se omite en vez de tapar a los siguientes.
  *
- * `home-desktop` va primero porque es lo que hay hoy en el bucket
- * (verificado: 200, 399 KB, `image/webp`). `home` queda detrás como nombre
- * alternativo, que es el que sugiere la documentación del API.
+ * El texto del hero **ya no está horneado en el arte**: lo pone el componente
+ * (`components/hero-section.tsx`) y es el mismo sobre las dos piezas. Por eso
+ * el arte que va aquí tiene que venir SIN tipografía — si no, se leerían dos
+ * mensajes superpuestos.
+ *
+ * `home-desktop` (la pieza vieja, con el copy quemado) queda FUERA de la lista
+ * a propósito: sigue en el bucket pero ya no se publica.
  */
-export const HERO_SLUGS = ["home-desktop", "home"] as const
+export const HERO_SLUGS = ["home-desktop-1", "home-desktop-2"] as const
 
 /** Un hueco publicitario: dos archivos, uno por formato. */
 export interface PlacementBanner {
