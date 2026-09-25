@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/carousel"
 import { cn } from "@/lib/utils"
 
-import type { ImagenSitio } from "../types"
+import type { PiezaHero } from "../types"
 
 /**
  * Primer slide del homepage: la fotografía llena el viewport restante bajo el
@@ -28,6 +28,10 @@ import type { ImagenSitio } from "../types"
  * corrige desplegando, se reflowea por breakpoint, lo lee un lector de
  * pantalla y lo indexa el buscador.
  *
+ * El tamaño del titular se escala con el VIEWPORT (`min(7vw, 6.5rem)`) en vez
+ * de por breakpoints: el arte original lo tenía en ~4.8% del ancho y con pasos
+ * fijos se quedaba chico en monitores grandes.
+ *
  * El `h1` es el único de la página —el resto de las secciones abre en `h2`— y
  * ahora sí es visible. Las FOTOS pasan a ser decorativas (`alt=""`): su
  * mensaje ya está escrito al lado.
@@ -40,10 +44,12 @@ import type { ImagenSitio } from "../types"
  *
  * El arte tiene que venir **sin tipografía** — ver `../placements.ts`.
  *
- * ENCUADRE: en móvil se ancla a la DERECHA (`object-right`) y desde `md` vuelve
- * al centro. Las piezas del bucket son de escritorio (16:9) y en un viewport
- * angosto `object-cover` recorta a lo ancho; centrarlas se comía el lado
- * derecho, que es donde está el motivo.
+ * ENCUADRE: desde `md` todas van centradas —la caja es apaisada y el recorte
+ * solo quita arriba y abajo—, pero en móvil cada pieza trae el suyo
+ * (`encuadreMovil`, en `../placements.ts`). Las del bucket son de escritorio
+ * (16:9) y en un viewport angosto `object-cover` deja ver apenas un tercio del
+ * master a lo ancho: dónde tiene que caer ese tercio depende de dónde compuso
+ * el motivo cada fotografía, y no hay un valor que sirva para las dos.
  *
  * **Sin respaldo local.** Si no hay pieza subida queda la banda negra del
  * propio `section` con el copy encima: legible, del mismo alto y sin imagen
@@ -79,7 +85,7 @@ const AUTOPLAY_OPCIONES = {
   stopOnMouseEnter: true,
 } as const
 
-export function HeroSection({ imagenes }: { imagenes: ImagenSitio[] }) {
+export function HeroSection({ imagenes }: { imagenes: PiezaHero[] }) {
   const [api, setApi] = React.useState<CarouselApi>()
   const [current, setCurrent] = React.useState(0)
 
@@ -135,7 +141,13 @@ export function HeroSection({ imagenes }: { imagenes: ImagenSitio[] }) {
                   // LCP de la portada.
                   priority={i === 0}
                   sizes="100vw"
-                  className="object-cover object-right md:object-center"
+                  // El encuadre de móvil lo trae cada pieza (`placements.ts`):
+                  // en un viewport angosto solo se ve un tercio del master y
+                  // cada fotografía compuso el motivo en un sitio distinto.
+                  className={cn(
+                    "object-cover md:object-center",
+                    imagen.encuadreMovil
+                  )}
                 />
               </CarouselItem>
             ))}
@@ -155,11 +167,15 @@ export function HeroSection({ imagenes }: { imagenes: ImagenSitio[] }) {
       {/* `pointer-events-none` en el bloque de texto: encima va el arrastre del
           carrusel, y una capa a pantalla completa lo tragaría entero. */}
       <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-start pt-[var(--space-12)] md:justify-center md:pt-0">
-        <div className="mx-auto w-full max-w-[var(--container-wide)] px-6">
-          <h1 className="max-w-[16ch] text-[2rem] leading-[1.05] font-bold tracking-tight text-balance text-[var(--color-on-ink)] sm:text-5xl lg:text-6xl">
+        {/* Se sale del `--container-wide` del resto de la página A PROPÓSITO:
+            el hero es la única sección full-bleed y el arte original apoyaba
+            el copy a ~5% del borde. Metido en el contenedor arrancaba a 13.75%
+            en un monitor de 1920 y el titular se leía pequeño y desplazado. */}
+        <div className="w-full px-6 md:px-[5vw]">
+          <h1 className="max-w-[17ch] text-[2.75rem] leading-[0.95] font-bold tracking-[-0.02em] text-[var(--color-on-ink)] sm:text-[3.5rem] md:text-[min(7vw,6.5rem)]">
             Acompañar en todo momento a nuestros clientes,
           </h1>
-          <p className="mt-[var(--space-6)] max-w-[38ch] text-base leading-relaxed text-[var(--color-on-ink)] sm:text-lg lg:text-xl">
+          <p className="mt-[var(--space-6)] max-w-[34ch] text-lg leading-[1.5] text-[var(--color-on-ink)] md:text-[min(2.6vw,2.25rem)]">
             Y garantizar un servicio con los mejores estándares,{" "}
             <strong className="font-bold">
               ha sido y será nuestra mayor promesa.

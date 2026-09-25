@@ -28,7 +28,37 @@
  * `home-desktop` (la pieza vieja, con el copy quemado) queda FUERA de la lista
  * a propósito: sigue en el bucket pero ya no se publica.
  */
-export const HERO_SLUGS = ["home-desktop-1", "home-desktop-2"] as const
+export const PIEZAS_HERO: PiezaHeroDeclarada[] = [
+  {
+    slug: "home-desktop-1",
+    // El camión vive en el centro-derecha del master (≈59% del ancho). Con
+    // `object-right` la ventana de móvil caía en la carretera y el vehículo
+    // quedaba fuera de cuadro; 62% lo centra en el recorte.
+    encuadreMovil: "object-[62%_center]",
+  },
+  {
+    slug: "home-desktop-2",
+    // El equipo ya está pegado al lado derecho del master: el anclaje a la
+    // derecha lo deja completo.
+    encuadreMovil: "object-right",
+  },
+]
+
+/** Una pieza del hero tal como se declara aquí, antes de resolverla contra el
+ *  bucket. La resuelta (`PiezaHero` en `types.ts`) le añade la URL. */
+export interface PiezaHeroDeclarada {
+  /** Slug en `site/hero/`. Nombra el placement, no la campaña. */
+  slug: string
+  /**
+   * `object-position` de esta pieza **en móvil** (`<md`), como clase de
+   * Tailwind. En escritorio todas van centradas: la caja es apaisada y el
+   * recorte solo quita arriba y abajo. En un viewport angosto, en cambio,
+   * `object-cover` deja ver apenas un tercio del master a lo ancho, y dónde
+   * cae ese tercio depende de dónde compuso el motivo cada fotografía — no
+   * hay un valor que sirva para las dos.
+   */
+  encuadreMovil: string
+}
 
 /** Un hueco publicitario: dos archivos, uno por formato. */
 export interface PlacementBanner {
