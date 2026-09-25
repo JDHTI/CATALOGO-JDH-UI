@@ -26,13 +26,13 @@ import { ValueProps } from "./value-props"
  *
  * Las IMÁGENES del sitio (hero y banners, de `site/*` en el bucket) son la
  * excepción: las resuelve la RUTA en el servidor y llegan como props, porque
- * el hero es el LCP y no puede descubrirse después de hidratar. Están
- * cacheadas con `revalidate`, así que la ruta sigue estática — ver
- * `../server/queries.ts`. Sin ellas el hero cae a la foto del repo y los
- * banners no se dibujan.
+ * la primera pieza del hero es el LCP y no puede descubrirse después de
+ * hidratar. Están cacheadas con `revalidate`, así que la ruta sigue estática
+ * — ver `../server/queries.ts`. Sin ellas el hero queda como banda negra con
+ * su copy y los banners no se dibujan.
  *
  * El texto institucional (copy del hero, cobertura, CTA) es propio y siempre
- * está presente.
+ * está presente — el del hero volvió al DOM y ya no viene horneado en la foto.
  *
  * En MÓVIL las tres secciones que en desktop son grilla colapsan a scroll
  * horizontal en vez de apilarse: cobertura y proveedores como pista de una
@@ -67,12 +67,12 @@ export function InicioView({
   hero,
   banners,
 }: {
-  hero: ImagenSitio | null
+  hero: ImagenSitio[]
   banners: BannerSitio[]
 }) {
   return (
     <div>
-      <HeroSection imagen={hero} />
+      <HeroSection imagenes={hero} />
       <ValueProps />
 
       <div className="mx-auto flex w-full max-w-[var(--container-wide)] flex-col gap-[var(--space-16)] px-6 py-[var(--space-16)] pb-24 md:pb-[var(--space-32)] lg:gap-[var(--space-32)] lg:py-[var(--space-32)]">
