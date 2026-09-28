@@ -2,7 +2,7 @@
 
 import { ScrollReveal } from "@/components/motion/scroll-reveal"
 import { Stagger, StaggerItem } from "@/components/motion/stagger"
-import { CATEGORIAS_CATALOGO } from "@/modules/catalogo/categorias"
+import { CATEGORIAS_DESTACADAS } from "@/modules/catalogo/categorias"
 
 /**
  * Contenedor: PISTA deslizable en móvil, grilla desde `sm`. La pista SANGRA
@@ -20,8 +20,9 @@ const CLASES_ITEM =
   "h-[var(--jdh-card-movil)] w-[58%] shrink-0 sm:h-full sm:w-auto"
 
 /**
- * Grilla de CATEGORÍAS del e-commerce — la taxonomía propuesta en
- * `CategorizacionEcommerce.xlsx` (ver `@/modules/catalogo/categorias`).
+ * Grilla de CATEGORÍAS DESTACADAS del e-commerce: 9 de las 21 de la taxonomía
+ * propuesta en `CategorizacionEcommerce.xlsx`, elegidas por volumen de
+ * referencias (ver `CODIGOS_DESTACADAS` en `@/modules/catalogo/categorias`).
  *
  * Las tarjetas NO son enlaces todavía: los productos no traen categoría y
  * `/productos` no lee `?categoria=`, así que enlazarlas llevaría al catálogo
@@ -30,7 +31,7 @@ const CLASES_ITEM =
  * lista estática se cambia por la query.
  *
  * En móvil la tarjeta es vertical (pista); desde `sm` es horizontal, ícono a
- * la izquierda, para que 21 categorías quepan en siete filas compactas.
+ * la izquierda: 3×3 desde `lg`.
  */
 export function CategoriasSection() {
   return (
@@ -41,7 +42,7 @@ export function CategoriasSection() {
       <ScrollReveal>
         <div className="flex flex-col gap-2">
           <p className="font-mono text-xs tracking-[0.08em] text-muted-foreground uppercase">
-            Explora por categoría
+            Categorías destacadas
           </p>
           <h2
             id="categorias-grid-title"
@@ -59,10 +60,10 @@ export function CategoriasSection() {
         // con el dedo (WCAG 2.2 SC 2.1.1). Mismo criterio que `ValueProps`.
         tabIndex={0}
         role="group"
-        aria-label="Categorías del catálogo"
+        aria-label="Categorías destacadas"
         className={CLASES_PISTA}
       >
-        {CATEGORIAS_CATALOGO.map(
+        {CATEGORIAS_DESTACADAS.map(
           ({ codigo, nombre, icono: Icono, subcategorias }) => (
             <StaggerItem key={codigo} className={CLASES_ITEM}>
               <div className="flex h-full flex-col gap-3 rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:flex-row sm:items-start sm:gap-4">
