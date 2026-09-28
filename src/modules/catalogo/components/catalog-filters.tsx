@@ -152,7 +152,13 @@ export function CatalogFilters({
         <div
           ref={scrollRef}
           data-lenis-prevent
-          className="min-h-0 [scrollbar-gutter:stable] overflow-x-hidden overflow-y-auto overscroll-contain px-3 pt-2 pb-5"
+          // `contain: content` NO es decorativo: aísla este subárbol del
+          // layout de la página. Sin él, la lista interna (~4.700 px con los
+          // dos ejes desplegados) se filtraba al `scrollHeight` del documento
+          // pese al `overflow`, y `/productos` dejaba bajar casi una pantalla
+          // entera por debajo del paginador, ya en blanco — el scroll de la
+          // página no terminaba donde termina la lista de productos.
+          className="min-h-0 [scrollbar-gutter:stable] overflow-x-hidden overflow-y-auto overscroll-contain px-3 pt-2 pb-5 [contain:content]"
         >
           <EjeFiltro
             icono={Store}
