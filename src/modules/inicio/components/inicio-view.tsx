@@ -1,11 +1,11 @@
 import type { BannerSitio, PiezaHero } from "../types"
 
 import { BrandsSection } from "./brands-section"
+import { CategoriasSection } from "./categorias-section"
 import { CtaSection } from "./cta-section"
 import { FeaturedProducts } from "./featured-products"
 import { HeroSection } from "./hero-section"
 import { PromoBanner } from "./promo-banner"
-import { ProveedoresSection } from "./proveedores-section"
 import { ProviderMarquee } from "./provider-marquee"
 import { ValueProps } from "./value-props"
 
@@ -14,12 +14,12 @@ import { ValueProps } from "./value-props"
  * (imagen de fondo a viewport); le sigue la sección de cobertura full-bleed
  * (`ValueProps`) pegada al hero, negra en tema claro y blanca en oscuro.
  *
- * Orden: hero → cobertura negra → proveedores (grilla) → muestra del catálogo
+ * Orden: hero → cobertura negra → categorías (grilla) → muestra del catálogo
  * (carrusel) → banners publicitarios → cinta INFINITA de proveedores
  * (negra en claro, blanca en oscuro) → marcas (grilla de logos) → CTA final.
  *
- * Las secciones que dependen del CATÁLOGO (`ProveedoresSection`,
- * `FeaturedProducts`, `ProviderMarquee`, `BrandsSection`) piden sus datos
+ * Las secciones que dependen del CATÁLOGO (`FeaturedProducts`,
+ * `ProviderMarquee`, `BrandsSection`) piden sus datos
  * ellas mismas al API desde el cliente y se OCULTAN si no hay: así `/` sigue
  * prerenderizada sin depender de que el API esté arriba en build, y las
  * secciones aparecen al hidratar.
@@ -35,7 +35,7 @@ import { ValueProps } from "./value-props"
  * está presente — el del hero volvió al DOM y ya no viene horneado en la foto.
  *
  * En MÓVIL las tres secciones que en desktop son grilla colapsan a scroll
- * horizontal en vez de apilarse: cobertura y proveedores como pista de una
+ * horizontal en vez de apilarse: cobertura y categorías como pista de una
  * fila, marcas como vitrina de tres filas. Apiladas, las tres sumaban más de
  * veinte pantallas entre el hero y el CTA. Cada componente declara su propia
  * pista (`no-scrollbar` + `overflow-x-auto`); no hay wrapper compartido, y el
@@ -76,7 +76,7 @@ export function InicioView({
       <ValueProps />
 
       <div className="mx-auto flex w-full max-w-[var(--container-wide)] flex-col gap-[var(--space-16)] px-6 py-[var(--space-16)] pb-24 md:pb-[var(--space-32)] lg:gap-[var(--space-32)] lg:py-[var(--space-32)]">
-        <ProveedoresSection />
+        <CategoriasSection />
         <FeaturedProducts />
         <PromoBanner banners={banners} />
       </div>

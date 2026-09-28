@@ -376,3 +376,15 @@ Se descartó exponer el JWT al cliente para llamar al API directo (contradice el
 - **El badge crece a lo ancho** (`min-w-4` + `px-1`) para que quepa "99+", y está posicionado en absoluto: el ícono y el área táctil no cambian de tamaño con el número. El recorte a "99+" es visual — la etiqueta accesible lleva el número exacto.
 - **Los tests de card y ficha necesitan `QueryClientProvider`.** `tests/render-con-providers.tsx` lo aporta, porque `FavoritoBoton` usa TanStack Query igual que en la app; renderizar esos componentes pelados probaba un árbol que no existe en ninguna parte.
 - **Pendiente:** todo el camino autenticado está sin verificar de punta a punta — no hay endpoint todavía ni `BACKEND_API_URL` configurada en local. Lo verificado es la degradación y el comportamiento anónimo.
+
+## 2026-09-28 — Mostrar la taxonomía propuesta de categorías como lista estática del front
+
+**Contexto:** el homepage debía mostrar las categorías futuras del e-commerce en lugar de la grilla de proveedores. La taxonomía existe solo en `CategorizacionEcommerce.xlsx`: el esquema del API tiene `categoria`/`subcategoria`, pero los productos no traen datos y no hay endpoint de categorías.
+
+**Decisión:** las 21 categorías navegables del Excel (se excluyen "Combos y surtidos" y "Registros administrativos") viven como constante en `src/modules/catalogo/categorias.ts`, con su código, ícono y subcategorías. `CategoriasSection` las pinta **sin enlaces**: `/productos` no lee `?categoria=`, y enlazar llevaría al catálogo completo sin filtrar. Se descartó esperar al API (dejaba el homepage con proveedores) y enlazar a una búsqueda por texto (daría resultados engañosos).
+
+**Consecuencias:**
+
+- Cuando el API publique las categorías, la constante se reemplaza por una query en `catalogo/hooks/` y las tarjetas pasan a `<Link>`. El `codigo` del Excel es la llave para cruzarlas.
+- `ProveedoresSection` se retiró del homepage. Los proveedores siguen en la cinta (`ProviderMarquee`) y en los filtros de `/productos`.
+- **Desviación de DESIGN.md:** el botón flotante de WhatsApp (`WhatsappFlotante`) usa el verde de marca (`--color-whatsapp`), una excepción al monocromo igual que `--destructive`, porque ese verde es lo que el usuario reconoce al instante. El token no se usa en ningún otro componente.
