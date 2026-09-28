@@ -45,6 +45,23 @@ export interface CategoriaCatalogo {
   subcategorias: readonly string[]
 }
 
+/**
+ * Las 9 que el homepage muestra como destacadas (3×3 en desktop): las de mayor
+ * volumen de referencias según el conteo por subcategoría del mismo Excel, de
+ * mayor a menor. Cambiar la selección es editar esta lista de códigos.
+ */
+export const CODIGOS_DESTACADAS = [
+  "16", // Cocina, mesa y bar
+  "02", // Salsas, condimentos y conservas
+  "13", // Implementos de aseo y residuos
+  "01", // Despensa básica
+  "12", // Limpieza y desinfección
+  "14", // Papel e higiene personal
+  "15", // Desechables y empaques
+  "06", // Bebidas
+  "05", // Panadería y repostería
+] as const
+
 export const CATEGORIAS_CATALOGO: readonly CategoriaCatalogo[] = [
   {
     codigo: "01",
@@ -364,3 +381,12 @@ export const CATEGORIAS_CATALOGO: readonly CategoriaCatalogo[] = [
     ],
   },
 ]
+
+/** Categorías destacadas, en el orden de `CODIGOS_DESTACADAS`. */
+export const CATEGORIAS_DESTACADAS: readonly CategoriaCatalogo[] =
+  CODIGOS_DESTACADAS.map((codigo) => {
+    const categoria = CATEGORIAS_CATALOGO.find((c) => c.codigo === codigo)
+    if (!categoria)
+      throw new Error(`Categoría destacada inexistente: ${codigo}`)
+    return categoria
+  })

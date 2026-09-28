@@ -381,7 +381,7 @@ Se descartó exponer el JWT al cliente para llamar al API directo (contradice el
 
 **Contexto:** el homepage debía mostrar las categorías futuras del e-commerce en lugar de la grilla de proveedores. La taxonomía existe solo en `CategorizacionEcommerce.xlsx`: el esquema del API tiene `categoria`/`subcategoria`, pero los productos no traen datos y no hay endpoint de categorías.
 
-**Decisión:** las 21 categorías navegables del Excel (se excluyen "Combos y surtidos" y "Registros administrativos") viven como constante en `src/modules/catalogo/categorias.ts`, con su código, ícono y subcategorías. `CategoriasSection` las pinta **sin enlaces**: `/productos` no lee `?categoria=`, y enlazar llevaría al catálogo completo sin filtrar. Se descartó esperar al API (dejaba el homepage con proveedores) y enlazar a una búsqueda por texto (daría resultados engañosos).
+**Decisión:** las 21 categorías navegables del Excel (se excluyen "Combos y surtidos" y "Registros administrativos") viven como constante en `src/modules/catalogo/categorias.ts`, con su código, ícono y subcategorías. El homepage muestra solo 9 destacadas (`CODIGOS_DESTACADAS`, las de mayor volumen de referencias según el Excel). `CategoriasSection` las pinta **sin enlaces**: `/productos` no lee `?categoria=`, y enlazar llevaría al catálogo completo sin filtrar. Se descartó esperar al API (dejaba el homepage con proveedores) y enlazar a una búsqueda por texto (daría resultados engañosos).
 
 **Consecuencias:**
 
