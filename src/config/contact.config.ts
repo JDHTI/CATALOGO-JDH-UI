@@ -11,6 +11,8 @@ export const contactConfig = {
   /**
    * Enlace directo a WhatsApp Business (wa.me). El `text` va URL-encoded;
    * el número en `whatsappNumber` sin "+", espacios ni símbolos.
+   * Lo usan la franja de contacto y el botón flotante (`WhatsappFlotante`).
+   * PENDIENTE: reemplazar el número de relleno por el real.
    */
   whatsappNumber: "573000000000",
   whatsappUrl:

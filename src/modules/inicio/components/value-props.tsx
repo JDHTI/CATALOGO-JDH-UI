@@ -1,38 +1,43 @@
 "use client"
 
-import { BadgeCheck, Headset, Tag, Truck } from "lucide-react"
+import { Award, Boxes, Handshake, Truck } from "lucide-react"
 
 import { Stagger, StaggerItem } from "@/components/motion/stagger"
 
+/**
+ * Cifras institucionales. Las descripciones se mantienen por debajo de ~110
+ * caracteres: en la pista móvil la card tiene alto fijo y recorta a 3 líneas.
+ * Los 31 años cuentan desde 1995 — actualizar el número cada año.
+ */
 const VALUE_PROPS = [
   {
     icon: Truck,
-    title: "Entrega en 7 ciudades",
+    title: "Entregas a nivel nacional",
     description:
-      "Cobertura propia en Medellín, Bogotá, Armenia, Bucaramanga, Urabá, Cartagena y Barranquilla.",
+      "Despachamos a todo el territorio colombiano desde nuestras sedes regionales, con logística propia.",
   },
   {
-    icon: Tag,
-    title: "Precios de lista pública",
+    icon: Boxes,
+    title: "Más de 3.000 referencias",
     description:
-      "Compra sin intermediarios: lo que ves es lo que pagas, sin sorpresas en el pedido.",
+      "Despensa, bebidas, aseo, desechables y menaje para tu operación, en un solo proveedor.",
   },
   {
-    icon: Headset,
-    title: "Soporte 24/7",
+    icon: Handshake,
+    title: "Más de 300 proveedores",
     description:
-      "Acompañamiento logístico y comercial en cada pedido, todos los días del año.",
+      "Aliados con marcas líderes nacionales e internacionales para asegurar surtido y disponibilidad.",
   },
   {
-    icon: BadgeCheck,
-    title: "Calidad institucional",
+    icon: Award,
+    title: "31 años de experiencia",
     description:
-      "Más de 30 años abasteciendo hoteles, restaurantes, colegios y retail en Colombia.",
+      "Desde 1995 abastecemos a hoteles, restaurantes, instituciones y comercios de Food Service y Retail.",
   },
 ] as const
 
 /**
- * Sección de cobertura y precios de lista: full-bleed negra en tema claro y
+ * Sección de cifras institucionales: full-bleed negra en tema claro y
  * blanca en tema oscuro, pegada al hero. Las 4 propuestas de valor son
  * CARDS INDEPENDIENTES (cada una con su borde hairline `--color-ink-border`,
  * separadas por gap) con texto en tokens on-ink y hover con overlay sutil.
@@ -55,7 +60,7 @@ const VALUE_PROPS = [
 export function ValueProps() {
   return (
     <section
-      aria-label="Por qué comprar en el catálogo JDH"
+      aria-label="JDH en cifras"
       className="bg-[var(--color-ink)] dark:bg-[var(--color-paper)]"
     >
       <Stagger

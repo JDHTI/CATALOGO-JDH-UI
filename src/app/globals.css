@@ -190,6 +190,13 @@
      Este valor solo se usa antes de la primera medición. */
   --catalogo-chrome-height: 10.25rem;
 
+  /* EXCEPCIÓN al monocromo (como `--destructive`): el botón flotante de
+     WhatsApp usa el verde de la marca porque es el patrón que el usuario
+     reconoce al instante. Solo lo consume `WhatsappFlotante`; no usarlo en
+     el chrome ni en ningún otro componente. */
+  --color-whatsapp: #25d366;
+  --color-whatsapp-hover: #1ebe5b;
+
   --z-base: 0;
   --z-dropdown: 1000;
   --z-sticky: 1100;
