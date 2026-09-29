@@ -5,7 +5,6 @@ import type { Route } from "next"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { PackageSearch, RotateCcw } from "lucide-react"
 
-import { Breadcrumbs } from "@/components/navigation/breadcrumbs"
 import { JdhButton } from "@/components/common/jdh-button"
 import { EmptyState } from "@/components/common/empty-state"
 import { Pagination } from "@/components/navigation/pagination"
@@ -174,23 +173,11 @@ export function CatalogoView() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Breadcrumbs
-        items={[
-          { label: "Inicio", href: "/" },
-          { label: "Productos", href: "/productos" },
-          { label: "Todos los productos" },
-        ]}
-      />
-
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">
-          Todos los productos
-        </h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          Portafolio completo JDH para operaciones institucionales: consulta
-          referencias por proveedor, marca o código de producto.
-        </p>
-      </header>
+      {/* Sin breadcrumb ni bajada: la página es un nivel bajo el inicio y el
+          título basta; quitarlos sube filtros y productos hacia la vista. */}
+      <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">
+        Todos los productos
+      </h1>
 
       {/* El panel de filtros arranca DESDE debajo de "Todos los productos". */}
       <div
