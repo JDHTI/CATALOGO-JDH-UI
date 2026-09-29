@@ -82,6 +82,12 @@ export interface Producto {
   descripcionLarga: string | null
   seo: { title: string | null; description: string | null }
   marca: string
+  /**
+   * Id de la marca, para filtrar `GET /products?brandId=`. Null mientras el
+   * API no lo publique: entonces se resuelve por nombre entre las marcas del
+   * proveedor (ver `useMismaMarca`).
+   */
+  marcaId: string | null
   fabricante: string
   proveedor: Proveedor
   categoria: CategoriaProducto | null

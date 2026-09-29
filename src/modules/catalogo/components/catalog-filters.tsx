@@ -106,8 +106,11 @@ export function CatalogFilters({
         "flex flex-col overflow-hidden rounded-[var(--jdh-radius-md)] bg-[var(--color-ink)]",
         // La altura solo se limita cuando hay algo desplegado; cerrado, el
         // panel es una barra y no debe reservar 60vh de nada.
+        // En `lg` manda `--filtros-alto`, que `CatalogoView` mide en vivo
+        // contra el borde real del aside; el `calc` es solo el valor previo a
+        // la primera medición.
         abierto &&
-          "max-h-[70dvh] lg:max-h-[calc(100dvh-var(--catalogo-chrome-height)-2rem)]"
+          "max-h-[70dvh] lg:max-h-[var(--filtros-alto,calc(100dvh-var(--catalogo-chrome-height)-2rem))]"
       )}
     >
       {/* ENCABEZADO = disparador del disclosure. */}

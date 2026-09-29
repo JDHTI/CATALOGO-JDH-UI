@@ -10,8 +10,8 @@ import { AppFooter } from "./app-footer"
  *
  * - `/productos` — el listado es una superficie de compra que termina en su
  *   paginación.
- * - `/productos/<id>` — la ficha se dimensiona al viewport y no scrollea (ver
- *   `CatalogoPage compacta`); un footer de 401px la haría scrollear sola.
+ * - `/productos/<id>` — la ficha se dimensiona al viewport (ver
+ *   `CatalogoPage compacta`) y la página termina en "Más de la marca".
  *
  * El resto de rutas del catálogo conservan el footer negro.
  */

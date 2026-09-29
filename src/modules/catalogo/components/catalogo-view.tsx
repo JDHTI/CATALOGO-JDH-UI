@@ -5,6 +5,7 @@ import type { Route } from "next"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { PackageSearch, RotateCcw } from "lucide-react"
 
+import { Breadcrumbs } from "@/components/navigation/breadcrumbs"
 import { JdhButton } from "@/components/common/jdh-button"
 import { EmptyState } from "@/components/common/empty-state"
 import { Pagination } from "@/components/navigation/pagination"
@@ -16,6 +17,7 @@ import { useMarcas, useProductos, useProveedores } from "../hooks/use-productos"
 import { CatalogBannerCarousel } from "./catalog-banner-carousel"
 import { CatalogFilters } from "./catalog-filters"
 import { ProductoCard, ProductoCardSkeleton } from "./producto-card"
+import { DestacadosCatalogo } from "./productos-vitrina"
 
 const PAGE_SIZE = 12
 
@@ -165,6 +167,55 @@ export function CatalogoView() {
     return () => grid.removeEventListener("wheel", onWheel)
   }, [])
 
+  /**
+   * ALTO DEL PANEL DE FILTROS = lo que queda de PANTALLA bajo su borde
+   * superior (lg+). Un `max-h` fijo de "viewport menos chrome" solo es
+   * correcto cuando el aside ya está pegado; antes de eso arranca más abajo
+   * (breadcrumb de por medio), su pie con "Limpiar filtros" caía bajo el
+   * borde de la pantalla y solo aparecía al scrollear la página. Medir el
+   * borde real en cada scroll deja el panel entero —encabezado, lista y
+   * pie— siempre dentro del viewport; lo que no cabe se scrollea DENTRO.
+   *
+   * Se toma el mayor entre el borde real y el `top` del sticky: al final de
+   * la página el grid empuja el aside hacia arriba, y sin ese tope el panel
+   * crecería justo cuando ya no tiene sitio.
+   */
+  useEffect(() => {
+    const aside = asideRef.current
+    if (!aside) return
+
+    const MARGEN_INFERIOR = 16
+    const ALTO_MINIMO = 240
+    let frame = 0
+
+    const medir = () => {
+      frame = 0
+      if (window.innerWidth < 1024) {
+        aside.style.removeProperty("--filtros-alto")
+        return
+      }
+      const topSticky = parseFloat(getComputedStyle(aside).top) || 0
+      const borde = Math.max(aside.getBoundingClientRect().top, topSticky)
+      const alto = Math.max(
+        ALTO_MINIMO,
+        window.innerHeight - borde - MARGEN_INFERIOR
+      )
+      aside.style.setProperty("--filtros-alto", `${Math.round(alto)}px`)
+    }
+    const programar = () => {
+      if (!frame) frame = requestAnimationFrame(medir)
+    }
+
+    medir()
+    window.addEventListener("scroll", programar, { passive: true })
+    window.addEventListener("resize", programar)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener("scroll", programar)
+      window.removeEventListener("resize", programar)
+    }
+  }, [])
+
   const meta = productos.data?.meta
   const visibles = productos.data?.data ?? []
   const hayFiltrosActivos = Boolean(q || proveedorIds.length || marcaIds.length)
@@ -173,11 +224,18 @@ export function CatalogoView() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Sin breadcrumb ni bajada: la página es un nivel bajo el inicio y el
-          título basta; quitarlos sube filtros y productos hacia la vista. */}
-      <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">
-        Todos los productos
-      </h1>
+      {/* El breadcrumb hace de encabezado visible: su último tramo ya dice
+          "Todos los productos". El `h1` queda solo para lectores de pantalla
+          — sin él la página no tendría título en el árbol de encabezados —
+          y no ocupa alto, así filtros y productos quedan más arriba. */}
+      <Breadcrumbs
+        items={[
+          { label: "Inicio", href: "/" },
+          { label: "Productos", href: "/productos" },
+          { label: "Todos los productos" },
+        ]}
+      />
+      <h1 className="sr-only">Todos los productos</h1>
 
       {/* El panel de filtros arranca DESDE debajo de "Todos los productos". */}
       <div
@@ -322,6 +380,11 @@ export function CatalogoView() {
           ) : null}
         </div>
       </div>
+
+      {/* Fuera del grid a propósito: a ancho completo, y así el aside
+          sticky deja de acompañar al llegar aquí — su recorrido termina con
+          la lista de productos. */}
+      <DestacadosCatalogo className="mt-6 border-t border-[var(--color-border)] pt-10" />
     </div>
   )
 }

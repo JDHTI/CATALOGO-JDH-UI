@@ -68,6 +68,9 @@ export const productoDtoSchema = z.object({
     })
     .nullish(),
   marca: z.string().nullish(),
+  // Pedido al API, aún no publicado: nullish para que la respuesta actual
+  // (solo el nombre en `marca`) siga validando.
+  marcaId: idSchema.nullish(),
   fabricante: z.string().nullish(),
   proveedor: proveedorDtoSchema,
   categoria: categoriaDtoSchema.nullish(),
@@ -152,6 +155,7 @@ export function aProducto(dto: ProductoDto): Producto {
       description: dto.seo?.description?.trim() || null,
     },
     marca: dto.marca ?? "",
+    marcaId: dto.marcaId ?? null,
     fabricante: dto.fabricante ?? "",
     proveedor: aProveedor(dto.proveedor),
     categoria: dto.categoria ?? null,

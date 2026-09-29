@@ -35,8 +35,9 @@ import { ProductoDescripcion } from "./producto-descripcion"
  * largo de la descripción editorial no lo controlamos, es texto redactado por
  * producto. En la práctica no aparece barra porque a esos anchos entra.
  *
- * Cuando se añada el carrusel de destacados al pie habrá que revisar esto: o
- * deja de ser compacta, o el carrusel entra en el reparto.
+ * "Más de la marca" (`MismaMarcaSection`) NO entra en este reparto: la ruta la
+ * pinta en un contenedor aparte, debajo, así que la ficha sigue ocupando la
+ * primera pantalla completa y la página scrollea hasta la sección.
  */
 export function ProductoDetalleView({ producto }: { producto: Producto }) {
   return (
