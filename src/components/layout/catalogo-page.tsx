@@ -8,8 +8,11 @@ import { cn } from "@/lib/utils"
 export function CatalogoPage({
   children,
   compacta = false,
+  className,
 }: {
   children: React.ReactNode
+  /** Ajustes puntuales de espaciado (se fusiona con tailwind-merge). */
+  className?: string
   /**
    * De `lg` hacia arriba la página se dimensiona al VIEWPORT en vez de crecer
    * con su contenido (hoy solo la ficha de producto). El alto sale de
@@ -36,7 +39,8 @@ export function CatalogoPage({
         "mx-auto w-full max-w-[var(--container-wide)] px-4 sm:px-6",
         compacta
           ? "py-8 pb-24 md:pb-8 lg:flex lg:h-[calc(100svh-var(--catalogo-chrome-height))] lg:flex-col lg:overflow-hidden lg:py-4"
-          : "py-8 pb-24 md:pb-8"
+          : "py-8 pb-24 md:pb-8",
+        className
       )}
     >
       {children}

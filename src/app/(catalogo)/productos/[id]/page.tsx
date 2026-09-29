@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 
 import { CatalogoPage } from "@/components/layout/catalogo-page"
-import { ProductoDetalleView } from "@/modules/catalogo"
+import { MismaMarcaSection, ProductoDetalleView } from "@/modules/catalogo"
 import {
   productoJsonLd,
   productoMetadata,
@@ -46,12 +46,25 @@ export default async function ProductoDetallePage({
   const { id } = await params
   const producto = await obtenerProductoPublico(id)
   if (!producto) notFound()
+  // La ficha llena la primera pantalla (`compacta`) y "Más de la marca" va
+  // DEBAJO, en su propio contenedor: la página scrollea hasta ella sin que la
+  // ficha pierda su reparto al viewport. `pb-8` quita el colchón de la barra
+  // inferior móvil a la ficha — ahora lo lleva el último contenedor.
   return (
-    <CatalogoPage compacta>
-      <script type="application/ld+json">
-        {serializarJsonLd(productoJsonLd(producto))}
-      </script>
-      <ProductoDetalleView producto={producto} />
-    </CatalogoPage>
+    <>
+      <CatalogoPage compacta className="pb-8">
+        <script type="application/ld+json">
+          {serializarJsonLd(productoJsonLd(producto))}
+        </script>
+        <ProductoDetalleView producto={producto} />
+      </CatalogoPage>
+      <CatalogoPage className="pt-4 lg:pt-8">
+        <MismaMarcaSection
+          key={producto.id}
+          producto={producto}
+          className="border-t border-[var(--color-border)] pt-10"
+        />
+      </CatalogoPage>
+    </>
   )
 }

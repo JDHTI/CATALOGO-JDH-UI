@@ -32,6 +32,9 @@ vi.mock("@/modules/catalogo/components/catalog-banner-carousel", () => ({
 vi.mock("@/modules/catalogo/components/catalog-filters", () => ({
   CatalogFilters: () => null,
 }))
+vi.mock("@/modules/catalogo/components/productos-vitrina", () => ({
+  DestacadosCatalogo: () => null,
+}))
 vi.mock("@/components/motion/stagger", () => ({
   Stagger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   StaggerItem: ({ children }: { children: ReactNode }) => <div>{children}</div>,

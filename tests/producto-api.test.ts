@@ -48,6 +48,8 @@ describe("contrato editorial progresivo", () => {
       // El DTO lo llama `descripcion`; el dominio, `referencia`.
       referencia: descripcion,
       id: "42",
+      // Pedido al API y aún no publicado: el fixture no lo trae.
+      marcaId: null,
       proveedor: {
         id: "7",
         nombre: productoDto.proveedor.nombre,
