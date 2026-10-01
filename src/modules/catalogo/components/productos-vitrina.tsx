@@ -1,5 +1,13 @@
 "use client"
 
+import * as React from "react"
+
+import {
+  Carousel,
+  type CarouselApi,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel"
 import { formatNombreComercial } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
@@ -20,6 +28,107 @@ const LIMITE_VITRINA = 5
 const CLASES_PISTA =
   "no-scrollbar -mx-4 flex gap-4 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 lg:grid-cols-5"
 const CLASES_ITEM = "w-[46%] shrink-0 sm:w-auto"
+
+/** Desde aquí la vitrina es grilla: embla se apaga y deja de arrastrar. */
+const DESDE_SM = "(min-width: 640px)"
+
+/**
+ * Con las cinco cards, en móvil la pista pasa a CARRUSEL (embla): arrastre con
+ * inercia que encaja card a card y puntos de posición debajo. Con menos no
+ * hace falta, y la pista libre de arriba basta.
+ *
+ * Es el mismo DOM en todos los anchos: desde `sm` embla se desactiva por
+ * `breakpoints` y el contenido se reacomoda en la grilla de `CLASES_PISTA`.
+ * El sangrado contra el gutter sale de `-mx-4` en la raíz, `ml-0` en el track
+ * (anula el `-ml-4` de shadcn, así el `pl-4` del primer slide hace de gutter)
+ * y `mr-4` en el último slide, que embla mide como hueco final. Sin ese
+ * margen, la última card quedaba pegada al borde de la pantalla.
+ */
+function PistaDeslizable({
+  titulo,
+  productos,
+}: {
+  titulo: string
+  productos: Producto[]
+}) {
+  const [api, setApi] = React.useState<CarouselApi>()
+  const [actual, setActual] = React.useState(0)
+  const [total, setTotal] = React.useState(0)
+
+  React.useEffect(() => {
+    if (!api) return
+    const sincronizar = () => {
+      setTotal(api.scrollSnapList().length)
+      setActual(api.selectedScrollSnap())
+    }
+    sincronizar()
+    api.on("select", sincronizar)
+    api.on("reInit", sincronizar)
+    return () => {
+      api.off("select", sincronizar)
+      api.off("reInit", sincronizar)
+    }
+  }, [api])
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Carousel
+        setApi={setApi}
+        aria-label={titulo}
+        opts={{
+          align: "start",
+          // De a dos: es lo que cabe a la vista. Card a card daba cinco
+          // puntos y el último movía ~17px — solo el hueco final, porque la
+          // card que asoma ya casi está entera. Con grupos quedan tres
+          // posiciones que sí cambian lo que se ve.
+          slidesToScroll: 2,
+          breakpoints: { [DESDE_SM]: { active: false } },
+        }}
+        className="-mx-4 sm:mx-0"
+      >
+        <CarouselContent className="ml-0 sm:grid sm:transform-none! sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
+          {productos.map((producto) => (
+            <CarouselItem
+              key={producto.id}
+              className="basis-[calc(46%+1rem)] last:mr-4 sm:basis-auto sm:pl-0 sm:last:mr-0"
+            >
+              <ProductoCard producto={producto} />
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+      </Carousel>
+
+      {total > 1 ? (
+        <div
+          className="flex items-center justify-center gap-2 sm:hidden"
+          aria-label={`Posición en ${titulo}`}
+        >
+          {Array.from({ length: total }, (_, i) => (
+            <button
+              key={i}
+              type="button"
+              aria-label={`Ir al grupo ${i + 1} de ${total}`}
+              aria-pressed={i === actual}
+              onClick={() => api?.scrollTo(i)}
+              // El punto visible mide 6px; el `p-2` agranda el área táctil
+              // sin cambiar lo que se ve.
+              className="group flex items-center p-2 focus-visible:outline-none"
+            >
+              <span
+                className={cn(
+                  "block h-1.5 rounded-full transition-all duration-[var(--duration-base)] group-focus-visible:ring-2 group-focus-visible:ring-ring",
+                  i === actual
+                    ? "w-5 bg-foreground"
+                    : "w-1.5 bg-[var(--color-border-strong)]"
+                )}
+              />
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
 
 /**
  * Fila de hasta cinco productos con encabezado. Pieza de presentación: los
@@ -65,19 +174,23 @@ function VitrinaProductos({
         </h2>
       </div>
 
-      <div className={CLASES_PISTA}>
-        {isPending
-          ? Array.from({ length: LIMITE_VITRINA }, (_, i) => (
-              <div key={i} className={CLASES_ITEM} aria-hidden="true">
-                <ProductoCardSkeleton />
-              </div>
-            ))
-          : productos.map((producto) => (
-              <div key={producto.id} className={CLASES_ITEM}>
-                <ProductoCard producto={producto} />
-              </div>
-            ))}
-      </div>
+      {!isPending && productos.length === LIMITE_VITRINA ? (
+        <PistaDeslizable titulo={titulo} productos={productos} />
+      ) : (
+        <div className={CLASES_PISTA}>
+          {isPending
+            ? Array.from({ length: LIMITE_VITRINA }, (_, i) => (
+                <div key={i} className={CLASES_ITEM} aria-hidden="true">
+                  <ProductoCardSkeleton />
+                </div>
+              ))
+            : productos.map((producto) => (
+                <div key={producto.id} className={CLASES_ITEM}>
+                  <ProductoCard producto={producto} />
+                </div>
+              ))}
+        </div>
+      )}
     </section>
   )
 }
