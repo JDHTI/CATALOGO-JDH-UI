@@ -49,7 +49,11 @@ export default async function ProductoDetallePage({
   // La ficha llena la primera pantalla (`compacta`) y "Más de la marca" va
   // DEBAJO, en su propio contenedor: la página scrollea hasta ella sin que la
   // ficha pierda su reparto al viewport. `pb-8` quita el colchón de la barra
-  // inferior móvil a la ficha — ahora lo lleva el último contenedor.
+  // inferior móvil a la ficha. El último contenedor tampoco lo necesita: el
+  // layout ya reserva el alto de esa barra (`pb-[calc(3.5rem+…)]`), y sumarle
+  // el `pb-24` de `CatalogoPage` dejaba ~150px en blanco bajo "Más de la
+  // marca" — la página seguía bajando sin nada que mostrar (no hay footer en
+  // esta ruta). `pb-8` es el mismo cierre que en escritorio.
   return (
     <>
       <CatalogoPage compacta className="pb-8">
@@ -58,7 +62,7 @@ export default async function ProductoDetallePage({
         </script>
         <ProductoDetalleView producto={producto} />
       </CatalogoPage>
-      <CatalogoPage className="pt-4 lg:pt-8">
+      <CatalogoPage className="pt-4 pb-8 lg:pt-8">
         <MismaMarcaSection
           key={producto.id}
           producto={producto}

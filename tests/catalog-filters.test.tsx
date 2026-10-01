@@ -43,17 +43,30 @@ function Filters() {
   )
 }
 
-it("permite combinar opciones, deseleccionar una y limpiar ambos grupos", () => {
+it("elegir otra opción reemplaza la anterior en vez de acumularla", () => {
   render(<Filters />)
-  for (const name of ["Proveedor A", "Proveedor B", "Marca A", "Marca B"]) {
-    fireEvent.click(screen.getByRole("button", { name }))
-  }
-  expect(screen.getAllByRole("button", { pressed: true })).toHaveLength(4)
   fireEvent.click(screen.getByRole("button", { name: "Proveedor A" }))
+  fireEvent.click(screen.getByRole("button", { name: "Proveedor B" }))
   expect(
     screen.getByRole("button", { name: "Proveedor B", pressed: true })
   ).toBeDefined()
-  fireEvent.click(screen.getByRole("button", { name: "Todos los proveedores" }))
+  expect(
+    screen.getByRole("button", { name: "Proveedor A", pressed: false })
+  ).toBeDefined()
+})
+
+it("pulsar la opción activa la quita, y limpiar reinicia ambos grupos", () => {
+  render(<Filters />)
+  for (const name of ["Proveedor A", "Marca A", "Marca B"]) {
+    fireEvent.click(screen.getByRole("button", { name }))
+  }
+  // Una por eje: Marca B reemplazó a Marca A.
+  expect(screen.getAllByRole("button", { pressed: true })).toHaveLength(2)
+  fireEvent.click(screen.getByRole("button", { name: "Proveedor A" }))
+  expect(
+    screen.getByRole("button", { name: "Todos los proveedores", pressed: true })
+  ).toBeDefined()
+  fireEvent.click(screen.getByRole("button", { name: "Marca A" }))
   expect(
     screen.getByRole("button", { name: "Marca A", pressed: true })
   ).toBeDefined()
