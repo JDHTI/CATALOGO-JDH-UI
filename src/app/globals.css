@@ -259,7 +259,12 @@
   --color-focus: var(--neutral-900);
   --color-focus-on-ink: var(--neutral-0);
   --color-focus-on-paper: var(--neutral-900);
-  --color-selection: var(--overlay-on-light-16);
+  /* Selección de texto SÓLIDA: tinta con texto blanco. DESIGN.md pide
+     `--overlay-on-light-08`, y ni ese ni el 16 % que hubo aquí se distinguían
+     sobre blanco. Las superficies de signo contrario la invierten — ver
+     `::selection` en @layer base. Pendiente ratificar en DESIGN.md §2. */
+  --color-selection: var(--neutral-900);
+  --color-selection-text: var(--neutral-0);
 
   /* Tinte semántico para alertas (tema claro). Ampliación consciente de la
      excepción de color de DESIGN.md — solo para feedback (JdhAlert); siempre
@@ -299,7 +304,8 @@
   --color-text-tertiary: var(--neutral-500);
   --color-text-disabled: var(--neutral-700);
   --color-focus: var(--neutral-0);
-  --color-selection: var(--overlay-on-dark-08);
+  --color-selection: var(--neutral-0);
+  --color-selection-text: var(--neutral-900);
   /* --color-ink / --color-on-ink se mantienen fijos (chrome negro en ambos
      temas). Solo el SEPARADOR sube de opacidad para que header/footer/hero
      ink no se fundan con el fondo oscuro (el color del chrome no cambia). */
@@ -514,6 +520,27 @@
   }
   ::selection {
     background: var(--color-selection);
+    color: var(--color-selection-text);
+  }
+
+  /* La selección se invierte en las superficies de signo contrario al tema:
+     tinta en claro (header, footer, franjas negras) y papel en oscuro. Se
+     hace reasignando las VARIABLES en la superficie, no con otro
+     `::selection`: así la superficie más cercana gana por herencia y un
+     bloque blanco dentro de una franja negra vuelve a la selección normal.
+     `~=` compara la clase exacta, para que `dark:bg-[var(--color-paper)]` no
+     cuente como papel en el tema claro. */
+  :root:not(.dark) [class~="bg-[var(--color-ink)]"],
+  .dark [class~="bg-[var(--color-ink)]"],
+  .dark [class~="dark:bg-[var(--color-ink)]"] {
+    --color-selection: var(--neutral-0);
+    --color-selection-text: var(--neutral-900);
+  }
+  :root:not(.dark) [class~="bg-[var(--color-paper)]"],
+  .dark [class~="bg-[var(--color-paper)]"],
+  .dark [class~="dark:bg-[var(--color-paper)]"] {
+    --color-selection: var(--neutral-900);
+    --color-selection-text: var(--neutral-0);
   }
 }
 
