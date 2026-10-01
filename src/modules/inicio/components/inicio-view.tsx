@@ -1,4 +1,4 @@
-import type { BannerSitio, PiezaHero } from "../types"
+import type { BannerSitio, LogoMarca, PiezaHero } from "../types"
 
 import { BrandsSection } from "./brands-section"
 import { CategoriasSection } from "./categorias-section"
@@ -16,38 +16,38 @@ import { ValueProps } from "./value-props"
  *
  * Orden: hero → cobertura negra → categorías (grilla) → muestra del catálogo
  * (carrusel) → banners publicitarios → cinta INFINITA de proveedores
- * (negra en claro, blanca en oscuro) → marcas (grilla de logos) → CTA final.
+ * (negra en claro, blanca en oscuro) → marcas (tablero rotativo de logos) →
+ * CTA final.
  *
  * Las secciones que dependen del CATÁLOGO (`FeaturedProducts`,
- * `ProviderMarquee`, `BrandsSection`) piden sus datos
- * ellas mismas al API desde el cliente y se OCULTAN si no hay: así `/` sigue
- * prerenderizada sin depender de que el API esté arriba en build, y las
- * secciones aparecen al hidratar.
+ * `ProviderMarquee`) piden sus datos ellas mismas al API desde el cliente y
+ * se OCULTAN si no hay: así `/` sigue prerenderizada sin depender de que el
+ * API esté arriba en build, y las secciones aparecen al hidratar.
  *
- * Las IMÁGENES del sitio (hero y banners, de `site/*` en el bucket) son la
- * excepción: las resuelve la RUTA en el servidor y llegan como props, porque
- * la primera pieza del hero es el LCP y no puede descubrirse después de
- * hidratar. Están cacheadas con `revalidate`, así que la ruta sigue estática
- * — ver `../server/queries.ts`. Sin ellas el hero queda como banda negra con
- * su copy y los banners no se dibujan.
+ * Lo que sale del BUCKET (hero y banners de `site/*`, y el manifiesto de
+ * logos `brands/manifest.json`) es la excepción: lo resuelve la RUTA en el
+ * servidor y llega como props. El hero porque su primera pieza es el LCP y no
+ * puede descubrirse después de hidratar; el manifiesto porque el bucket no
+ * da CORS y el navegador no puede leerlo. Todo va con `revalidate`, así que la
+ * ruta sigue estática — ver `../server/queries.ts`. Sin ellas el hero queda
+ * como banda negra con su copy, los banners no se dibujan y el tablero de
+ * marcas queda en fantasma.
  *
  * El texto institucional (copy del hero, cobertura, CTA) es propio y siempre
  * está presente — el del hero volvió al DOM y ya no viene horneado en la foto.
  *
- * En MÓVIL las tres secciones que en desktop son grilla colapsan a scroll
- * horizontal en vez de apilarse: cobertura y categorías como pista de una
- * fila, marcas como vitrina de tres filas. Apiladas, las tres sumaban más de
- * veinte pantallas entre el hero y el CTA. Cada componente declara su propia
- * pista (`no-scrollbar` + `overflow-x-auto`); no hay wrapper compartido, y el
- * marcado NO se duplica por breakpoint — es el mismo contenedor cambiando de
- * `flex`/`grid-flow-col` a grilla en `sm`.
+ * En MÓVIL cobertura y categorías colapsan a scroll horizontal (pista de una
+ * fila) en vez de apilarse. Las marcas no lo necesitan: el tablero ya es de
+ * cuatro filas fijas y en móvil solo muestra menos columnas. Cada pista
+ * declara su propio `no-scrollbar` + `overflow-x-auto`; no hay wrapper
+ * compartido, y el marcado NO se duplica por breakpoint — es el mismo
+ * contenedor cambiando de `flex` a grilla en `sm`.
  *
- * Las tres comparten UNA sola altura de tarjeta en móvil,
- * `--jdh-card-movil` (`globals.css`) — la vitrina de marcas son tres filas de
- * esa altura. El ancho no: lo manda el contenido de cada sección. Con alturas
- * propias las tres se leían como carruseles ajenos entre sí.
+ * Las pistas comparten UNA sola altura de tarjeta en móvil,
+ * `--jdh-card-movil` (`globals.css`). El ancho no: lo manda el contenido de
+ * cada sección.
  *
- * Y dos reglas que las tres pistas comparten, que NO son cosmética:
+ * Y dos reglas que las pistas comparten, que NO son cosmética:
  *
  * 1. `overflow-y-hidden` junto al `overflow-x-auto`. Con el eje Y en
  *    `visible`, la cascada de CSS Overflow (§3.2) lo sube a `auto` y la pista
@@ -66,9 +66,11 @@ import { ValueProps } from "./value-props"
 export function InicioView({
   hero,
   banners,
+  marcas,
 }: {
   hero: PiezaHero[]
   banners: BannerSitio[]
+  marcas: LogoMarca[] | null
 }) {
   return (
     <div>
@@ -84,7 +86,7 @@ export function InicioView({
       <ProviderMarquee />
 
       <div className="mx-auto flex w-full max-w-[var(--container-wide)] flex-col gap-[var(--space-16)] px-6 py-[var(--space-16)] pb-24 md:pb-[var(--space-32)] lg:gap-[var(--space-32)] lg:py-[var(--space-32)]">
-        <BrandsSection />
+        <BrandsSection marcas={marcas} />
         <CtaSection />
       </div>
     </div>

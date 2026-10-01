@@ -36,7 +36,7 @@ export type CategoriaImagenSitio = "hero" | "banners"
  * diagnosticar que no mostrarlas. Sin la variable, la portada usa sus
  * respaldos: el hero cae a la foto del repo y los banners no se dibujan.
  */
-const BASE_URL =
+export const BASE_URL =
   process.env.NEXT_PUBLIC_ASSETS_CDN_URL?.replace(/\/+$/, "") ?? null
 
 /**

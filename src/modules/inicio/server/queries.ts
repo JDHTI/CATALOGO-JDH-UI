@@ -1,9 +1,14 @@
 import "server-only"
 
-import { resolverImagenSitio } from "@/lib/site-assets"
+import { BASE_URL, resolverImagenSitio } from "@/lib/site-assets"
 
 import { PIEZAS_HERO, PLACEMENTS_BANNER } from "../placements"
-import type { BannerSitio, PiezaHero } from "../types"
+import {
+  manifiestoMarcasSchema,
+  nombreDesdeSlug,
+  parsearMarcas,
+} from "../schemas/manifiesto-marcas"
+import type { BannerSitio, LogoMarca, PiezaHero } from "../types"
 
 /**
  * Resolución de las imágenes del homepage, en el SERVIDOR.
@@ -80,4 +85,41 @@ export async function listarBanners(): Promise<BannerSitio[]> {
   )
 
   return resueltos.filter((banner): banner is BannerSitio => banner !== null)
+}
+
+/** El `max-age` con el que el API publica el manifiesto de marcas. */
+const REVALIDATE_MANIFIESTO_S = 60
+
+/**
+ * Logos del tablero de marcas, del manifiesto que el API publica en el bucket
+ * (`brands/manifest.json`). La lista crece sin desplegar, así que la UI no
+ * fija ni logos ni cantidad.
+ *
+ * Se lee en el SERVIDOR por fuerza: el bucket no devuelve
+ * `Access-Control-Allow-Origin` y un `fetch` desde el navegador falla. Los
+ * `<img>` no necesitan CORS. Con `revalidate` alineado al `max-age` del
+ * manifiesto, `/` sigue estática.
+ *
+ * `null` = no se pudo leer (sin bucket configurado, red, JSON inválido); la
+ * sección distingue eso de una lista vacía para elegir su nota.
+ */
+export async function listarLogosMarcas(): Promise<LogoMarca[] | null> {
+  if (!BASE_URL) return null
+
+  try {
+    const respuesta = await fetch(`${BASE_URL}/brands/manifest.json`, {
+      next: { revalidate: REVALIDATE_MANIFIESTO_S },
+    })
+    if (!respuesta.ok) return null
+
+    const manifiesto = manifiestoMarcasSchema.safeParse(await respuesta.json())
+    if (!manifiesto.success) return null
+
+    return parsearMarcas(manifiesto.data.marcas).map((marca) => ({
+      ...marca,
+      nombre: nombreDesdeSlug(marca.slug),
+    }))
+  } catch {
+    return null
+  }
 }

@@ -28,6 +28,18 @@ export interface PiezaHero extends ImagenSitio {
 }
 
 /**
+ * Un logo del tablero de marcas, del manifiesto `brands/manifest.json` del
+ * bucket. El manifiesto solo trae `slug` y `logo`; `nombre` se deriva del slug
+ * (alt del logo) y no es el nombre del catálogo — por eso el tablero no enlaza.
+ */
+export interface LogoMarca {
+  slug: string
+  nombre: string
+  /** URL inmutable (lleva hash): cacheable sin límite. */
+  logo: string
+}
+
+/**
  * Una pieza publicitaria del homepage. `escritorio` es obligatoria (es la que
  * se recorta si falta la otra) y `movil` opcional — misma regla que ya
  * documenta `docs/brand/imagenes.md`.
