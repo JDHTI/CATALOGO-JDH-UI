@@ -388,3 +388,16 @@ Se descartó exponer el JWT al cliente para llamar al API directo (contradice el
 - Cuando el API publique las categorías, la constante se reemplaza por una query en `catalogo/hooks/` y las tarjetas pasan a `<Link>`. El `codigo` del Excel es la llave para cruzarlas.
 - `ProveedoresSection` se retiró del homepage. Los proveedores siguen en la cinta (`ProviderMarquee`) y en los filtros de `/productos`.
 - **Desviación de DESIGN.md:** el botón flotante de WhatsApp (`WhatsappFlotante`) usa el verde de marca (`--color-whatsapp`), una excepción al monocromo igual que `--destructive`, porque ese verde es lo que el usuario reconoce al instante. El token no se usa en ningún otro componente.
+
+## 2026-10-01 — Tablero de logos de marca desde el manifiesto del bucket, leído en servidor
+
+**Contexto:** la grilla de marcas del homepage pintaba `GET /brands` (monograma + nombre, enlazada a `/productos?marca=`) y casi ninguna marca tenía logo. El API ahora publica 73 logos monocromáticos y un índice `{S3_PUBLIC_URL}/brands/manifest.json` (`{ marcas: [{ slug, logo }] }`, `max-age=60`, URLs de logo inmutables con hash; contrato en `jdh-catalogo-api/docs/brand-media.md`). La lista crece sin despliegue. El bucket **no devuelve CORS**, así que el navegador no puede hacer `fetch` del manifiesto (los `<img>` sí cargan).
+
+**Decisión:** `listarLogosMarcas()` (`inicio/server/queries.ts`) lee el manifiesto en la RUTA con `revalidate: 60`, igual que hero y banners, y lo pasa como prop; `/` sigue estática. `BrandsSection` pasa a ser un tablero de 4 filas fijas (3/4/5 columnas → 12/16/20 celdas) que rota 2–3 celdas cada 3 s con desfase de 150 ms, recorriendo todo el pool sin repetir un logo visible (`useTablero`: los primeros N del arreglo son las celdas, el resto es una cola FIFO). Sin texto por celda y **sin enlaces**: el manifiesto no trae el id de marca del catálogo, y cruzar por nombre es frágil. Se descartó pedir CORS en R2: otra pieza de infraestructura que mantener, y el cliente tendría que pedir el manifiesto después de hidratar.
+
+**Consecuencias:**
+
+- La rotación se detiene con `prefers-reduced-motion`, con la pestaña oculta y con la sección fuera de vista. Se baraja al montar, no en el servidor: rompería la hidratación y sería el mismo orden para todos hasta el siguiente `revalidate`.
+- Tema oscuro: `invert` + `opacity-90` sobre el mismo archivo. Se descartó `brightness-0 invert` porque aplanaba los logos de formas sólidas en manchas blancas. Los que traen fondo sólido (`apancol`, `mdc`, `fortex`) se siguen viendo como un cuadro claro en oscuro; eso se corrige en el asset, no aquí.
+- `GET /brands` sigue alimentando los filtros de `/productos`; el homepage ya no lo usa.
+- `alt` = nombre derivado del slug (`nombreDesdeSlug`), con un mapa corto para acentos. Si el API añade `nombre` al manifiesto, se usa ese y el mapa sobra.
