@@ -19,7 +19,14 @@ import { cn } from "@/lib/utils"
 
 import type { Marca, Proveedor } from "../types"
 
-/** Filtros múltiples: OR dentro de cada eje, AND entre proveedor y marca. */
+/**
+ * Selección ÚNICA por eje (AND entre proveedor y marca). Fue múltiple (OR
+ * dentro del eje) y se revirtió: la búsqueda local esconde los ya marcados,
+ * así que elegir "Colanta" tras "Alpina" sumaba ambos sin que se viera, y los
+ * productos del primero parecían quedarse pegados. Los props siguen siendo
+ * arrays porque la URL y el API aceptan varios ids (enlaces viejos siguen
+ * funcionando); desde el panel solo se escribe uno.
+ */
 
 const MAX_VISIBLES = 50
 
@@ -195,7 +202,7 @@ export function CatalogFilters({
               // se lea como el total del catálogo.
               nota={
                 proveedorIds.length > 0
-                  ? "Marcas y conteos de los proveedores seleccionados."
+                  ? "Marcas y conteos del proveedor seleccionado."
                   : undefined
               }
             />
@@ -233,7 +240,7 @@ interface ItemEje {
 }
 
 /**
- * Un eje de clasificación: título, búsqueda local y lista de opciones múltiples. La
+ * Un eje de clasificación: título, búsqueda local y lista de opciones. La
  * búsqueda filtra en cliente sobre la lista completa (el API la devuelve
  * entera, sin paginar) y solo se pintan `MAX_VISIBLES` resultados; el resto
  * se alcanza refinando el término, que es más rápido que un scroll de
@@ -379,11 +386,12 @@ function EjeFiltro({
                 label={formatNombreComercial(item.nombre)}
                 count={item.totalProductos}
                 checked={seleccionado.includes(item.id)}
+                // Reemplaza la selección; pulsar el activo lo quita.
                 onSelect={() =>
                   onSeleccionar(
-                    seleccionado.includes(item.id)
-                      ? seleccionado.filter((id) => id !== item.id)
-                      : [...seleccionado, item.id]
+                    seleccionado.length === 1 && seleccionado[0] === item.id
+                      ? []
+                      : [item.id]
                   )
                 }
               />
@@ -407,7 +415,7 @@ function EjeFiltro({
   )
 }
 
-/** Cada fila se alterna sin modificar las demás selecciones. */
+/** Una fila del eje: opción de selección única. */
 function FilaEje({
   label,
   count,
