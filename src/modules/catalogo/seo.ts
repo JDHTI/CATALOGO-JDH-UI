@@ -47,13 +47,18 @@ export function productoMetadata(producto: Producto): Metadata {
       title,
       description,
       url,
-      images: image ? [{ url: image, alt: producto.nombre }] : [],
+      // Sin foto publicada, la tarjeta de marca: un enlace compartido nunca
+      // queda con el icono genérico. El JSON-LD, en cambio, la omite — ahí
+      // `image` afirma ser la foto del producto.
+      images: [
+        image ? { url: image, alt: producto.nombre } : siteConfig.ogImage,
+      ],
     },
     twitter: {
-      card: image ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title,
       description,
-      images: image ? [image] : [],
+      images: [image ?? siteConfig.ogImage.url],
     },
   }
 }

@@ -23,21 +23,13 @@ export const metadata: Metadata = {
     siteName: siteConfig.company,
     title: siteConfig.name,
     description: siteConfig.description,
-    images: [
-      {
-        url: "/photos/camion-carretera.webp",
-        width: 1444,
-        height: 1089,
-        type: "image/webp",
-        alt: "Camión de Juan D. Hoyos Distribuciones en carretera",
-      },
-    ],
+    images: [siteConfig.ogImage],
   },
   twitter: {
     card: "summary_large_image",
     title: siteConfig.name,
     description: siteConfig.description,
-    images: ["/photos/camion-carretera.webp"],
+    images: [siteConfig.ogImage.url],
   },
   // Isotipo (mark) de JDH en la pestaña del navegador. NO hay
   // `src/app/favicon.ico` (se eliminó a propósito): esa convención de archivo

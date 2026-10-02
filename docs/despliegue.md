@@ -33,6 +33,7 @@ incrusta en el bundle **en tiempo de build**: cambiarla exige redespliegue.
 | `BETTER_AUTH_SECRET`                | ✅ _(Sensitive)_ | ✅ _(Sensitive)_   | **Uno distinto por entorno.** Rotarlo invalida sesiones y exige `TRUNCATE TABLE jwks` (§4) |
 | `BETTER_AUTH_URL`                   | ✅ dominio real  | ❌ **dejar vacía** | Ver §3                                                                                     |
 | `DATABASE_URL`                      | ✅ _(Sensitive)_ | ✅ _(Sensitive)_   | Puerto del **pooler**, `sslmode=require`. Ver §4                                           |
+| `NEXT_PUBLIC_SITE_URL`              | ❌ hasta el DNS  | ❌ hasta el DNS    | Origen de `og:image`/canónicas. Vacía → dominio de producción de Vercel                    |
 | `NEXT_PUBLIC_API_URL`               | ✅ HTTPS         | ✅ HTTPS           | Con el prefijo `/api/v1`. Hoy: `https://catalogo-jdh-api-production.up.railway.app/api/v1` |
 | `NEXT_PUBLIC_ASSETS_CDN_URL`        | ✅               | ✅                 | De aquí sale el host de `images.remotePatterns`                                            |
 | `BACKEND_API_URL`                   | —                | —                  | `backend-fetch.ts` existe pero nadie lo llama todavía                                      |
