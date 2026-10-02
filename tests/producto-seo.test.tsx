@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { renderToStaticMarkup } from "react-dom/server"
 
+import { siteConfig } from "@/config/site"
 import {
   productoCanonical,
   productoJsonLd,
@@ -49,7 +50,7 @@ describe("SEO del producto", () => {
     )
   })
 
-  it("omite imágenes ausentes/incorrectas y el fallback de UI", () => {
+  it("cambia imágenes ausentes/incorrectas por la tarjeta de marca, nunca por el fallback de UI", () => {
     for (const imagenUrl of [
       null,
       "",
@@ -59,8 +60,11 @@ describe("SEO del producto", () => {
     ]) {
       const sinImagen = { ...producto, imagenes: [], imagenUrl }
       expect(productoMetadata(sinImagen)).toMatchObject({
-        openGraph: { images: [] },
-        twitter: { card: "summary", images: [] },
+        openGraph: { images: [siteConfig.ogImage] },
+        twitter: {
+          card: "summary_large_image",
+          images: [siteConfig.ogImage.url],
+        },
       })
       expect(productoJsonLd(sinImagen)).not.toHaveProperty("image")
     }

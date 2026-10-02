@@ -148,8 +148,14 @@ try {
       document.querySelector('link[rel="canonical"]').href,
       `https://catalogo.jdh.com.co/productos/${id}`
     )
-    assert.equal(document.querySelector('meta[property="og:image"]'), null)
-    assert.equal(document.querySelector('meta[name="twitter:image"]'), null)
+    assert.equal(
+      document.querySelector('meta[property="og:image"]').content,
+      "https://catalogo.jdh.com.co/og/catalogo-jdh.jpg"
+    )
+    assert.equal(
+      document.querySelector('meta[name="twitter:image"]').content,
+      "https://catalogo.jdh.com.co/og/catalogo-jdh.jpg"
+    )
     assert.equal(document.querySelector("h1").textContent, expected.nombre)
     const scripts = document.querySelectorAll(
       'script[type="application/ld+json"]'
