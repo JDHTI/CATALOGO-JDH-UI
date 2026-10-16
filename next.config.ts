@@ -51,6 +51,22 @@ function patronDelBucket(): NonNullable<
 }
 
 const nextConfig: NextConfig = {
+  // Imagen Docker mínima (despliegue en tienda.jdh.local): `.next/standalone`
+  // trae server.js y solo los node_modules trazados. Solo con NEXT_OUTPUT=
+  // standalone (lo fija el Dockerfile) para no alterar el build de Vercel.
+  ...(process.env.NEXT_OUTPUT === "standalone" && {
+    output: "standalone" as const,
+    // Node >=22.12 resuelve la condición `module-sync` de los `exports` de
+    // @swc/helpers hacia `esm/`, pero el trazado solo copia `cjs/`: el
+    // contenedor muere con "Cannot find module .../@swc/helpers/esm/
+    // _interop_require_default.js". Con pnpm el paquete no está en el
+    // `node_modules` de primer nivel, de ahí la ruta del store virtual.
+    outputFileTracingIncludes: {
+      "/*": [
+        "node_modules/.pnpm/@swc+helpers@*/node_modules/@swc/helpers/esm/**/*",
+      ],
+    },
+  }),
   typedRoutes: true,
   images: {
     dangerouslyAllowLocalIP: permitirHostsLocales,

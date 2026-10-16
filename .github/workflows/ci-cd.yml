@@ -1,0 +1,92 @@
+# CI en runners de GitHub; CD en el runner self-hosted del servidor
+# tienda.jdh.local (192.168.100.216). El servidor está en la red interna: el
+# runner se conecta saliendo hacia GitHub, no hay puertos abiertos para esto.
+#
+# La UI se construye desde su clon en el servidor y corre en el stack de
+# compose que vive en el repo del API (servicio `ui`, detrás de Caddy).
+# Configuración del runner y de las deploy keys: CATALOGO-JDH-API
+# deploy/README.md → CI/CD.
+#
+# Vercel sigue construyendo esta app por su cuenta (no usa este workflow ni el
+# Dockerfile); este pipeline solo gobierna el despliegue en tienda.jdh.local.
+name: CI/CD
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    name: Lint, tipos y pruebas
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      # La versión de pnpm sale de "packageManager" en package.json.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+
+  # `next build` corre dentro de la imagen (etapa build), con placeholders
+  # de las variables que exige la carga de los módulos.
+  image:
+    name: Imagen Docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runtime
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Desplegar en tienda.jdh.local
+    needs: [check, image]
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+    runs-on: [self-hosted, tienda-jdh]
+    timeout-minutes: 30
+    environment: produccion
+    concurrency:
+      group: deploy-tienda-ui
+      cancel-in-progress: false
+    env:
+      UI_DIR: /home/tienda/apps/CATALOGO-JDH-UI
+      STACK_DIR: /home/tienda/apps/CATALOGO-JDH-API
+      # Común a los 2 repos: comparten el stack, y dos builds/respaldos a la
+      # vez sobre el mismo compose se pisan.
+      DEPLOY_LOCK: /home/tienda/apps/.deploy.lock
+    steps:
+      - name: Actualizar el código y desplegar la UI
+        # deploy.sh: respaldo pre-deploy → build (con los NEXT_PUBLIC_* de
+        # deploy/.env) → up → verificación de la UI, la API, el JWKS y /media.
+        # ui-auth-migrate crea/actualiza las tablas de Better Auth antes de
+        # que arranque la UI.
+        run: |
+          exec 9>"$DEPLOY_LOCK"
+          flock 9
+          cd "$UI_DIR"
+          git fetch --prune origin
+          git checkout --force master
+          git reset --hard "${GITHUB_SHA}"
+          git log --oneline -1
+          "$STACK_DIR/deploy/scripts/deploy.sh" ui-auth-migrate ui
