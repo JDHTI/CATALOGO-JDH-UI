@@ -77,6 +77,20 @@ describe("manifiesto de marcas", () => {
     ])
   })
 
+  it("conserva la marca del catálogo y descarta una inválida sin perder el logo", () => {
+    const logo = "https://cdn.test/brands/alpina/logo-1.webp"
+    const [conMarca, marcaRota] = parsearMarcas([
+      {
+        slug: "alpina",
+        logo,
+        marca: { id: 7, slug: "alpina", nombre: "ALPINA" },
+      },
+      { slug: "alpina", logo, marca: { slug: "Con Espacios", nombre: "X" } },
+    ])
+    expect(conMarca.marca).toEqual({ slug: "alpina", nombre: "ALPINA" })
+    expect(marcaRota).toEqual({ slug: "alpina", logo, marca: undefined })
+  })
+
   it("deriva el nombre de la marca desde el slug", () => {
     expect(nombreDesdeSlug("harinera-del-valle")).toBe("Harinera del Valle")
     expect(nombreDesdeSlug("3m")).toBe("3M")

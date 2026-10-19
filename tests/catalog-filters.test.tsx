@@ -21,8 +21,8 @@ function Filters() {
         { id: "2", nombre: "Proveedor B" },
       ]}
       marcas={[
-        { id: "3", nombre: "Marca A" },
-        { id: "4", nombre: "Marca B" },
+        { id: "3", slug: "marca-a", nombre: "Marca A" },
+        { id: "4", slug: "marca-b", nombre: "Marca B" },
       ]}
       proveedorIds={suppliers}
       onProveedorChange={setSuppliers}

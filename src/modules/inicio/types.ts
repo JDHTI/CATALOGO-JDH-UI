@@ -29,14 +29,19 @@ export interface PiezaHero extends ImagenSitio {
 
 /**
  * Un logo del tablero de marcas, del manifiesto `brands/manifest.json` del
- * bucket. El manifiesto solo trae `slug` y `logo`; `nombre` se deriva del slug
- * (alt del logo) y no es el nombre del catálogo — por eso el tablero no enlaza.
+ * bucket. `slug` es el del ARCHIVO del logo y `nombre` se deriva de él (alt
+ * del logo); ninguno de los dos identifica una marca del catálogo.
  */
 export interface LogoMarca {
   slug: string
   nombre: string
   /** URL inmutable (lleva hash): cacheable sin límite. */
   logo: string
+  /**
+   * La marca del catálogo a la que enlaza el logo (`/marcas/[slug]`). Solo
+   * existe si el API la cruzó; sin ella el logo se pinta sin enlace.
+   */
+  marca?: { slug: string; nombre: string }
 }
 
 /**
