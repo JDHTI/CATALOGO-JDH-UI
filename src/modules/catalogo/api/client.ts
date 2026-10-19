@@ -14,6 +14,7 @@ import {
   aProducto,
   aProveedor,
   apiErrorDtoSchema,
+  marcaDtoSchema,
   marcasDtoSchema,
   paginaProductosDtoSchema,
   productoDtoSchema,
@@ -258,4 +259,21 @@ export async function listarMarcas(
     signal
   )
   return dto.map(aMarca)
+}
+
+/**
+ * `GET /brands/:slug` — la marca de su página. 404 si no existe, si no tiene
+ * productos activos o si el slug está mal formado.
+ */
+export async function obtenerMarca(
+  slug: string,
+  signal?: AbortSignal
+): Promise<Marca> {
+  const dto = await apiGet(
+    `/brands/${encodeURIComponent(slug)}`,
+    marcaDtoSchema,
+    undefined,
+    signal
+  )
+  return aMarca(dto)
 }

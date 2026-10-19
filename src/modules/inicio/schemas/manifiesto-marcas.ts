@@ -6,10 +6,20 @@ import { z } from "zod"
  * la UI usa; `version` y `generadoEn` se toleran sin leerse.
  *
  * Una entrada inválida no tumba la lista: se descarta y el resto se muestra.
+ *
+ * `marca` llega solo cuando el logo coincide con una marca del catálogo con
+ * productos activos (si no, el API lo omite). Un `marca` inválido no descarta
+ * el logo: se queda sin enlace, como uno sin match.
  */
+const marcaCatalogo = z.object({
+  slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),
+  nombre: z.string(),
+})
+
 const entradaMarca = z.object({
   slug: z.string().min(1),
   logo: z.url(),
+  marca: marcaCatalogo.optional().catch(undefined),
 })
 
 export const manifiestoMarcasSchema = z.object({

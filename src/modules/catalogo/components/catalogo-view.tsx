@@ -10,10 +10,11 @@ import { JdhButton } from "@/components/common/jdh-button"
 import { EmptyState } from "@/components/common/empty-state"
 import { Pagination } from "@/components/navigation/pagination"
 import { Stagger, StaggerItem } from "@/components/motion/stagger"
-import { formatNumero } from "@/lib/format"
+import { formatNombreComercial, formatNumero } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 import { useMarcas, useProductos, useProveedores } from "../hooks/use-productos"
+import type { Marca } from "../types"
 import { CatalogBannerCarousel } from "./catalog-banner-carousel"
 import { CatalogFilters } from "./catalog-filters"
 import { ProductoCard, ProductoCardSkeleton } from "./producto-card"
@@ -51,29 +52,40 @@ export function CatalogoViewFallback() {
  * Esta vista NO tiene campo de búsqueda: el término lo escribe el buscador
  * del header (`ProductSearchBar`) en `?q=`, y aquí solo se lee. Tener dos
  * buscadores a la vez obligaba a adivinar cuál manda.
+ *
+ * Con `marca`, la vista es la página de esa marca (`/marcas/[slug]`): la
+ * marca la fija la ruta, no la URL, y `?proveedor=` / `?marca=` se ignoran.
+ * El panel de filtros sigue igual, pero elegir otra opción NAVEGA en vez de
+ * filtrar aquí: otra marca lleva a su página, y un proveedor o "Todas las
+ * marcas" llevan a `/productos`. Es la misma regla que en el listado, donde
+ * cambiar de proveedor descarta la marca.
  */
-export function CatalogoView() {
+export function CatalogoView({ marca }: { marca?: Marca } = {}) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
   const q = searchParams.get("q")?.trim() ?? ""
-  const proveedorIds = [
-    ...new Set(
-      searchParams
-        .getAll("proveedor")
-        .flatMap((v) => v.split(","))
-        .filter(Boolean)
-    ),
-  ]
-  const marcaIds = [
-    ...new Set(
-      searchParams
-        .getAll("marca")
-        .flatMap((v) => v.split(","))
-        .filter(Boolean)
-    ),
-  ]
+  const proveedorIds = marca
+    ? []
+    : [
+        ...new Set(
+          searchParams
+            .getAll("proveedor")
+            .flatMap((v) => v.split(","))
+            .filter(Boolean)
+        ),
+      ]
+  const marcaIds = marca
+    ? [marca.id]
+    : [
+        ...new Set(
+          searchParams
+            .getAll("marca")
+            .flatMap((v) => v.split(","))
+            .filter(Boolean)
+        ),
+      ]
   const pagina = Math.max(1, Number(searchParams.get("pagina")) || 1)
 
   const actualizarParams = useCallback(
@@ -117,11 +129,47 @@ export function CatalogoView() {
     gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
+  // `push`, no `replace`: salir de la página de marca es cambiar de página, y
+  // el botón atrás debe poder volver a ella.
+  const salirAProductos = (params: Record<string, string> = {}) => {
+    const query = new URLSearchParams(params).toString()
+    router.push(`/productos${query ? `?${query}` : ""}` as Route)
+  }
+
+  const cambiarProveedor = (id: string[]) => {
+    if (marca) {
+      salirAProductos(id.length ? { proveedor: id.join(",") } : {})
+      return
+    }
+    // Cambiar de proveedor invalida la marca elegida: puede no existir en el
+    // proveedor nuevo.
+    actualizarParams({ proveedor: id.join(","), marca: null, pagina: null })
+  }
+
+  const cambiarMarca = (id: string[]) => {
+    if (!marca) {
+      actualizarParams({ marca: id.join(","), pagina: null })
+      return
+    }
+    const destino = marcas.data?.find((m) => m.id === id[0])
+    if (destino?.slug) router.push(`/marcas/${destino.slug}` as Route)
+    else salirAProductos(id.length ? { marca: id.join(",") } : {})
+  }
+
   const limpiarFiltros = () =>
-    actualizarParams({ proveedor: null, marca: null, pagina: null })
+    marca
+      ? salirAProductos()
+      : actualizarParams({ proveedor: null, marca: null, pagina: null })
 
   const limpiarTodo = () =>
-    actualizarParams({ q: null, proveedor: null, marca: null, pagina: null })
+    marca
+      ? salirAProductos()
+      : actualizarParams({
+          q: null,
+          proveedor: null,
+          marca: null,
+          pagina: null,
+        })
 
   /**
    * WHEEL-HIJACK del área de filtros (UX) — con listener NATIVO no-pasivo:
@@ -221,6 +269,9 @@ export function CatalogoView() {
   const hayFiltrosActivos = Boolean(q || proveedorIds.length || marcaIds.length)
   const inicio = meta && meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0
   const fin = meta ? Math.min(meta.page * meta.limit, meta.total) : 0
+  const titulo = marca
+    ? formatNombreComercial(marca.nombre)
+    : "Todos los productos"
 
   return (
     <div className="flex flex-col gap-6">
@@ -232,10 +283,10 @@ export function CatalogoView() {
         items={[
           { label: "Inicio", href: "/" },
           { label: "Productos", href: "/productos" },
-          { label: "Todos los productos" },
+          { label: titulo },
         ]}
       />
-      <h1 className="sr-only">Todos los productos</h1>
+      <h1 className="sr-only">{titulo}</h1>
 
       {/* El panel de filtros arranca DESDE debajo de "Todos los productos". */}
       <div
@@ -254,24 +305,14 @@ export function CatalogoView() {
             proveedoresError={proveedores.isError}
             onRetryProveedores={() => proveedores.refetch()}
             proveedorIds={proveedorIds}
-            // Cambiar de proveedor invalida la marca elegida: puede no
-            // existir en el proveedor nuevo.
-            onProveedorChange={(id) =>
-              actualizarParams({
-                proveedor: id.join(","),
-                marca: null,
-                pagina: null,
-              })
-            }
+            onProveedorChange={cambiarProveedor}
             marcas={marcas.data}
             marcasPending={marcas.isPending}
             marcasError={marcas.isError}
             marcasNoImplementado={marcas.noImplementado}
             onRetryMarcas={() => marcas.refetch()}
             marcaIds={marcaIds}
-            onMarcaChange={(id) =>
-              actualizarParams({ marca: id.join(","), pagina: null })
-            }
+            onMarcaChange={cambiarMarca}
             onLimpiar={limpiarFiltros}
             scrollRef={filtrosScrollRef}
           />

@@ -401,3 +401,20 @@ Se descartó exponer el JWT al cliente para llamar al API directo (contradice el
 - Tema oscuro: `invert` + `opacity-90` sobre el mismo archivo. Se descartó `brightness-0 invert` porque aplanaba los logos de formas sólidas en manchas blancas. Los que traen fondo sólido (`apancol`, `mdc`, `fortex`) se siguen viendo como un cuadro claro en oscuro; eso se corrige en el asset, no aquí.
 - `GET /brands` sigue alimentando los filtros de `/productos`; el homepage ya no lo usa.
 - `alt` = nombre derivado del slug (`nombreDesdeSlug`), con un mapa corto para acentos. Si el API añade `nombre` al manifiesto, se usa ese y el mapa sobra.
+
+## 2026-10-19 — La marca es una ruta propia (`/marcas/[slug]`); los filtros siguen en query params
+
+**Contexto:** se quería que los logos del tablero del home llevaran a la página de su marca, y se revisó si `/productos?proveedor=…&marca=…` era la forma correcta. Esos params no llevan códigos del ERP sino el **id autoincremental de Postgres** (`Supplier.id`, `Brand.id`): un detalle interno que cambia si se reconstruye la BD y que no dice nada en un enlace compartido o indexado. Además, el manifiesto de logos solo traía el slug del ARCHIVO, sin relación con la tabla `Brand`.
+
+**Decisión:**
+
+- **Filtros combinables → query params**, sin cambios: `?q=&proveedor=&marca=&pagina=` en `/productos`. Es estado de UI combinable (AND entre ejes), compartible y con botón atrás.
+- **La marca → ruta propia `/marcas/[slug]`.** Una página de marca es un lugar, no un filtro: tiene su propio `h1`, metadata y canonical, y sigue valiendo cuando llegue la categorización. El slug lo define el API (`Brand.slug`, único, `LogosService.slug(nombre)`; contrato en `jdh-catalogo-api/docs/brands.md`) y se resuelve con `GET /brands/:slug` en servidor (`obtenerMarcaPublica`). La página reutiliza `CatalogoView` con `marca` fija. Ahí, el panel de filtros **navega** en vez de filtrar: otra marca lleva a su página, y un proveedor o "Todas las marcas" a `/productos` (la misma regla de siempre: cambiar de proveedor descarta la marca).
+- **Logo → marca lo cruza el API**, no la UI: `brands:ingest` agrega `marca: { id, slug, nombre }` a la entrada del manifiesto solo si hay una marca con productos activos, el mismo criterio con el que `/brands/:slug` responde 200. Se descartó cruzar `slug(nombre)` en la UI: duplica la regla del API y falla en silencio cuando el archivo no se llama como la marca.
+- El tablero **se pausa con el puntero o el foco encima**: un enlace que rota bajo el cursor lleva a una marca que el usuario no eligió, y uno que rota con foco lo pierde.
+
+**Consecuencias:**
+
+- Todo es degradable: contra un API sin `slug`, `/marcas/*` responde 404 y los logos se pintan sin enlace. Los enlaces aparecen solos cuando operaciones corre `pnpm brands:ingest -- --solo-manifiesto` con el API nuevo desplegado.
+- El DWH manda un renombre de marca como marca nueva, así que el slug viejo pasa a 404. Si eso se vuelve frecuente, el API necesitará un historial de slugs con redirección.
+- **Pendiente:** `?proveedor=` y `?marca=` en `/productos` siguen llevando el id de la BD. Lo propuesto es pasar el proveedor a `Supplier.code` (código del ERP, ya único) y la marca a su slug; necesita que `/products` acepte esas claves.

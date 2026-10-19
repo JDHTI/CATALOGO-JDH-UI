@@ -3,10 +3,47 @@ import type { Metadata } from "next"
 import { siteConfig } from "@/config/site"
 import { siteUrl } from "@/config/site-url"
 
-import type { Producto } from "./types"
+import { formatNombreComercial } from "@/lib/format"
+
+import type { Marca, Producto } from "./types"
 
 export function productoCanonical(id: string): string {
   return new URL(`/productos/${encodeURIComponent(id)}`, siteUrl).href
+}
+
+/** Slug que el API acepta en `GET /brands/:slug` (cualquier otro es 404). */
+export const SLUG_MARCA = /^[a-z0-9]+(-[a-z0-9]+)*$/
+
+export function marcaCanonical(slug: string): string {
+  return new URL(`/marcas/${slug}`, siteUrl).href
+}
+
+export function marcaMetadata(marca: Marca, slug: string): Metadata {
+  const nombre = formatNombreComercial(marca.nombre)
+  const title = `Productos ${nombre}`
+  const description = `Explora las referencias de ${nombre} en el portafolio JDH.`
+  const url = marcaCanonical(slug)
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "website",
+      locale: "es_CO",
+      siteName: siteConfig.company,
+      title,
+      description,
+      url,
+      images: [siteConfig.ogImage],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [siteConfig.ogImage.url],
+    },
+  }
 }
 
 /** Solo imágenes primarias publicadas, nunca el placeholder ni secundarias. */

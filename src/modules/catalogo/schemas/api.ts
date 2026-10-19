@@ -28,9 +28,14 @@ export const proveedorDtoSchema = z.object({
   logoUrl: z.string().nullish(),
 })
 
-/** `GET /brands` → marcas con id propio (tabla normalizada en el backend). */
+/**
+ * `GET /brands` y `GET /brands/:slug` → marcas con id propio (tabla
+ * normalizada en el backend). `slug` es reciente: nullish para que un API
+ * anterior siga validando.
+ */
 export const marcaDtoSchema = z.object({
   id: idSchema,
+  slug: z.string().nullish(),
   nombre: z.string(),
   totalProductos: z.number().nullish(),
   logoUrl: z.string().nullish(),
@@ -124,6 +129,7 @@ export function aProveedor(dto: ProveedorDto): Proveedor {
 export function aMarca(dto: MarcaDto): Marca {
   return {
     id: dto.id,
+    slug: dto.slug || null,
     nombre: dto.nombre,
     ...(dto.totalProductos != null && { totalProductos: dto.totalProductos }),
     logoUrl: dto.logoUrl ?? null,

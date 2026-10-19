@@ -1,6 +1,8 @@
 "use client"
 
+import type { Route } from "next"
 import Image from "next/image"
+import Link from "next/link"
 import { useRef, useState, useSyncExternalStore } from "react"
 import {
   AnimatePresence,
@@ -70,12 +72,16 @@ const PRECARGA = CELDAS_POR_TICK[1]
  * (`brands/manifest.json`, leído en servidor — ver `listarLogosMarcas`).
  *
  * - Sin texto por celda: solo el logo, con el nombre derivado del slug como
- *   `alt`. Los logos NO enlazan: el manifiesto no trae el id de marca del
- *   catálogo, y un blanco que cambia bajo el cursor es un mal enlace.
+ *   `alt`. El logo enlaza a la página de su marca (`/marcas/[slug]`) cuando
+ *   el manifiesto trae la marca del catálogo; los que no, se pintan igual
+ *   pero sin enlace.
  * - Nunca hay dos celdas con el mismo logo y con el tiempo pasan todos — ver
  *   `useTablero`.
  * - La rotación se detiene con `prefers-reduced-motion`, con la pestaña en
- *   segundo plano y con la sección fuera de vista.
+ *   segundo plano, con la sección fuera de vista y mientras el puntero o el
+ *   foco estén sobre el tablero: un enlace que cambia bajo el cursor lleva a
+ *   una marca que el usuario no eligió, y el que cambia con el foco encima lo
+ *   pierde al desmontarse.
  * - Los logos vienen en gris oscuro sobre transparente. En tema oscuro se
  *   invierten a gris claro, con algo de opacidad para que los de formas
  *   sólidas no deslumbren.
@@ -131,6 +137,8 @@ function Tablero({ marcas }: { marcas: LogoMarca[] }) {
   const enVista = useInView(ref, { amount: 0.25 })
   const pestanaVisible = usePestanaVisible()
   const reducir = useReducedMotion() ?? false
+  const [conPuntero, setConPuntero] = useState(false)
+  const [conFoco, setConFoco] = useState(false)
   const visibles = useSyncExternalStore(
     suscribirAncho,
     celdasDelAncho,
@@ -139,7 +147,7 @@ function Tablero({ marcas }: { marcas: LogoMarca[] }) {
 
   const orden = useTablero(marcas, slugDe, {
     visibles,
-    activo: enVista && pestanaVisible && !reducir,
+    activo: enVista && pestanaVisible && !reducir && !conPuntero && !conFoco,
     intervaloMs: INTERVALO_MS,
     celdasPorTick: CELDAS_POR_TICK,
     desfaseMs: DESFASE_MS,
@@ -147,7 +155,20 @@ function Tablero({ marcas }: { marcas: LogoMarca[] }) {
 
   return (
     <>
-      <ul ref={ref} className={CLASES_GRILLA}>
+      <ul
+        ref={ref}
+        className={CLASES_GRILLA}
+        onPointerEnter={() => setConPuntero(true)}
+        onPointerLeave={() => setConPuntero(false)}
+        onFocus={() => setConFoco(true)}
+        // Pasar de un logo a otro con Tab también dispara `blur`: solo cuenta
+        // si el foco sale del tablero.
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) {
+            setConFoco(false)
+          }
+        }}
+      >
         {orden.slice(0, CELDAS_MAX).map((marca, celda) => (
           // La celda es la identidad estable; el logo dentro es lo que cambia.
           <li key={celda} className={CLASES_CELDA}>
@@ -188,27 +209,41 @@ function LogoCelda({ marca, reducir }: { marca: LogoMarca; reducir: boolean }) {
   const visible = { opacity: 1, scale: 1 }
   const apagado = { opacity: 0, scale: 0.94 }
 
+  const logo = (
+    <div className="relative size-full">
+      <Image
+        src={marca.logo}
+        alt={marca.nombre}
+        fill
+        sizes={SIZES_LOGO}
+        onLoad={() => setCargado(true)}
+        // `invert` a secas, no `brightness-0 invert`: aplanar a negro antes
+        // de invertir convertía los logos de formas sólidas en manchas
+        // blancas sin detalle interior.
+        className="object-contain dark:opacity-90 dark:invert"
+      />
+    </div>
+  )
+
   return (
     <motion.div
-      className="absolute inset-0 p-2 sm:p-3"
+      className="absolute inset-0"
       initial={apagado}
       animate={cargado ? visible : apagado}
       exit={apagado}
       transition={{ duration: reducir ? 0 : 0.35, ease: "easeOut" }}
     >
-      <div className="relative size-full">
-        <Image
-          src={marca.logo}
-          alt={marca.nombre}
-          fill
-          sizes={SIZES_LOGO}
-          onLoad={() => setCargado(true)}
-          // `invert` a secas, no `brightness-0 invert`: aplanar a negro antes
-          // de invertir convertía los logos de formas sólidas en manchas
-          // blancas sin detalle interior.
-          className="object-contain dark:opacity-90 dark:invert"
-        />
-      </div>
+      {marca.marca ? (
+        <Link
+          href={`/marcas/${marca.marca.slug}` as Route}
+          aria-label={`Ver productos de ${marca.nombre}`}
+          className="block size-full p-2 transition-colors duration-[var(--duration-base)] hover:bg-[var(--color-surface-subtle)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring sm:p-3"
+        >
+          {logo}
+        </Link>
+      ) : (
+        <div className="size-full p-2 sm:p-3">{logo}</div>
+      )}
     </motion.div>
   )
 }

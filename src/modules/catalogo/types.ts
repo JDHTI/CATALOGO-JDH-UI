@@ -34,6 +34,12 @@ export interface Proveedor {
  */
 export interface Marca {
   id: string
+  /**
+   * Identidad pública y estable de la marca: la URL de su página
+   * (`/marcas/[slug]`). El `id` es la clave de la BD y solo viaja al API como
+   * filtro. Null contra un API anterior al campo.
+   */
+  slug: string | null
   nombre: string
   /**
    * Conteo de productos activos, para el panel de filtros. SE ACOTA al
