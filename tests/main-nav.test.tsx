@@ -3,74 +3,77 @@ import { render, screen } from "@testing-library/react"
 
 import { MainNav } from "@/components/layout/main-nav"
 
-const mocks = vi.hoisted(() => ({ useProveedores: vi.fn() }))
+const mocks = vi.hoisted(() => ({ useMarcas: vi.fn() }))
 vi.mock("@/modules/catalogo/hooks/use-productos", () => ({
-  useProveedores: mocks.useProveedores,
+  useMarcas: mocks.useMarcas,
 }))
 vi.mock("@/components/layout/mega-menu", () => ({
   MegaMenu: () => null,
 }))
 
 beforeEach(() => {
-  mocks.useProveedores.mockReturnValue({ data: [] })
+  mocks.useMarcas.mockReturnValue({ data: [] })
 })
 
-describe("accesos a proveedores del header", () => {
-  it("enlaza cada proveedor con su propio filtro, sin usar IDs de marcas", () => {
-    mocks.useProveedores.mockReturnValue({
+describe("accesos a marcas del header", () => {
+  it("enlaza cada marca con su propio filtro, sin usar IDs de proveedores", () => {
+    mocks.useMarcas.mockReturnValue({
       data: [
-        { id: "85", nombre: "Proveedor Uno", totalProductos: 20 },
-        { id: "42", nombre: "Proveedor Dos", totalProductos: 10 },
+        {
+          id: "85",
+          slug: "marca-uno",
+          nombre: "Marca Uno",
+          totalProductos: 20,
+        },
+        { id: "42", slug: null, nombre: "Marca Dos", totalProductos: 10 },
       ],
     })
     render(<MainNav />)
     expect(
-      screen.getByRole("link", { name: "Proveedor Uno" }).getAttribute("href")
-    ).toBe("/productos?proveedor=85")
+      screen.getByRole("link", { name: "Marca Uno" }).getAttribute("href")
+    ).toBe("/marcas/marca-uno")
     expect(
-      screen.getByRole("link", { name: "Proveedor Dos" }).getAttribute("href")
-    ).toBe("/productos?proveedor=42")
+      screen.getByRole("link", { name: "Marca Dos" }).getAttribute("href")
+    ).toBe("/productos?marca=42")
     expect(
       screen
         .getAllByRole("link")
-        .some((link) => link.getAttribute("href")?.includes("marca="))
+        .some((link) => link.getAttribute("href")?.includes("proveedor="))
     ).toBe(false)
   })
 
-  it("muestra los ocho proveedores con mayor catalogo sin modificar los datos compartidos", () => {
-    const proveedores = Object.freeze(
+  it("muestra los ocho marcas con mayor catalogo sin modificar los datos compartidos", () => {
+    const marcas = Object.freeze(
       Array.from({ length: 10 }, (_, i) =>
         Object.freeze({
           id: String(i),
-          nombre: `Proveedor ${i}`,
+          nombre: `Marca ${i}`,
           totalProductos: i,
         })
       )
     )
-    mocks.useProveedores.mockReturnValue({ data: proveedores })
+    mocks.useMarcas.mockReturnValue({ data: marcas })
     render(<MainNav />)
-    const enlaces = screen.getAllByRole("link", { name: /^Proveedor/ })
+    const enlaces = screen.getAllByRole("link", { name: /^Marca/ })
     expect(enlaces.map((link) => link.textContent)).toEqual([
-      "Proveedor 9",
-      "Proveedor 8",
-      "Proveedor 7",
-      "Proveedor 6",
-      "Proveedor 5",
-      "Proveedor 4",
-      "Proveedor 3",
-      "Proveedor 2",
+      "Marca 9",
+      "Marca 8",
+      "Marca 7",
+      "Marca 6",
+      "Marca 5",
+      "Marca 4",
+      "Marca 3",
+      "Marca 2",
     ])
-    expect(proveedores[0].id).toBe("0")
+    expect(marcas[0].id).toBe("0")
   })
 
   it.each([undefined, []])(
-    "mantiene la navegacion general sin proveedores (%j)",
+    "mantiene la navegacion general sin marcas (%j)",
     (data) => {
-      mocks.useProveedores.mockReturnValue({ data })
+      mocks.useMarcas.mockReturnValue({ data })
       render(<MainNav />)
-      expect(
-        screen.queryAllByRole("link", { name: /^Proveedor/ })
-      ).toHaveLength(0)
+      expect(screen.queryAllByRole("link", { name: /^Marca/ })).toHaveLength(0)
       expect(
         screen.getByRole("link", { name: /Explorar/ }).getAttribute("href")
       ).toBe("/productos")

@@ -4,21 +4,23 @@ import type { Route } from "next"
 import Link from "next/link"
 import { Compass, Tag } from "lucide-react"
 
-import { useProveedores } from "@/modules/catalogo/hooks/use-productos"
+import { useMarcas } from "@/modules/catalogo/hooks/use-productos"
 import { formatNombreComercial } from "@/lib/format"
 import { cn } from "@/lib/utils"
+
+import { marcaHref } from "@/modules/catalogo/navigation"
 
 import { MegaMenu } from "./mega-menu"
 
 const MAX_ACCESOS = 8
 
-/** Ocho proveedores destacados alineados con el buscador; deslizables si no caben. */
+/** Ocho marcas destacadas alineadas con el buscador; deslizables si no caben. */
 export function MainNav({ className }: { className?: string }) {
-  const { data: proveedores } = useProveedores()
+  const { data: marcas } = useMarcas()
 
-  // Los de mayor catálogo primero: con cientos de proveedores, el orden
+  // Las de mayor catálogo primero: con cientos de marcas, el orden
   // alfabético del API no dice nada en una barra de 8 accesos.
-  const destacados = (proveedores ?? [])
+  const destacados = (marcas ?? [])
     .slice()
     .sort((a, b) => (b.totalProductos ?? 0) - (a.totalProductos ?? 0))
     .slice(0, MAX_ACCESOS)
@@ -47,15 +49,13 @@ export function MainNav({ className }: { className?: string }) {
         </div>
 
         <div className="hidden min-w-0 [scrollbar-width:none] items-center gap-1 overflow-x-auto lg:flex [&::-webkit-scrollbar]:hidden">
-          {destacados.map((proveedor) => (
+          {destacados.map((marca) => (
             <Link
-              key={proveedor.id}
-              href={
-                `/productos?proveedor=${encodeURIComponent(proveedor.id)}` as Route
-              }
+              key={marca.id}
+              href={marcaHref(marca)}
               className="inline-flex h-9 max-w-[9rem] shrink-0 items-center truncate rounded-lg px-2 text-sm font-medium text-[var(--color-on-ink-muted)] transition-colors first:ml-auto last:mr-auto hover:bg-transparent hover:text-[var(--color-on-ink)]"
             >
-              {formatNombreComercial(proveedor.nombre)}
+              {formatNombreComercial(marca.nombre)}
             </Link>
           ))}
         </div>
