@@ -15,6 +15,7 @@ export function ProductoDetalleEstado({
   return (
     <div className="flex flex-col gap-6">
       <Breadcrumbs
+        prominent
         items={[
           { label: "Inicio", href: "/" },
           { label: "Productos", href: "/productos" },
