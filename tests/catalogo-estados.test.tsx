@@ -123,3 +123,11 @@ it("restaura selecciones multiples desde la URL", () => {
     })
   )
 })
+
+it("aplica a la consulta el proveedor recibido desde el enlace del header", () => {
+  mocks.query = "proveedor=85"
+  render(<CatalogoView />)
+  expect(mocks.useProductos).toHaveBeenLastCalledWith(
+    expect.objectContaining({ supplierIds: ["85"] })
+  )
+})
