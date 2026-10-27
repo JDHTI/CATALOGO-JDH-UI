@@ -43,6 +43,7 @@ export function ProductoDetalleView({ producto }: { producto: Producto }) {
   return (
     <div className="flex flex-col gap-4 lg:h-full lg:min-h-0">
       <Breadcrumbs
+        prominent
         items={[
           { label: "Inicio", href: "/" },
           { label: "Productos", href: "/productos" },

@@ -10,6 +10,7 @@ import { megaMenuConfig } from "@/config/mega-menu.config"
 import { modules } from "@/config/modules"
 import { useCurrentUser } from "@/hooks/use-current-user"
 import { cn } from "@/lib/utils"
+import { MegaMenuCatalogo } from "./mega-menu-catalogo"
 
 /**
  * Trigger "Menú" + panel disclosure de la segunda barra (negra, igual que la
@@ -109,6 +110,7 @@ export function MegaMenu() {
           className="absolute inset-x-0 top-full z-30 max-h-[70vh] overflow-y-auto overscroll-contain border-b border-border bg-popover text-popover-foreground shadow-lg motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-2"
         >
           <div className="mx-auto grid max-w-[var(--container-wide)] gap-4 px-6 py-4 sm:grid-cols-3">
+            <MegaMenuCatalogo onNavigate={close} />
             {megaMenuConfig.groups.map((group) => (
               <div key={group.id} className="space-y-2">
                 <p className="font-mono text-xs tracking-[0.08em] text-muted-foreground uppercase">

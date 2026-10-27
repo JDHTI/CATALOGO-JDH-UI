@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils"
+
 import { Fragment } from "react"
 import type { Route } from "next"
 import Link from "next/link"
@@ -24,13 +26,17 @@ export interface BreadcrumbEntry {
 export function Breadcrumbs({
   items,
   className,
+  prominent = false,
 }: {
   items: BreadcrumbEntry[]
   className?: string
+  prominent?: boolean
 }) {
   return (
     <Breadcrumb className={className}>
-      <BreadcrumbList className="text-xs">
+      <BreadcrumbList
+        className={cn("text-xs", prominent && "text-base font-bold md:text-lg")}
+      >
         {items.map((item, index) => {
           const isLast = index === items.length - 1
 
@@ -38,7 +44,11 @@ export function Breadcrumbs({
             <Fragment key={item.href ?? item.label}>
               <BreadcrumbItem>
                 {isLast || !item.href ? (
-                  <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                  <BreadcrumbPage
+                    className={prominent ? "font-bold" : undefined}
+                  >
+                    {item.label}
+                  </BreadcrumbPage>
                 ) : (
                   <BreadcrumbLink asChild>
                     <Link href={item.href as Route}>{item.label}</Link>

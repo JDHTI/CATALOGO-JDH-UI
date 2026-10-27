@@ -280,6 +280,7 @@ export function CatalogoView({ marca }: { marca?: Marca } = {}) {
           — sin él la página no tendría título en el árbol de encabezados —
           y no ocupa alto, así filtros y productos quedan más arriba. */}
       <Breadcrumbs
+        prominent
         items={[
           { label: "Inicio", href: "/" },
           { label: "Productos", href: "/productos" },
