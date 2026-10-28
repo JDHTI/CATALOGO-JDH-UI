@@ -35,7 +35,10 @@ export function Breadcrumbs({
   return (
     <Breadcrumb className={className}>
       <BreadcrumbList
-        className={cn("text-xs", prominent && "text-base font-bold md:text-lg")}
+        className={cn(
+          "text-xs",
+          prominent && "text-base font-light md:text-lg"
+        )}
       >
         {items.map((item, index) => {
           const isLast = index === items.length - 1
@@ -45,7 +48,7 @@ export function Breadcrumbs({
               <BreadcrumbItem>
                 {isLast || !item.href ? (
                   <BreadcrumbPage
-                    className={prominent ? "font-bold" : undefined}
+                    className={prominent ? "font-light" : undefined}
                   >
                     {item.label}
                   </BreadcrumbPage>

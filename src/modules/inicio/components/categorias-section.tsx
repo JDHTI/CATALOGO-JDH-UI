@@ -1,8 +1,18 @@
 "use client"
 
+import Link from "next/link"
+
 import { ScrollReveal } from "@/components/motion/scroll-reveal"
 import { Stagger, StaggerItem } from "@/components/motion/stagger"
-import { CATEGORIAS_DESTACADAS } from "@/modules/catalogo/categorias"
+import { formatNombreComercial } from "@/lib/format"
+import { iconoCategoria } from "@/modules/catalogo/categorias"
+import { useCategorias } from "@/modules/catalogo/hooks/use-productos"
+import { categoriaHref } from "@/modules/catalogo/navigation"
+
+/** Las que caben en la grilla 3×3 de desktop. */
+const MAX_DESTACADAS = 9
+/** Subcategorías que asoman como texto de apoyo en cada tarjeta. */
+const MAX_SUBCATEGORIAS_EN_TARJETA = 4
 
 /**
  * Contenedor: PISTA deslizable en móvil, grilla desde `sm`. La pista SANGRA
@@ -18,22 +28,32 @@ const CLASES_PISTA =
 /** Alto de pista compartido con las otras dos del homepage (`--jdh-card-movil`). */
 const CLASES_ITEM =
   "h-[var(--jdh-card-movil)] w-[58%] shrink-0 sm:h-full sm:w-auto"
+const CLASES_TARJETA =
+  "flex h-full flex-col gap-3 rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:flex-row sm:items-start sm:gap-4"
 
 /**
- * Grilla de CATEGORÍAS DESTACADAS del e-commerce: 9 de las 21 de la taxonomía
- * propuesta en `CategorizacionEcommerce.xlsx`, elegidas por volumen de
- * referencias (ver `CODIGOS_DESTACADAS` en `@/modules/catalogo/categorias`).
+ * Grilla de CATEGORÍAS DESTACADAS del e-commerce: las 9 de mayor volumen de
+ * `GET /categories`, la misma taxonomía del panel de filtros y del megamenú.
+ * Cada tarjeta lleva al catálogo filtrado por esa categoría.
  *
- * Las tarjetas NO son enlaces todavía: los productos no traen categoría y
- * `/productos` no lee `?categoria=`, así que enlazarlas llevaría al catálogo
- * completo sin filtrar — una promesa que la página no cumple. Cuando el API
- * publique las categorías, cada tarjeta pasa a `<Link>` con su filtro y la
- * lista estática se cambia por la query.
+ * Es una sección del CATÁLOGO: pide su data desde el cliente y se OCULTA si el
+ * API no responde o no trae categorías (ver `InicioView`), así `/` sigue
+ * prerenderizada sin depender de que el API esté arriba en build. Mientras
+ * llega dibuja la misma grilla con esqueletos, para que no haya salto.
  *
  * En móvil la tarjeta es vertical (pista); desde `sm` es horizontal, ícono a
  * la izquierda: 3×3 desde `lg`.
  */
 export function CategoriasSection() {
+  const { data, isPending } = useCategorias()
+
+  const destacadas = (data ?? [])
+    .slice()
+    .sort((a, b) => b.totalProductos - a.totalProductos)
+    .slice(0, MAX_DESTACADAS)
+
+  if (!isPending && destacadas.length === 0) return null
+
   return (
     <section
       aria-labelledby="categorias-grid-title"
@@ -53,36 +73,63 @@ export function CategoriasSection() {
         </div>
       </ScrollReveal>
 
-      <Stagger
-        staggerDelay={0.03}
-        // Enfocable mientras es pista: las tarjetas son texto, no enlaces, y
-        // sin un tab stop el contenido fuera de pantalla solo se alcanzaría
-        // con el dedo (WCAG 2.2 SC 2.1.1). Mismo criterio que `ValueProps`.
-        tabIndex={0}
-        role="group"
-        aria-label="Categorías destacadas"
-        className={CLASES_PISTA}
-      >
-        {CATEGORIAS_DESTACADAS.map(
-          ({ codigo, nombre, icono: Icono, subcategorias }) => (
-            <StaggerItem key={codigo} className={CLASES_ITEM}>
-              <div className="flex h-full flex-col gap-3 rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:flex-row sm:items-start sm:gap-4">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-[var(--jdh-radius-sm)] bg-[var(--color-surface-subtle)] text-foreground">
-                  <Icono className="size-5" aria-hidden="true" />
-                </span>
-                <span className="flex min-w-0 flex-col gap-1">
-                  <span className="text-sm font-medium text-balance">
-                    {nombre}
-                  </span>
-                  <span className="line-clamp-3 text-xs text-muted-foreground sm:line-clamp-2">
-                    {subcategorias.join(" · ")}
-                  </span>
+      {isPending ? (
+        <div
+          className={CLASES_PISTA}
+          role="status"
+          aria-label="Cargando categorías"
+        >
+          {Array.from({ length: MAX_DESTACADAS }, (_, i) => (
+            <div key={i} className={CLASES_ITEM} aria-hidden="true">
+              <div className={`${CLASES_TARJETA} animate-pulse`}>
+                <span className="size-10 shrink-0 rounded-[var(--jdh-radius-sm)] bg-[var(--color-surface-subtle)]" />
+                <span className="flex min-w-0 flex-1 flex-col gap-2">
+                  <span className="h-4 w-2/3 rounded bg-[var(--color-surface-subtle)]" />
+                  <span className="h-3 w-full rounded bg-[var(--color-surface-subtle)]" />
                 </span>
               </div>
-            </StaggerItem>
-          )
-        )}
-      </Stagger>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <Stagger
+          staggerDelay={0.03}
+          // Enfocable mientras es pista: sin un tab stop el contenido fuera
+          // de pantalla solo se alcanzaría con el dedo (WCAG 2.2 SC 2.1.1).
+          // Mismo criterio que `ValueProps`.
+          tabIndex={0}
+          role="group"
+          aria-label="Categorías destacadas"
+          className={CLASES_PISTA}
+        >
+          {destacadas.map((categoria) => {
+            const Icono = iconoCategoria(categoria.slug)
+            return (
+              <StaggerItem key={categoria.id} className={CLASES_ITEM}>
+                <Link
+                  href={categoriaHref(categoria)}
+                  className={`${CLASES_TARJETA} transition-colors outline-none hover:bg-[var(--color-surface-subtle)] focus-visible:outline-2 focus-visible:outline-ring`}
+                >
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-[var(--jdh-radius-sm)] bg-[var(--color-surface-subtle)] text-foreground">
+                    <Icono className="size-5" aria-hidden="true" />
+                  </span>
+                  <span className="flex min-w-0 flex-col gap-1">
+                    <span className="text-sm font-medium text-balance">
+                      {formatNombreComercial(categoria.nombre)}
+                    </span>
+                    <span className="line-clamp-3 text-xs text-muted-foreground sm:line-clamp-2">
+                      {categoria.subcategorias
+                        .slice(0, MAX_SUBCATEGORIAS_EN_TARJETA)
+                        .map((sub) => formatNombreComercial(sub.nombre))
+                        .join(" · ")}
+                    </span>
+                  </span>
+                </Link>
+              </StaggerItem>
+            )
+          })}
+        </Stagger>
+      )}
     </section>
   )
 }

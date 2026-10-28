@@ -54,10 +54,36 @@ export interface Marca {
   logoUrl?: string | null
 }
 
-/** Categoría / subcategoría (existen en el esquema, aún sin datos). */
+/**
+ * Categoría / subcategoría tal como viaja embebida en un `Producto`. `slug`
+ * es null contra un API anterior a la categorización.
+ */
 export interface CategoriaProducto {
   id: string
   nombre: string
+  slug: string | null
+}
+
+/** Subcategoría de `GET /categories`, con su conteo de productos activos. */
+export interface Subcategoria {
+  id: string
+  slug: string
+  nombre: string
+  totalProductos: number
+}
+
+/**
+ * Categoría de `GET /categories`: la FUENTE DE VERDAD de la taxonomía pública
+ * (se edita en el backend sin desplegar la UI). Solo llegan las que tienen al
+ * menos un producto activo, ya en orden de navegación. Los conteos se acotan a
+ * los `supplierIds`/`brandIds` de la consulta.
+ */
+export interface Categoria {
+  id: string
+  slug: string
+  nombre: string
+  totalProductos: number
+  subcategorias: Subcategoria[]
 }
 
 /** Una imagen de la galería del producto, en sus 3 variantes WebP. */
@@ -140,6 +166,13 @@ export interface ProductosQueryParams {
   /** Filtro por marca — va por id, no por nombre. */
   brandIds?: string[]
   brandId?: string
+  /** Filtro por categoría / subcategoría (por id). OR dentro del grupo, AND
+   *  entre grupos y con proveedor/marca/búsqueda; una subcategoría que no
+   *  pertenece a la categoría elegida da 0 resultados. */
+  categoryIds?: string[]
+  categoryId?: string
+  subcategoryIds?: string[]
+  subcategoryId?: string
   /**
    * Orden del listado. `nombre` (el default del backend, alfabético) o
    * `conImagen` (primero los que tienen imagen primaria, luego alfabético).
@@ -161,4 +194,11 @@ export interface ProductosQueryParams {
 export interface MarcasQueryParams {
   supplierIds?: string[]
   supplierId?: string
+}
+
+/** Parámetros de `GET /categories`: acotan los CONTEOS (no la lista de
+ *  categorías) a lo ya elegido en el panel de filtros. */
+export interface CategoriasQueryParams {
+  supplierIds?: string[]
+  brandIds?: string[]
 }

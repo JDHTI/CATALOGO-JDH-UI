@@ -14,7 +14,11 @@ export const productoDto = {
   marca: "Marca de prueba",
   fabricante: "Fabricante de prueba",
   proveedor: { id: 7, nombre: "Proveedor de prueba" },
-  categoria: { id: 8, nombre: "Categoría de prueba" },
+  categoria: {
+    id: 8,
+    nombre: "Categoría de prueba",
+    slug: "categoria-de-prueba",
+  },
   subcategoria: null,
   imagenUrl: "https://images.example.com/card.webp",
   imagenUrlFallback: "https://images.example.com/fallback.webp",

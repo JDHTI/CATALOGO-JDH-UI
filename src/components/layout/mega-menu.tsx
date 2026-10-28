@@ -107,81 +107,71 @@ export function MegaMenu() {
           ref={panelRef}
           role="region"
           aria-label="Menú"
-          className="absolute inset-x-0 top-full z-30 max-h-[70vh] overflow-y-auto overscroll-contain border-b border-border bg-popover text-popover-foreground shadow-lg motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-2"
+          // El tope es la pantalla que queda bajo la barra, no un 70vh fijo:
+          // el contenido está pensado para caber entero (ver
+          // `MegaMenuCatalogo`) y el scroll es solo la red de seguridad para
+          // ventanas muy bajas. Bajo `md` se descuenta además la barra
+          // inferior de la app (4.5rem), que si no tapa el final del panel.
+          className="absolute inset-x-0 top-full z-30 max-h-[calc(100dvh-var(--catalogo-chrome-height)-4.5rem)] overflow-y-auto overscroll-contain border-b border-border bg-popover text-popover-foreground shadow-lg motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-2 md:max-h-[calc(100dvh-var(--catalogo-chrome-height))]"
         >
-          <div className="mx-auto grid max-w-[var(--container-wide)] gap-4 px-6 py-4 sm:grid-cols-3">
+          <div className="mx-auto grid max-w-[var(--container-wide)] gap-3 px-6 py-3">
             <MegaMenuCatalogo onNavigate={close} />
-            {megaMenuConfig.groups.map((group) => (
-              <div key={group.id} className="space-y-2">
-                <p className="font-mono text-xs tracking-[0.08em] text-muted-foreground uppercase">
-                  {group.title}
-                </p>
-                <ul className="space-y-0.5">
-                  {(group.moduleIds ?? []).map((id) => {
-                    const mod = modules.byId(id)
-                    if (!mod || !visibleIds.has(id)) return null
-                    const Icon = mod.icon
 
-                    return (
-                      <li key={id}>
-                        <Link
-                          href={mod.href as Route}
-                          onClick={close}
-                          className="flex items-start gap-3 rounded-md p-1.5 transition-colors outline-none hover:bg-accent focus-visible:bg-accent"
-                        >
-                          <Icon className="mt-0.5 size-5 shrink-0" />
-                          <span className="min-w-0">
-                            <span className="block text-sm font-medium">
-                              {mod.nav?.label ?? mod.title}
-                            </span>
-                            {mod.description ? (
-                              <span className="line-clamp-2 block text-xs text-muted-foreground">
-                                {mod.description}
-                              </span>
-                            ) : null}
-                          </span>
-                        </Link>
-                      </li>
-                    )
-                  })}
-                  {(group.links ?? []).map((link) => (
-                    <li key={link.href}>
-                      <Link
-                        href={link.href as Route}
-                        onClick={close}
-                        className="block rounded-md p-1.5 text-sm transition-colors outline-none hover:bg-accent focus-visible:bg-accent"
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+            {/* Accesos secundarios en UNA franja, no en columnas: antes cada
+                grupo y la tarjeta destacada sumaban alto al menú. */}
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-border pt-2">
+              {megaMenuConfig.groups.flatMap((group) => [
+                ...(group.moduleIds ?? []).map((id) => {
+                  const mod = modules.byId(id)
+                  if (!mod || !visibleIds.has(id)) return null
+                  const Icon = mod.icon
 
-            {megaMenuConfig.featured ? (
-              <div className="flex flex-col rounded-[var(--jdh-radius-md)] border border-transparent bg-primary p-4 text-primary-foreground dark:border-[var(--color-ink-border)]">
-                <p className="text-sm font-medium">
-                  {megaMenuConfig.featured.title}
-                </p>
-                <p className="mt-1 text-xs text-[var(--color-on-ink-muted)]">
-                  {megaMenuConfig.featured.description}
-                </p>
-                <Link
-                  href={megaMenuConfig.featured.href as Route}
-                  onClick={close}
-                  className={cn(
-                    jdhButtonVariants({
-                      variant: "primary-on-ink",
-                      size: "sm",
-                    }),
-                    "mt-3 self-start"
-                  )}
-                >
-                  {megaMenuConfig.featured.cta}
-                </Link>
-              </div>
-            ) : null}
+                  return (
+                    <Link
+                      key={`${group.id}-${id}`}
+                      href={mod.href as Route}
+                      onClick={close}
+                      className="inline-flex items-center gap-2 rounded-md px-1.5 py-1 text-sm font-medium transition-colors outline-none hover:bg-accent focus-visible:bg-accent"
+                    >
+                      <Icon className="size-4 shrink-0" aria-hidden="true" />
+                      {mod.nav?.label ?? mod.title}
+                    </Link>
+                  )
+                }),
+                ...(group.links ?? []).map((link) => (
+                  <Link
+                    key={`${group.id}-${link.href}`}
+                    href={link.href as Route}
+                    onClick={close}
+                    className="rounded-md px-1.5 py-1 text-sm font-medium transition-colors outline-none hover:bg-accent focus-visible:bg-accent"
+                  >
+                    {link.label}
+                  </Link>
+                )),
+              ])}
+
+              {megaMenuConfig.featured ? (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 md:ml-auto">
+                  <p className="text-sm">
+                    <span className="font-medium">
+                      {megaMenuConfig.featured.title}.
+                    </span>{" "}
+                    <span className="text-muted-foreground">
+                      {megaMenuConfig.featured.description}
+                    </span>
+                  </p>
+                  <Link
+                    href={megaMenuConfig.featured.href as Route}
+                    onClick={close}
+                    className={cn(
+                      jdhButtonVariants({ variant: "primary", size: "sm" })
+                    )}
+                  >
+                    {megaMenuConfig.featured.cta}
+                  </Link>
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
       ) : null}
