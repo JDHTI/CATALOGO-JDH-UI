@@ -13,7 +13,12 @@ import { Stagger, StaggerItem } from "@/components/motion/stagger"
 import { formatNombreComercial, formatNumero } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import { useMarcas, useProductos, useProveedores } from "../hooks/use-productos"
+import {
+  useCategorias,
+  useMarcas,
+  useProductos,
+  useProveedores,
+} from "../hooks/use-productos"
 import type { Marca } from "../types"
 import { CatalogBannerCarousel } from "./catalog-banner-carousel"
 import { CatalogFilters } from "./catalog-filters"
@@ -43,8 +48,9 @@ export function CatalogoViewFallback() {
 
 /**
  * Listado de productos REALES del API (jdh-catalogo-api) — referencia visual
- * sin venta ni precio. Búsqueda, los dos ejes de clasificación y la página
- * viven en la URL (`?q=&proveedor=&marca=&pagina=`): el estado es
+ * sin venta ni precio. Búsqueda, los ejes de clasificación y la página viven
+ * en la URL (`?q=&categoria=&subcategoria=&proveedor=&marca=&pagina=`): el
+ * estado es
  * compartible y el botón atrás funciona. La data llega vía TanStack Query
  * con `keepPreviousData` (grid atenuado mientras carga la página siguiente,
  * sin flash de skeleton).
@@ -58,34 +64,30 @@ export function CatalogoViewFallback() {
  * El panel de filtros sigue igual, pero elegir otra opción NAVEGA en vez de
  * filtrar aquí: otra marca lleva a su página, y un proveedor o "Todas las
  * marcas" llevan a `/productos`. Es la misma regla que en el listado, donde
- * cambiar de proveedor descarta la marca.
+ * cambiar de proveedor descarta la marca. Categoría y subcategoría, en
+ * cambio, sí filtran en el sitio: refinan la marca, no la reemplazan.
  */
 export function CatalogoView({ marca }: { marca?: Marca } = {}) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
+  // Un param de la URL puede repetirse o venir en CSV (`marca=3&marca=4`,
+  // `marca=3,4`): ambas formas llegan aquí como una lista sin duplicados.
+  const leerIds = (clave: string) => [
+    ...new Set(
+      searchParams
+        .getAll(clave)
+        .flatMap((v) => v.split(","))
+        .filter(Boolean)
+    ),
+  ]
+
   const q = searchParams.get("q")?.trim() ?? ""
-  const proveedorIds = marca
-    ? []
-    : [
-        ...new Set(
-          searchParams
-            .getAll("proveedor")
-            .flatMap((v) => v.split(","))
-            .filter(Boolean)
-        ),
-      ]
-  const marcaIds = marca
-    ? [marca.id]
-    : [
-        ...new Set(
-          searchParams
-            .getAll("marca")
-            .flatMap((v) => v.split(","))
-            .filter(Boolean)
-        ),
-      ]
+  const proveedorIds = marca ? [] : leerIds("proveedor")
+  const marcaIds = marca ? [marca.id] : leerIds("marca")
+  const categoriaIds = leerIds("categoria")
+  const subcategoriaIds = leerIds("subcategoria")
   const pagina = Math.max(1, Number(searchParams.get("pagina")) || 1)
 
   const actualizarParams = useCallback(
@@ -109,6 +111,8 @@ export function CatalogoView({ marca }: { marca?: Marca } = {}) {
     search: q || undefined,
     supplierIds: proveedorIds.length ? proveedorIds : undefined,
     brandIds: marcaIds.length ? marcaIds : undefined,
+    categoryIds: categoriaIds.length ? categoriaIds : undefined,
+    subcategoryIds: subcategoriaIds.length ? subcategoriaIds : undefined,
     // Los productos con foto van primero (ver `ProductosQueryParams.orderBy`).
     // Tiene que resolverlo el backend: la paginación es del lado del servidor.
     orderBy: "conImagen",
@@ -119,6 +123,13 @@ export function CatalogoView({ marca }: { marca?: Marca } = {}) {
   const marcas = useMarcas(
     proveedorIds.length ? { supplierIds: proveedorIds } : {}
   )
+  // Los conteos de categorías reflejan los OTROS filtros activos (proveedor y
+  // marca), no el árbol global: así el número de la fila es lo que el usuario
+  // vería al elegirla. La búsqueda `q` no entra — `/categories` no la acepta.
+  const categorias = useCategorias({
+    ...(proveedorIds.length > 0 && { supplierIds: proveedorIds }),
+    ...(marcaIds.length > 0 && { brandIds: marcaIds }),
+  })
 
   const gridRef = useRef<HTMLDivElement>(null)
   const asideRef = useRef<HTMLElement>(null)
@@ -156,16 +167,37 @@ export function CatalogoView({ marca }: { marca?: Marca } = {}) {
     else salirAProductos(id.length ? { marca: id.join(",") } : {})
   }
 
+  // Cambiar de categoría invalida la subcategoría: una que no pertenece a la
+  // categoría elegida deja el listado en 0 resultados, así que ese estado se
+  // evita en origen en vez de explicarlo después.
+  const cambiarCategoria = (id: string[]) =>
+    actualizarParams({
+      categoria: id.join(","),
+      subcategoria: null,
+      pagina: null,
+    })
+
+  const cambiarSubcategoria = (id: string[]) =>
+    actualizarParams({ subcategoria: id.join(","), pagina: null })
+
   const limpiarFiltros = () =>
     marca
       ? salirAProductos()
-      : actualizarParams({ proveedor: null, marca: null, pagina: null })
+      : actualizarParams({
+          categoria: null,
+          subcategoria: null,
+          proveedor: null,
+          marca: null,
+          pagina: null,
+        })
 
   const limpiarTodo = () =>
     marca
       ? salirAProductos()
       : actualizarParams({
           q: null,
+          categoria: null,
+          subcategoria: null,
           proveedor: null,
           marca: null,
           pagina: null,
@@ -266,7 +298,13 @@ export function CatalogoView({ marca }: { marca?: Marca } = {}) {
 
   const meta = productos.data?.meta
   const visibles = productos.data?.data ?? []
-  const hayFiltrosActivos = Boolean(q || proveedorIds.length || marcaIds.length)
+  const hayFiltrosActivos = Boolean(
+    q ||
+    proveedorIds.length ||
+    marcaIds.length ||
+    categoriaIds.length ||
+    subcategoriaIds.length
+  )
   const inicio = meta && meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0
   const fin = meta ? Math.min(meta.page * meta.limit, meta.total) : 0
   const titulo = marca
@@ -301,6 +339,12 @@ export function CatalogoView({ marca }: { marca?: Marca } = {}) {
           className="lg:sticky lg:top-[calc(var(--catalogo-chrome-height)+1rem)] lg:self-start"
         >
           <CatalogFilters
+            categorias={categorias.data}
+            categoriasPending={categorias.isPending}
+            categoriaIds={categoriaIds}
+            onCategoriaChange={cambiarCategoria}
+            subcategoriaIds={subcategoriaIds}
+            onSubcategoriaChange={cambiarSubcategoria}
             proveedores={proveedores.data}
             proveedoresPending={proveedores.isPending}
             proveedoresError={proveedores.isError}

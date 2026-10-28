@@ -5,6 +5,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { CatalogoApiError } from "../api/errors"
 import {
   buscarProductos,
+  listarCategorias,
   listarDestacados,
   listarMarcas,
   listarProductos,
@@ -12,6 +13,7 @@ import {
   obtenerProducto,
 } from "../api/client"
 import type {
+  CategoriasQueryParams,
   MarcasQueryParams,
   Producto,
   ProductosQueryParams,
@@ -38,6 +40,8 @@ export const catalogoKeys = {
   proveedores: ["catalogo", "proveedores"] as const,
   marcas: (params: MarcasQueryParams) =>
     ["catalogo", "marcas", params] as const,
+  categorias: (params: CategoriasQueryParams) =>
+    ["catalogo", "categorias", params] as const,
 }
 
 /** Los ejes de clasificación son conjuntos pequeños y estables frente a los
@@ -258,4 +262,32 @@ export function useMarcas(
     query.error instanceof CatalogoApiError && query.error.statusCode === 404
 
   return { ...query, noImplementado }
+}
+
+/**
+ * Árbol de categorías — la taxonomía pública, que vive en el backend. Sin
+ * `params` es el árbol completo (megamenú, home); con `supplierIds` /
+ * `brandIds` los conteos reflejan lo ya elegido en el panel de filtros.
+ *
+ * `keepPreviousData`: al cambiar de proveedor/marca los conteos se actualizan
+ * sin que la sección parpadee a esqueleto ni pierda la categoría elegida.
+ * Sin reintentos ante un 404 (API anterior a la categorización): los
+ * consumidores ocultan su sección en vez de mostrar un error que el usuario no
+ * puede resolver.
+ */
+export function useCategorias(
+  params: CategoriasQueryParams = {},
+  options: { enabled?: boolean } = {}
+) {
+  return useQuery({
+    queryKey: catalogoKeys.categorias(params),
+    queryFn: ({ signal }) => listarCategorias(params, signal),
+    enabled: options.enabled ?? true,
+    staleTime: CLASIFICACION_STALE_MS,
+    placeholderData: keepPreviousData,
+    retry: (intento, error) =>
+      error instanceof CatalogoApiError && error.statusCode === 404
+        ? false
+        : intento < 2,
+  })
 }

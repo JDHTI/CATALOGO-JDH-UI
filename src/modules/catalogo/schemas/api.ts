@@ -1,6 +1,8 @@
 import { z } from "zod"
 
 import type {
+  Categoria,
+  CategoriaProducto,
   ImagenProducto,
   Marca,
   Paginado,
@@ -41,9 +43,28 @@ export const marcaDtoSchema = z.object({
   logoUrl: z.string().nullish(),
 })
 
+// Embebida en el producto. `slug` es nullish por un API anterior a la
+// categorización, que enviaba solo `{ id, nombre }`.
 const categoriaDtoSchema = z.object({
   id: idSchema,
   nombre: z.string(),
+  slug: z.string().nullish(),
+})
+
+const subcategoriaArbolDtoSchema = z.object({
+  id: idSchema,
+  slug: z.string(),
+  nombre: z.string(),
+  totalProductos: z.number(),
+})
+
+/** `GET /categories` y `GET /categories/:slug` → categoría con su árbol. */
+export const categoriaArbolDtoSchema = z.object({
+  id: idSchema,
+  slug: z.string(),
+  nombre: z.string(),
+  totalProductos: z.number(),
+  subcategorias: z.array(subcategoriaArbolDtoSchema),
 })
 
 // `imagenes` es reciente: nullish para que responda tanto un backend viejo
@@ -104,6 +125,9 @@ export const proveedoresDtoSchema = z.array(proveedorDtoSchema)
 /** `GET /brands` → lista completa, sin meta. */
 export const marcasDtoSchema = z.array(marcaDtoSchema)
 
+/** `GET /categories` → árbol completo, sin meta. */
+export const categoriasDtoSchema = z.array(categoriaArbolDtoSchema)
+
 /** Error estándar de NestJS. */
 export const apiErrorDtoSchema = z.object({
   statusCode: z.number(),
@@ -114,8 +138,25 @@ export const apiErrorDtoSchema = z.object({
 export type ProductoDto = z.infer<typeof productoDtoSchema>
 export type ProveedorDto = z.infer<typeof proveedorDtoSchema>
 export type MarcaDto = z.infer<typeof marcaDtoSchema>
+export type CategoriaArbolDto = z.infer<typeof categoriaArbolDtoSchema>
 
 /* ——— Mappers DTO → dominio ——— */
+
+export function aCategoria(dto: CategoriaArbolDto): Categoria {
+  return {
+    id: dto.id,
+    slug: dto.slug,
+    nombre: dto.nombre,
+    totalProductos: dto.totalProductos,
+    subcategorias: dto.subcategorias,
+  }
+}
+
+function aCategoriaProducto(
+  dto: z.infer<typeof categoriaDtoSchema>
+): CategoriaProducto {
+  return { id: dto.id, nombre: dto.nombre, slug: dto.slug ?? null }
+}
 
 export function aProveedor(dto: ProveedorDto): Proveedor {
   return {
@@ -164,8 +205,10 @@ export function aProducto(dto: ProductoDto): Producto {
     marcaId: dto.marcaId ?? null,
     fabricante: dto.fabricante ?? "",
     proveedor: aProveedor(dto.proveedor),
-    categoria: dto.categoria ?? null,
-    subcategoria: dto.subcategoria ?? null,
+    categoria: dto.categoria ? aCategoriaProducto(dto.categoria) : null,
+    subcategoria: dto.subcategoria
+      ? aCategoriaProducto(dto.subcategoria)
+      : null,
     imagenUrl: dto.imagenUrl ?? null,
     imagenUrlFallback: dto.imagenUrlFallback ?? null,
     imagenes: (dto.imagenes ?? []).map(aImagenProducto),

@@ -1,6 +1,8 @@
 import type { z } from "zod"
 
 import type {
+  Categoria,
+  CategoriasQueryParams,
   Marca,
   MarcasQueryParams,
   Paginado,
@@ -9,11 +11,13 @@ import type {
   Proveedor,
 } from "../types"
 import {
+  aCategoria,
   aMarca,
   aPaginaProductos,
   aProducto,
   aProveedor,
   apiErrorDtoSchema,
+  categoriasDtoSchema,
   marcaDtoSchema,
   marcasDtoSchema,
   paginaProductosDtoSchema,
@@ -138,6 +142,10 @@ export async function listarProductos(
     supplierIds: params.supplierIds?.join(","),
     brandIds: params.brandIds?.join(","),
     brandId: params.brandId,
+    categoryIds: params.categoryIds?.join(","),
+    categoryId: params.categoryId,
+    subcategoryIds: params.subcategoryIds?.join(","),
+    subcategoryId: params.subcategoryId,
   }
 
   if (params.orderBy) {
@@ -259,6 +267,28 @@ export async function listarMarcas(
     signal
   )
   return dto.map(aMarca)
+}
+
+/**
+ * `GET /categories` — árbol categoría → subcategorías, ya ordenado para
+ * navegación y solo con lo que tiene productos activos. Los `supplierIds` /
+ * `brandIds` acotan los CONTEOS a lo elegido en el panel de filtros; no
+ * esconden categorías por sí solos más allá de las que quedan en cero.
+ */
+export async function listarCategorias(
+  params: CategoriasQueryParams = {},
+  signal?: AbortSignal
+): Promise<Categoria[]> {
+  const dto = await apiGet(
+    "/categories",
+    categoriasDtoSchema,
+    {
+      supplierIds: params.supplierIds?.join(","),
+      brandIds: params.brandIds?.join(","),
+    },
+    signal
+  )
+  return dto.map(aCategoria)
 }
 
 /**

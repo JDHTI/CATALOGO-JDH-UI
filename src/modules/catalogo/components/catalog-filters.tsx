@@ -4,6 +4,8 @@ import { useMemo, useState, useSyncExternalStore } from "react"
 import {
   Check,
   ChevronDown,
+  Layers,
+  LayoutGrid,
   RotateCcw,
   Search,
   SlidersHorizontal,
@@ -17,15 +19,16 @@ import { useMontado } from "@/hooks/use-montado"
 import { formatNombreComercial } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import type { Marca, Proveedor } from "../types"
+import type { Categoria, Marca, Proveedor } from "../types"
 
 /**
- * Selección ÚNICA por eje (AND entre proveedor y marca). Fue múltiple (OR
- * dentro del eje) y se revirtió: la búsqueda local esconde los ya marcados,
- * así que elegir "Colanta" tras "Alpina" sumaba ambos sin que se viera, y los
- * productos del primero parecían quedarse pegados. Los props siguen siendo
- * arrays porque la URL y el API aceptan varios ids (enlaces viejos siguen
- * funcionando); desde el panel solo se escribe uno.
+ * Selección ÚNICA por eje (AND entre categoría, subcategoría, proveedor y
+ * marca). Fue múltiple (OR dentro del eje) y se revirtió: la búsqueda local
+ * esconde los ya marcados, así que elegir "Colanta" tras "Alpina" sumaba
+ * ambos sin que se viera, y los productos del primero parecían quedarse
+ * pegados. Los props siguen siendo arrays porque la URL y el API aceptan
+ * varios ids (enlaces viejos siguen funcionando); desde el panel solo se
+ * escribe uno.
  */
 
 const MAX_VISIBLES = 50
@@ -54,6 +57,20 @@ function useEsEscritorio(): boolean {
 }
 
 export interface CatalogFiltersProps {
+  /**
+   * Árbol de `GET /categories` con los conteos ya acotados a proveedor/marca.
+   * Si la consulta falla, no hay datos o el API aún no la publica, la sección
+   * se OCULTA: el resto del panel (y el catálogo) sigue funcionando.
+   */
+  categorias?: Categoria[]
+  categoriasPending?: boolean
+  /** Categoría activa; vacío = todas. */
+  categoriaIds?: string[]
+  onCategoriaChange?: (categoryId: string[]) => void
+  /** Subcategoría activa; vacío = todas las de la categoría. */
+  subcategoriaIds?: string[]
+  onSubcategoriaChange?: (subcategoryId: string[]) => void
+
   proveedores: Proveedor[] | undefined
   proveedoresPending: boolean
   proveedoresError: boolean
@@ -78,6 +95,12 @@ export interface CatalogFiltersProps {
 }
 
 export function CatalogFilters({
+  categorias,
+  categoriasPending = false,
+  categoriaIds = [],
+  onCategoriaChange = () => {},
+  subcategoriaIds = [],
+  onSubcategoriaChange = () => {},
   proveedores,
   proveedoresPending,
   proveedoresError,
@@ -105,7 +128,34 @@ export function CatalogFilters({
   // `null` = nadie ha tocado el disclosure, así que manda el viewport.
   const [forzado, setForzado] = useState<boolean | null>(null)
   const abierto = forzado ?? esEscritorio
-  const activos = proveedorIds.length + marcaIds.length
+  const activos =
+    categoriaIds.length +
+    subcategoriaIds.length +
+    proveedorIds.length +
+    marcaIds.length
+
+  // Las subcategorías son las de la categoría elegida. Una subcategoría que
+  // llega sola por la URL aporta también a su categoría padre, para que el
+  // panel muestre la jerarquía completa.
+  const padres = useMemo(
+    () =>
+      (categorias ?? []).filter(
+        (categoria) =>
+          categoriaIds.includes(categoria.id) ||
+          categoria.subcategorias.some((sub) =>
+            subcategoriaIds.includes(sub.id)
+          )
+      ),
+    [categorias, categoriaIds, subcategoriaIds]
+  )
+  const subcategorias = useMemo(
+    () => padres.flatMap((padre) => padre.subcategorias),
+    [padres]
+  )
+  // Con datos previos (refetch fallido) la sección se queda; sin datos, no
+  // hay nada útil que mostrar ni que reintentar.
+  const hayCategorias = (categorias?.length ?? 0) > 0
+  const ocultarCategorias = montado && !categoriasPending && !hayCategorias
 
   return (
     <div
@@ -170,6 +220,54 @@ export function CatalogFilters({
           // página no terminaba donde termina la lista de productos.
           className="min-h-0 [scrollbar-gutter:stable] overflow-x-hidden overflow-y-auto overscroll-contain px-3 pt-2 pb-5 [contain:content]"
         >
+          {/* Categorías primero: es el eje con el que se navega el catálogo.
+              Como el de marcas, se decide en cliente (el 404 y los errores
+              solo se conocen ahí), así que antes de montar se pinta el
+              esqueleto para no cambiar la estructura respecto al SSR. */}
+          {ocultarCategorias ? null : (
+            <EjeFiltro
+              icono={LayoutGrid}
+              titulo="Categorías"
+              etiquetaTodos="Todas las categorías"
+              placeholderBusqueda="Buscar categoría…"
+              items={categorias}
+              isPending={!montado || categoriasPending}
+              isError={false}
+              onRetry={() => {}}
+              seleccionado={categoriaIds}
+              onSeleccionar={onCategoriaChange}
+              // Los conteos ya vienen acotados al proveedor/marca activos.
+              nota={
+                proveedorIds.length + marcaIds.length > 0
+                  ? "Conteos según proveedor y marca seleccionados."
+                  : undefined
+              }
+            />
+          )}
+
+          {/* `key` por padre: al cambiar de categoría la búsqueda local de
+              subcategorías no debe arrastrar el término anterior. */}
+          {subcategorias.length > 0 ? (
+            <EjeFiltro
+              key={padres.map((padre) => padre.id).join(",")}
+              icono={Layers}
+              titulo="Subcategorías"
+              etiquetaTodos="Todas las subcategorías"
+              placeholderBusqueda="Buscar subcategoría…"
+              items={subcategorias}
+              isPending={false}
+              isError={false}
+              onRetry={() => {}}
+              seleccionado={subcategoriaIds}
+              onSeleccionar={onSubcategoriaChange}
+              nota={
+                padres.length === 1
+                  ? `Dentro de ${formatNombreComercial(padres[0].nombre)}.`
+                  : undefined
+              }
+            />
+          ) : null}
+
           <EjeFiltro
             icono={Store}
             titulo="Proveedores"
