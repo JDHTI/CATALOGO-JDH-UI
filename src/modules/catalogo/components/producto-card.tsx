@@ -47,7 +47,7 @@ export function ProductoCard({ producto }: { producto: Producto }) {
         nombreProducto={producto.nombre}
         className="absolute top-2 right-2 z-10"
       />
-      <article className="group h-full overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] transition-[border-color,transform] duration-200 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:-translate-y-0.5 hover:border-[var(--color-border-strong)]">
+      <article className="group h-full overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] transition-transform duration-200 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:-translate-y-0.5">
         <Link
           href={`/productos/${encodeURIComponent(producto.id)}` as Route}
           aria-label={`Ver detalle de ${producto.nombre}`}

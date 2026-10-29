@@ -24,27 +24,30 @@ export function FavoritoBoton({
   productoId,
   nombreProducto,
   className,
+  mostrarTexto = false,
 }: {
   productoId: string
   /** Para la etiqueta accesible: "Quitar X de favoritos". */
   nombreProducto: string
   className?: string
+  mostrarTexto?: boolean
 }) {
   const { esFavorito, activo } = useEsFavorito(productoId)
   const alternar = useAlternarFavorito()
 
-  if (!activo) return null
-
-  const etiqueta = esFavorito
-    ? `Quitar ${nombreProducto} de favoritos`
-    : `Agregar ${nombreProducto} a favoritos`
+  const etiqueta = !activo
+    ? `Favoritos no disponibles para ${nombreProducto}`
+    : esFavorito
+      ? `Quitar ${nombreProducto} de favoritos`
+      : `Agregar ${nombreProducto} a favoritos`
 
   return (
     <button
       type="button"
       aria-label={etiqueta}
       title={etiqueta}
-      aria-pressed={esFavorito}
+      aria-pressed={activo ? esFavorito : undefined}
+      disabled={!activo || alternar.isPending}
       onClick={(evento) => {
         evento.preventDefault()
         evento.stopPropagation()
@@ -52,7 +55,9 @@ export function FavoritoBoton({
       }}
       className={cn(
         "inline-flex size-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-muted-foreground transition-colors hover:border-[var(--color-border-strong)] hover:text-foreground",
-        esFavorito && "text-foreground",
+        esFavorito && activo && "text-foreground",
+        (!activo || alternar.isPending) && "cursor-not-allowed opacity-50",
+        mostrarTexto && "h-10 w-auto gap-2 rounded-lg px-4 text-sm font-medium",
         className
       )}
     >
@@ -60,6 +65,11 @@ export function FavoritoBoton({
         className={cn("size-[18px]", esFavorito && "fill-current")}
         aria-hidden="true"
       />
+      {mostrarTexto
+        ? esFavorito
+          ? "Quitar de favoritos"
+          : "Agregar a favoritos"
+        : null}
     </button>
   )
 }
