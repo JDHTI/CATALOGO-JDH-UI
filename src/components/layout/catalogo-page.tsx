@@ -39,7 +39,7 @@ export function CatalogoPage({
         "mx-auto w-full max-w-[var(--container-wide)] px-4 sm:px-6",
         compacta
           ? "py-8 pb-24 md:pb-8 lg:flex lg:h-[calc(100svh-var(--catalogo-chrome-height))] lg:flex-col lg:overflow-hidden lg:py-4"
-          : "py-8 pb-24 md:pb-8",
+          : "py-4 pb-4 md:py-6 md:pb-6",
         className
       )}
     >

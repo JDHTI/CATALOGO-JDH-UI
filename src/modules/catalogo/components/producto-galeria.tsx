@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type CSSProperties } from "react"
 import Image from "next/image"
 
 import { cn } from "@/lib/utils"
@@ -55,79 +55,72 @@ export function ProductoGaleria({ producto }: { producto: Producto }) {
     null
 
   return (
-    <div className="flex flex-col gap-3 lg:h-full lg:min-h-0">
-      {/* El marco es CUADRADO siempre, pero se dimensiona distinto según el
-          eje que manda:
-
-          - Móvil/tablet: la página scrollea, así que no hay techo de alto y
-            el lado es el ANCHO de la columna. `aspect-square w-full` — la
-            card grande que se espera en un teléfono.
-          - `lg`: la ficha se dimensiona al viewport, así que el lado es el
-            MENOR entre el ancho de la columna y el alto disponible: el
-            cuadrado más grande que cabe. Eso es exactamente `cqmin`, con el
-            contenedor declarado como contenedor de tamaño.
-
-          Las alternativas se probaron y fallan: `aspect-square` a secas en
-          `lg` no cabe de alto; marco elástico con `object-contain` deja dos
-          franjas grises a los lados; y `h-full aspect-square max-w-full` deja
-          de ser cuadrado en cuanto el alto supera al ancho (en 1920x1080 la
-          columna mide 680 y el alto disponible 774, y salía 680x774).
-
-          `container-type: size` va solo en `lg` a propósito: exige alto
-          definido, y en móvil el contenedor crece con su contenido. */}
-      <div className="flex lg:[container-type:size] lg:min-h-0 lg:flex-1 lg:items-center lg:justify-start">
+    <div
+      className="lg:[container-type:size] lg:h-full lg:min-h-0"
+      style={
+        {
+          "--gallery-controls-height":
+            disponibles.length > 1 ? "5.5rem" : "0px",
+        } as CSSProperties
+      }
+    >
+      {/* El grupo completo se alinea arriba. Se reserva solo el alto de las
+          miniaturas, de modo que queden a 8px del marco, no al pie de la columna. */}
+      <div className="flex w-full flex-col gap-2 lg:w-[min(100cqw,calc(100cqh-var(--gallery-controls-height)))]">
         <ProductoImagen
           producto={producto}
           imagen={seleccionada}
           variant="detalle"
           sizes="(min-width: 1024px) 45vw, 100vw"
           priority
-          className="aspect-square w-full rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] lg:aspect-auto lg:size-[100cqmin]"
+          className="aspect-square w-full rounded-[var(--jdh-radius-md)] border border-[var(--color-border)]"
         />
+
+        {disponibles.length > 1 ? (
+          <div
+            role="group"
+            aria-label={`Imágenes de ${producto.nombre}`}
+            className="flex shrink-0 gap-2 overflow-x-auto"
+          >
+            {disponibles.map((imagen, indice) => {
+              const esActiva = imagen === seleccionada
+
+              return (
+                <button
+                  key={imagen.thumbUrl}
+                  type="button"
+                  onClick={() => setActivaUrl(imagen.thumbUrl)}
+                  aria-pressed={esActiva}
+                  className={cn(
+                    // Borde + opacidad: dos canales para el estado activo, no
+                    // solo el tono (DESIGN.md — nunca color por sí solo).
+                    "relative size-20 shrink-0 overflow-hidden rounded-[var(--jdh-radius-sm)] border bg-[var(--color-surface-subtle)] transition-[opacity,border-color] duration-150",
+                    esActiva
+                      ? "border-[var(--color-text)] opacity-100"
+                      : "border-[var(--color-border)] opacity-60 hover:border-[var(--color-border-strong)] hover:opacity-100"
+                  )}
+                >
+                  <Image
+                    src={imagen.thumbUrl}
+                    alt=""
+                    fill
+                    sizes="80px"
+                    className="object-cover"
+                    onError={() =>
+                      setRotas((previas) =>
+                        new Set(previas).add(imagen.thumbUrl)
+                      )
+                    }
+                  />
+                  <span className="sr-only">
+                    Ver imagen {indice + 1} de {disponibles.length}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        ) : null}
       </div>
-
-      {disponibles.length > 1 ? (
-        <div
-          role="group"
-          aria-label={`Imágenes de ${producto.nombre}`}
-          className="flex shrink-0 flex-wrap gap-2"
-        >
-          {disponibles.map((imagen, indice) => {
-            const esActiva = imagen === seleccionada
-
-            return (
-              <button
-                key={imagen.thumbUrl}
-                type="button"
-                onClick={() => setActivaUrl(imagen.thumbUrl)}
-                aria-pressed={esActiva}
-                className={cn(
-                  // Borde + opacidad: dos canales para el estado activo, no
-                  // solo el tono (DESIGN.md — nunca color por sí solo).
-                  "relative size-16 shrink-0 overflow-hidden rounded-[var(--jdh-radius-sm)] border bg-[var(--color-surface-subtle)] transition-[opacity,border-color] duration-150",
-                  esActiva
-                    ? "border-[var(--color-text)] opacity-100"
-                    : "border-[var(--color-border)] opacity-60 hover:border-[var(--color-border-strong)] hover:opacity-100"
-                )}
-              >
-                <Image
-                  src={imagen.thumbUrl}
-                  alt=""
-                  fill
-                  sizes="64px"
-                  className="object-cover"
-                  onError={() =>
-                    setRotas((previas) => new Set(previas).add(imagen.thumbUrl))
-                  }
-                />
-                <span className="sr-only">
-                  Ver imagen {indice + 1} de {disponibles.length}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      ) : null}
     </div>
   )
 }

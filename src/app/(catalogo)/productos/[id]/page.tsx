@@ -56,17 +56,17 @@ export default async function ProductoDetallePage({
   // esta ruta). `pb-8` es el mismo cierre que en escritorio.
   return (
     <>
-      <CatalogoPage compacta className="pb-8">
+      <CatalogoPage compacta className="pb-3 md:pb-3 lg:pb-3">
         <script type="application/ld+json">
           {serializarJsonLd(productoJsonLd(producto))}
         </script>
         <ProductoDetalleView producto={producto} />
       </CatalogoPage>
-      <CatalogoPage className="pt-4 pb-8 lg:pt-8">
+      <CatalogoPage className="pt-3 pb-8 lg:pt-3">
         <MismaMarcaSection
           key={producto.id}
           producto={producto}
-          className="border-t border-[var(--color-border)] pt-10"
+          className="border-t border-[var(--color-border)] pt-5"
         />
       </CatalogoPage>
     </>
