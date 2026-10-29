@@ -135,8 +135,8 @@ export function CatalogBannerCarousel() {
             className={cn(
               "h-1.5 rounded-full transition-all duration-[var(--duration-base)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
               i === current
-                ? "w-5 bg-[var(--color-ink)]"
-                : "w-1.5 bg-[var(--color-border-strong)] hover:bg-[var(--color-ink)]"
+                ? "w-5 bg-foreground"
+                : "w-1.5 bg-[var(--color-border-strong)] hover:bg-foreground"
             )}
           />
         ))}

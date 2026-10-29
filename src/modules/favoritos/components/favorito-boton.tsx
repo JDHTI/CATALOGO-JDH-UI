@@ -24,11 +24,14 @@ export function FavoritoBoton({
   productoId,
   nombreProducto,
   className,
+  sobreImagen = false,
 }: {
   productoId: string
   /** Para la etiqueta accesible: "Quitar X de favoritos". */
   nombreProducto: string
   className?: string
+  /** Product images retain a white background in both themes. */
+  sobreImagen?: boolean
 }) {
   const { esFavorito, activo } = useEsFavorito(productoId)
   const alternar = useAlternarFavorito()
@@ -51,8 +54,12 @@ export function FavoritoBoton({
         alternar.mutate({ productoId, esFavorito })
       }}
       className={cn(
-        "inline-flex size-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-muted-foreground transition-colors hover:border-[var(--color-border-strong)] hover:text-foreground",
-        esFavorito && "text-foreground",
+        "inline-flex size-9 items-center justify-center rounded-full border transition-colors",
+        sobreImagen
+          ? "border-[var(--neutral-200)] bg-[var(--neutral-0)] text-[var(--neutral-500)] hover:border-[var(--neutral-300)] hover:text-[var(--neutral-900)]"
+          : "border-[var(--color-border)] bg-[var(--color-surface)] text-muted-foreground hover:border-[var(--color-border-strong)] hover:text-foreground",
+        esFavorito &&
+          (sobreImagen ? "text-[var(--neutral-900)]" : "text-foreground"),
         className
       )}
     >

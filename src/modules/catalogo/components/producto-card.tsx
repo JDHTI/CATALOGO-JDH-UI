@@ -43,6 +43,7 @@ export function ProductoCard({ producto }: { producto: Producto }) {
      */
     <div className="relative h-full">
       <FavoritoBoton
+        sobreImagen
         productoId={producto.id}
         nombreProducto={producto.nombre}
         className="absolute top-2 right-2 z-10"
