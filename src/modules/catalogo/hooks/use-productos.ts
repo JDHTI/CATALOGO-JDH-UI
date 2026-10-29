@@ -2,6 +2,8 @@
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
+import { recomendarAlternativas } from "../api/recomendaciones"
+
 import { CatalogoApiError } from "../api/errors"
 import {
   buscarProductos,
@@ -290,4 +292,29 @@ export function useCategorias(
         ? false
         : intento < 2,
   })
+}
+
+/** Marca primero; proveedor y catalogo solo se consultan si no hay recomendaciones. */
+export function useRecomendacionesProducto(producto: Producto, limite: number) {
+  const marca = useMismaMarca(producto, limite)
+  const necesitaAlternativas = !marca.isPending && marca.productos.length === 0
+  const alternativas = useQuery({
+    queryKey: [
+      "catalogo",
+      "recomendaciones",
+      producto.id,
+      producto.proveedor.id,
+      limite,
+    ],
+    queryFn: ({ signal }) => recomendarAlternativas(producto, limite, signal),
+    enabled: necesitaAlternativas,
+    staleTime: DESTACADOS_STALE_MS,
+  })
+  if (!necesitaAlternativas) return { ...marca, origen: "marca" as const }
+  return {
+    productos: alternativas.data?.productos ?? [],
+    origen: alternativas.data?.origen ?? "proveedor",
+    isPending: alternativas.isPending,
+    isError: alternativas.isError,
+  }
 }

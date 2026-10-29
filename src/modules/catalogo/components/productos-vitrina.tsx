@@ -8,7 +8,10 @@ import {
 import { formatNombreComercial } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import { useDestacados, useMismaMarca } from "../hooks/use-productos"
+import {
+  useDestacados,
+  useRecomendacionesProducto,
+} from "../hooks/use-productos"
 import type { Producto } from "../types"
 import { ProductoCard, ProductoCardSkeleton } from "./producto-card"
 
@@ -161,15 +164,25 @@ export function MismaMarcaSection({
   producto: Producto
   className?: string
 }) {
-  const { productos, isPending, isError } = useMismaMarca(
+  const { productos, isPending, isError, origen } = useRecomendacionesProducto(
     producto,
     LIMITE_VITRINA
   )
   return (
     <VitrinaProductos
       id="misma-marca-title"
-      eyebrow="De la misma marca"
-      titulo={`Más de ${formatNombreComercial(producto.marca)}`}
+      eyebrow={
+        origen === "marca"
+          ? "De la misma marca"
+          : origen === "proveedor"
+            ? "Del mismo proveedor"
+            : "Descubre el catálogo"
+      }
+      titulo={
+        origen === "catalogo"
+          ? "Productos destacados"
+          : `Más de ${formatNombreComercial(origen === "marca" ? producto.marca : producto.proveedor.nombre)}`
+      }
       productos={productos}
       isPending={isPending}
       isError={isError}

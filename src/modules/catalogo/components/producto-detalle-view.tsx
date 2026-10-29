@@ -3,18 +3,18 @@ import { ArrowLeft } from "lucide-react"
 
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs"
 import { JdhButton } from "@/components/common/jdh-button"
-import { formatNombreComercial } from "@/lib/format"
 import { cn } from "@/lib/utils"
-import { FavoritoBoton } from "@/modules/favoritos/components/favorito-boton"
+import { formatNombreComercial } from "@/lib/format"
 
 import type { Producto } from "../types"
 import { ProductoGaleria } from "./producto-galeria"
 import { ProductoDescripcion } from "./producto-descripcion"
+import { ProductoAcciones } from "./producto-acciones"
 
 /**
  * Detalle de un producto real del API. El catálogo es referencia visual para
  * vendedores y clientes: identifica el producto (foto, códigos, marca,
- * fabricante, proveedor) — SIN precio ni compra. Cuando el backend defina
+ * fabricante, proveedor) — sin precios publicados. Cuando el backend defina
  * precios, el slot va debajo del encabezado (ver comentario en el JSX).
  *
  * La ficha tiene DOS comportamientos según el ancho, y la diferencia es
@@ -41,7 +41,7 @@ import { ProductoDescripcion } from "./producto-descripcion"
  */
 export function ProductoDetalleView({ producto }: { producto: Producto }) {
   return (
-    <div className="flex flex-col gap-4 lg:h-full lg:min-h-0">
+    <div className="flex flex-col gap-3 lg:h-full lg:min-h-0">
       <Breadcrumbs
         prominent
         items={[
@@ -68,7 +68,7 @@ export function ProductoDetalleView({ producto }: { producto: Producto }) {
           `minmax(0,…)` y no `11fr`/`13fr` a secas porque un track `fr` tiene
           `min-height:auto`, se niega a bajar del tamaño de su contenido y ahí
           reaparece el scroll. */}
-      <div className="grid grid-cols-1 gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,10fr)_minmax(0,14fr)] lg:grid-rows-[minmax(0,1fr)] lg:gap-8">
+      <div className="grid grid-cols-1 gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:grid-rows-[minmax(0,1fr)] lg:gap-8">
         {/* `key`: la galería guarda cuál miniatura está activa, y al navegar
             de un producto a otro React reutilizaría la instancia con el índice
             de la anterior. */}
@@ -91,7 +91,7 @@ export function ProductoDetalleView({ producto }: { producto: Producto }) {
             Es la convención que documenta `LenisProvider`. */}
         <div
           data-lenis-prevent
-          className="flex flex-col gap-4 lg:min-h-0 lg:overflow-y-auto"
+          className="flex min-w-0 flex-col gap-4 lg:min-h-0 lg:overflow-y-auto"
         >
           <header className="flex shrink-0 items-start justify-between gap-4">
             <div className="flex min-w-0 flex-col gap-1.5">
@@ -104,14 +104,6 @@ export function ProductoDetalleView({ producto }: { producto: Producto }) {
                 {producto.nombre}
               </h1>
             </div>
-            {/* Junto al título y no sobre la foto: aquí la card no es un
-                enlace, así que el corazón puede ir en el flujo, y al lado del
-                nombre queda claro QUÉ se está guardando. */}
-            <FavoritoBoton
-              productoId={producto.id}
-              nombreProducto={producto.nombre}
-              className="mt-0.5 shrink-0"
-            />
           </header>
 
           {/* SLOT DE PRECIO (oculto a propósito): los precios aún no están
@@ -121,6 +113,7 @@ export function ProductoDetalleView({ producto }: { producto: Producto }) {
           <ProductoDescripcion texto={producto.descripcionLarga} />
 
           <FichaTecnica producto={producto} />
+          <ProductoAcciones producto={producto} />
 
           <div className="shrink-0">
             <JdhButton asChild variant="secondary" size="sm">
@@ -136,55 +129,42 @@ export function ProductoDetalleView({ producto }: { producto: Producto }) {
   )
 }
 
-/**
- * Ficha de identificación — pares término/valor en grid, monocromo.
- *
- * El código del producto vive aquí y ya no bajo el título: es un dato de
- * identificación como el resto, y agruparlo libera el alto que la ficha
- * necesita para caber en el viewport.
- *
- * «Referencia» es el campo que el API llama `descripcion`. Se etiquetaba como
- * «Descripción ERP», que sugiere prosa: su contenido real son códigos tipo
- * "67303855" o "CO8413". La descripción de verdad es `descripcionLarga` y se
- * pinta arriba, en su propia sección.
- */
+/** Conserva los datos descriptivos; SKU sustituye el antiguo rotulo Codigo. */
 function FichaTecnica({ producto }: { producto: Producto }) {
-  // Los nombres comerciales llegan del ERP en mayúsculas sostenidas.
-  const filas: { termino: string; valor: string | null; codigo?: boolean }[] = [
-    { termino: "Código", valor: producto.sku, codigo: true },
-    { termino: "Referencia", valor: producto.referencia || null, codigo: true },
-    {
-      termino: "Marca",
-      valor: producto.marca ? formatNombreComercial(producto.marca) : null,
-    },
-    {
-      termino: "Fabricante",
-      valor: producto.fabricante
-        ? formatNombreComercial(producto.fabricante)
-        : null,
-    },
-    {
-      termino: "Proveedor",
-      valor: formatNombreComercial(producto.proveedor.nombre),
-    },
-    { termino: "Categoría", valor: producto.categoria?.nombre ?? null },
-    { termino: "Subcategoría", valor: producto.subcategoria?.nombre ?? null },
-  ].filter((f) => f.valor)
-
+  const ampliada = producto.imagenes.length <= 1
+  const filas = [
+    ["SKU", producto.sku],
+    ["Marca", formatNombreComercial(producto.marca)],
+    ["Fabricante", formatNombreComercial(producto.fabricante)],
+    ["Proveedor", formatNombreComercial(producto.proveedor.nombre)],
+    ["Categoría", producto.categoria?.nombre],
+    ["Subcategoría", producto.subcategoria?.nombre],
+  ].filter(([, valor]) => valor)
   return (
-    <dl className="grid shrink-0 grid-cols-2 overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)]">
-      {filas.map(({ termino, valor, codigo }) => (
+    <dl className="grid shrink-0 grid-cols-2 gap-px overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-border)]">
+      {filas.map(([termino, valor], index) => (
         <div
           key={termino}
-          className="flex flex-col gap-1 border-b border-[var(--color-border)] px-5 py-3.5 last:border-b-0 nth-last-2:border-b-0"
+          className={cn(
+            "min-w-0 bg-background px-4 py-2",
+            ampliada && "py-4",
+            index === filas.length - 1 && filas.length % 2 !== 0 && "col-span-2"
+          )}
         >
-          <dt className="text-xs text-muted-foreground">{termino}</dt>
+          <dt
+            className={cn(
+              "text-xs text-muted-foreground",
+              ampliada && "text-sm"
+            )}
+          >
+            {termino}
+          </dt>
           <dd
             className={cn(
-              "truncate text-base font-medium",
-              codigo && "tabular-nums"
+              "mt-1 text-sm font-medium break-words",
+              ampliada && "text-base",
+              termino === "SKU" && "tabular-nums"
             )}
-            title={valor ?? undefined}
           >
             {valor}
           </dd>
@@ -204,11 +184,11 @@ export function DetalleSkeleton() {
     <div
       role="status"
       aria-label="Cargando producto"
-      className="flex animate-pulse flex-col gap-4 lg:h-full lg:min-h-0"
+      className="flex animate-pulse flex-col gap-3 lg:h-full lg:min-h-0"
     >
       <span className="sr-only">Cargando producto…</span>
       <div className="h-4 w-64 shrink-0 rounded bg-[var(--color-surface-subtle)]" />
-      <div className="grid grid-cols-1 gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,10fr)_minmax(0,14fr)] lg:grid-rows-[minmax(0,1fr)] lg:gap-8">
+      <div className="grid grid-cols-1 gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:grid-rows-[minmax(0,1fr)] lg:gap-8">
         <div className="flex flex-col gap-3 lg:min-h-0">
           {/* Mismo criterio que la galería real: cuadrado a ancho completo en
               móvil, y en `lg` el que cabe en el alto disponible. */}
@@ -217,7 +197,7 @@ export function DetalleSkeleton() {
             {Array.from({ length: 4 }, (_, i) => (
               <div
                 key={i}
-                className="size-16 rounded-[var(--jdh-radius-sm)] bg-[var(--color-surface-subtle)]"
+                className="size-20 rounded-[var(--jdh-radius-sm)] bg-[var(--color-surface-subtle)]"
               />
             ))}
           </div>
@@ -226,7 +206,7 @@ export function DetalleSkeleton() {
           <div className="h-3 w-24 shrink-0 rounded bg-[var(--color-surface-subtle)]" />
           <div className="h-8 w-3/4 shrink-0 rounded bg-[var(--color-surface-subtle)]" />
           <div className="h-20 shrink-0 rounded bg-[var(--color-surface-subtle)] lg:min-h-0 lg:flex-1" />
-          <div className="h-48 w-full shrink-0 rounded-[var(--jdh-radius-md)] bg-[var(--color-surface-subtle)]" />
+          <div className="h-12 w-full shrink-0 rounded-[var(--jdh-radius-md)] bg-[var(--color-surface-subtle)]" />
         </div>
       </div>
     </div>
