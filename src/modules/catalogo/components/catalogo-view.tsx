@@ -20,7 +20,7 @@ import {
   useProveedores,
 } from "../hooks/use-productos"
 import type { Marca } from "../types"
-import { CatalogBannerCarousel } from "./catalog-banner-carousel"
+import { CatalogBanner } from "./catalog-banner"
 import { CatalogFilters } from "./catalog-filters"
 import { ProductoCard, ProductoCardSkeleton } from "./producto-card"
 import { DestacadosCatalogo } from "./productos-vitrina"
@@ -364,8 +364,11 @@ export function CatalogoView({ marca }: { marca?: Marca } = {}) {
         </aside>
 
         <div className="flex min-w-0 flex-col gap-5">
-          {/* Banner de imágenes de producto, al tamaño de la lista. */}
-          <CatalogBannerCarousel />
+          {/* Banner de la categoría activa (o el general), al tamaño de la lista. */}
+          <CatalogBanner
+            categoriaIds={categoriaIds}
+            categorias={categorias.data}
+          />
 
           {/* Barra de resultados. Aquí NO hay campo de búsqueda: el único
               buscador de la app es el del header, que escribe `?q=` en esta
