@@ -38,27 +38,12 @@ function descripcionDe(slug: string | null | undefined, nombre: string) {
 }
 
 /**
- * Proporción real (ancho / alto) de cada pieza del bucket. El contenedor la
- * adopta para que `object-cover` no recorte nada: con un alto fijo, las piezas
- * 3:1 solo mostraban la mitad de su alto y cortaban el producto. Una pieza
- * nueva sin entrada usa la proporción de las más anchas (4,8:1), que recorta
- * poco; si cambia el arte de un slug a otra proporción, se actualiza aquí.
+ * Todas las piezas del bucket miden 2746×572 (4,8:1). El contenedor adopta esa
+ * proporción para que `object-cover` no recorte nada y el banner no cambie de
+ * alto al pasar de una categoría a otra. Una pieza subida con otra proporción
+ * se recortaría: hay que entregarla a este tamaño.
  */
-const ASPECTO_POR_DEFECTO = 2746 / 572
-const ASPECTO: Record<string, number> = {
-  general: 2746 / 572,
-  alimentos: 2746 / 572,
-  proteinas: 2746 / 572,
-  "aseo-y-limpieza": 2746 / 572,
-  "cuidado-personal": 2172 / 724,
-  menaje: 2172 / 724,
-  "empaques-y-desechables": 2172 / 724,
-  "licores-y-tabaco": 2172 / 724,
-  "papeleria-y-oficina": 2172 / 724,
-  industrial: 2172 / 724,
-  mascotas: 2172 / 724,
-  farmaceuticos: 2172 / 724,
-}
+const ASPECTO = 2746 / 572
 
 /**
  * Banner del listado, por convención de bucket (`site/banners/{slug}.webp`).
@@ -95,7 +80,7 @@ export function CatalogBanner({
 
   return (
     <div
-      style={{ aspectRatio: ASPECTO[slug] ?? ASPECTO_POR_DEFECTO }}
+      style={{ aspectRatio: ASPECTO }}
       className="relative min-h-40 w-full overflow-hidden rounded-[var(--jdh-radius-md)] bg-[var(--color-ink)]"
     >
       <Image
