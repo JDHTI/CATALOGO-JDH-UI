@@ -10,6 +10,33 @@ import type { Categoria } from "../types"
 /** Banner por defecto: fuera de una categoría, o si la categoría no tiene pieza. */
 const SLUG_GENERAL = "general"
 
+const TEXTO_GENERAL = {
+  titulo: "Todos nuestros productos",
+  descripcion: "Todo el portafolio de JDH en un solo lugar.",
+}
+
+/**
+ * Qué encontrará el cliente en cada categoría, por `slug`. Una categoría nueva
+ * sin entrada aquí usa el texto genérico de `descripcionDe`, no queda vacía.
+ */
+const DESCRIPCIONES: Record<string, string> = {
+  alimentos: "Despensa, abarrotes y básicos para tu negocio.",
+  proteinas: "Carnes, pollo, pescado y derivados.",
+  "aseo-y-limpieza": "Productos de limpieza para hogar e institución.",
+  "cuidado-personal": "Higiene y cuidado diario.",
+  menaje: "Utensilios y artículos para cocina y mesa.",
+  "empaques-y-desechables": "Empaques y desechables para tus despachos.",
+  "licores-y-tabaco": "Licores y tabaco para tu punto de venta.",
+  "papeleria-y-oficina": "Papelería y suministros de oficina.",
+  industrial: "Insumos y elementos de uso industrial.",
+  mascotas: "Alimento y accesorios para mascotas.",
+  farmaceuticos: "Productos farmacéuticos y de salud.",
+}
+
+function descripcionDe(slug: string | null | undefined, nombre: string) {
+  return (slug && DESCRIPCIONES[slug]) || `Explora la categoría ${nombre}.`
+}
+
 /**
  * Banner del listado, por convención de bucket (`site/banners/{slug}.webp`).
  * El `slug` de la categoría activa ES el nombre del archivo; no hay mapeo
@@ -55,6 +82,25 @@ export function CatalogBanner({
         className="object-cover"
         onError={() => setFallidos((prev) => new Set(prev).add(slug))}
       />
+      {/* El arte deja libre ~30% a la izquierda: el texto vive ahí. El
+          degradado oscuro asegura el contraste sea cual sea la pieza. */}
+      <span
+        aria-hidden="true"
+        className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-[var(--color-ink)] via-[var(--color-ink)/60%] to-transparent"
+      />
+      <div className="absolute inset-y-0 left-0 flex w-[38%] flex-col justify-center gap-1.5 pl-4 sm:w-[32%] sm:gap-2 sm:pl-8">
+        <p className="font-mono text-[10px] tracking-[0.08em] text-[var(--color-on-ink-muted)] uppercase sm:text-xs">
+          {categoria ? "Categoría" : "Catálogo"}
+        </p>
+        <h2 className="text-base leading-tight font-bold tracking-tight text-balance text-[var(--color-on-ink)] sm:text-2xl">
+          {categoria ? categoria.nombre : TEXTO_GENERAL.titulo}
+        </h2>
+        <p className="line-clamp-3 text-xs text-[var(--color-on-ink-muted)] sm:text-sm">
+          {categoria
+            ? descripcionDe(categoria.slug, categoria.nombre)
+            : TEXTO_GENERAL.descripcion}
+        </p>
+      </div>
     </div>
   )
 }
