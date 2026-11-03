@@ -38,6 +38,29 @@ function descripcionDe(slug: string | null | undefined, nombre: string) {
 }
 
 /**
+ * Proporción real (ancho / alto) de cada pieza del bucket. El contenedor la
+ * adopta para que `object-cover` no recorte nada: con un alto fijo, las piezas
+ * 3:1 solo mostraban la mitad de su alto y cortaban el producto. Una pieza
+ * nueva sin entrada usa la proporción de las más anchas (4,8:1), que recorta
+ * poco; si cambia el arte de un slug a otra proporción, se actualiza aquí.
+ */
+const ASPECTO_POR_DEFECTO = 2746 / 572
+const ASPECTO: Record<string, number> = {
+  general: 2746 / 572,
+  alimentos: 2746 / 572,
+  proteinas: 2746 / 572,
+  "aseo-y-limpieza": 2746 / 572,
+  "cuidado-personal": 2172 / 724,
+  menaje: 2172 / 724,
+  "empaques-y-desechables": 2172 / 724,
+  "licores-y-tabaco": 2172 / 724,
+  "papeleria-y-oficina": 2172 / 724,
+  industrial: 2172 / 724,
+  mascotas: 2172 / 724,
+  farmaceuticos: 2172 / 724,
+}
+
+/**
  * Banner del listado, por convención de bucket (`site/banners/{slug}.webp`).
  * El `slug` de la categoría activa ES el nombre del archivo; no hay mapeo
  * aparte ni endpoint. Se muestra el de una categoría solo cuando el filtro de
@@ -71,7 +94,10 @@ export function CatalogBanner({
   if (!src) return null
 
   return (
-    <div className="relative h-48 w-full overflow-hidden rounded-[var(--jdh-radius-md)] bg-[var(--color-ink)] sm:h-56">
+    <div
+      style={{ aspectRatio: ASPECTO[slug] ?? ASPECTO_POR_DEFECTO }}
+      className="relative min-h-40 w-full overflow-hidden rounded-[var(--jdh-radius-md)] bg-[var(--color-ink)]"
+    >
       <Image
         key={slug}
         src={src}
