@@ -2,10 +2,9 @@
 
 Alternativa al despliegue en Vercel (`despliegue.md`): la misma app corre en la
 VM `tienda.jdh.local` (192.168.100.218) con Docker Compose, detrás de Caddy con
-TLS de la CA interna. El stack completo (UI + API + Postgres + Redis + storage
-
-- Caddy) lo define el repo **CATALOGO-JDH-API** en `deploy/`; este repo aporta
-  solo la imagen y su pipeline. Runbook completo: `deploy/README.md` de ese repo.
+TLS de la CA interna. El stack completo (UI, API, Postgres, Redis, storage y
+Caddy) lo define el repo **CATALOGO-JDH-API** en `deploy/`; este repo aporta
+solo la imagen y su pipeline. Runbook completo: `deploy/README.md` de ese repo.
 
 ## Qué aporta este repo
 
@@ -64,7 +63,8 @@ quedan en la imagen final).
 ## Mantenimiento del `Dockerfile`
 
 > El trazado de `output: "standalone"` omite `@swc/helpers/esm` y, con Node ≥
-> 22.12, el contenedor muere con `Cannot find module .../@swc/helpers/esm/
-_interop_require_default.js`. `next.config.ts` lo incluye con
+> 22.12, el contenedor muere con
+> `Cannot find module .../@swc/helpers/esm/_interop_require_default.js`.
+> `next.config.ts` lo incluye con
 > `outputFileTracingIncludes`. Si Next o pnpm cambian la ruta del store
 > virtual y el síntoma reaparece, empezar por ahí.
