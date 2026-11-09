@@ -42,8 +42,40 @@ import { CatalogoApiError } from "./errors"
 
 export { CatalogoApiError }
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1"
+/**
+ * Base del API para una petición.
+ *
+ * `NEXT_PUBLIC_API_URL` puede ser ABSOLUTA (Vercel, local) o RELATIVA al origen
+ * (`/api/v1`, en tienda.jdh.local, donde Caddy sirve UI y API en el mismo
+ * origen). La relativa existe porque esa variable se hornea en el bundle: con
+ * un host fijo, quien entra por la IP o por un nombre público pide los
+ * productos a un `.local` que desde fuera no resuelve, y el catálogo queda
+ * vacío. Relativa, el navegador la completa con el origen por el que entró.
+ *
+ * En el servidor no hay origen del que colgarla: ahí se usa `BACKEND_API_URL`,
+ * el API por la red interna (el mismo que usan favoritos y listas).
+ */
+export function resolverApiBaseUrl(
+  configurada: string | undefined,
+  origenNavegador: string | undefined,
+  interna: string | undefined
+): string {
+  const base = configurada || "http://localhost:8080/api/v1"
+  if (!base.startsWith("/")) return base
+  if (origenNavegador) return `${origenNavegador}${base}`
+  if (interna) return interna
+  throw new Error(
+    `NEXT_PUBLIC_API_URL es relativa (${base}) y falta BACKEND_API_URL para las peticiones del servidor`
+  )
+}
+
+function apiBaseUrl(): string {
+  return resolverApiBaseUrl(
+    process.env.NEXT_PUBLIC_API_URL,
+    typeof window === "undefined" ? undefined : window.location.origin,
+    process.env.BACKEND_API_URL
+  ).replace(/\/+$/, "")
+}
 
 /**
  * Las degradaciones de abajo mantienen la página en pie cuando el API va por
@@ -61,7 +93,7 @@ const yaAvisado = new Set<string>()
 function avisarDegradacion(motivo: string, detalle: string) {
   if (process.env.NODE_ENV === "production" || yaAvisado.has(motivo)) return
   yaAvisado.add(motivo)
-  console.warn(`[catalogo] ${detalle} — API en ${API_BASE_URL}`)
+  console.warn(`[catalogo] ${detalle} — API en ${apiBaseUrl()}`)
 }
 
 /**
@@ -77,7 +109,7 @@ async function apiGet<Schema extends z.ZodType>(
   params?: Record<string, string | number | undefined>,
   signal?: AbortSignal
 ): Promise<z.infer<Schema>> {
-  const url = new URL(`${API_BASE_URL}${path}`)
+  const url = new URL(`${apiBaseUrl()}${path}`)
   for (const [clave, valor] of Object.entries(params ?? {})) {
     if (valor !== undefined && valor !== "") {
       url.searchParams.set(clave, String(valor))

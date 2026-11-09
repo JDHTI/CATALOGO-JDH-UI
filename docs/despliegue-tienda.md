@@ -1,26 +1,34 @@
 # Despliegue en tienda.jdh.local (Docker)
 
 Alternativa al despliegue en Vercel (`despliegue.md`): la misma app corre en la
-VM `tienda.jdh.local` (192.168.100.216) con Docker Compose, detrás de Caddy con
+VM `tienda.jdh.local` (192.168.100.218) con Docker Compose, detrás de Caddy con
 TLS de la CA interna. El stack completo (UI + API + Postgres + Redis + storage
-+ Caddy) lo define el repo **CATALOGO-JDH-API** en `deploy/`; este repo aporta
-solo la imagen y su pipeline. Runbook completo: `deploy/README.md` de ese repo.
+
+- Caddy) lo define el repo **CATALOGO-JDH-API** en `deploy/`; este repo aporta
+  solo la imagen y su pipeline. Runbook completo: `deploy/README.md` de ese repo.
 
 ## Qué aporta este repo
 
-| Archivo | Para qué |
-|---|---|
-| `Dockerfile` | Etapas `deps` → `auth-migrate` (one-shot de Better Auth) → `build` → `runtime` (Next standalone, usuario `node`, healthcheck) |
-| `.dockerignore` | Contexto de build mínimo (sin `node_modules`, `.next`, `.env*`, docs) |
-| `next.config.ts` | `output: "standalone"` **solo** con `NEXT_OUTPUT=standalone` (lo fija el Dockerfile); el build de Vercel no cambia |
-| `src/app/api/health/route.ts` | `GET /api/health` para el `HEALTHCHECK` y la verificación del despliegue; no consulta Postgres ni el API a propósito |
-| `.github/workflows/ci-cd.yml` | CI en GitHub (lint, tipos, pruebas, imagen) y CD en el runner self-hosted `tienda-jdh` |
+| Archivo                       | Para qué                                                                                                                      |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `Dockerfile`                  | Etapas `deps` → `auth-migrate` (one-shot de Better Auth) → `build` → `runtime` (Next standalone, usuario `node`, healthcheck) |
+| `.dockerignore`               | Contexto de build mínimo (sin `node_modules`, `.next`, `.env*`, docs)                                                         |
+| `next.config.ts`              | `output: "standalone"` **solo** con `NEXT_OUTPUT=standalone` (lo fija el Dockerfile); el build de Vercel no cambia            |
+| `src/app/api/health/route.ts` | `GET /api/health` para el `HEALTHCHECK` y la verificación del despliegue; no consulta Postgres ni el API a propósito          |
+| `.github/workflows/ci-cd.yml` | CI en GitHub (lint, tipos, pruebas, imagen) y CD en el runner self-hosted `tienda-jdh`                                        |
 
 ## Diferencias con Vercel
 
 - **Un solo origen.** Caddy sirve la UI en `/`, el API en `/api/v1` y las
-  imágenes en `/media`. `NEXT_PUBLIC_API_URL=https://tienda.jdh.local/api/v1`,
-  `NEXT_PUBLIC_ASSETS_CDN_URL=https://tienda.jdh.local/media`. No hay CORS.
+  imágenes en `/media`. No hay CORS.
+- **`NEXT_PUBLIC_API_URL=/api/v1`, relativa.** El navegador la completa con el
+  origen por el que entró (IP, `tienda.jdh.local` o nombre público, por http o
+  https) y el servidor usa `BACKEND_API_URL` por la red interna. Con un host
+  fijo horneado, quien entra desde internet pide los productos a un `.local`
+  que no resuelve y el catálogo queda vacío.
+- **`NEXT_PUBLIC_ASSETS_CDN_URL=https://tienda.jdh.local/media`** sigue
+  absoluta: las imágenes pasan por `/_next/image`, que las descarga el
+  servidor, así que el navegador nunca pide ese host.
 - **`NEXT_PUBLIC_*` son `build.args`** del compose (derivadas de `TIENDA_HOST`),
   no variables del dashboard: cambiarlas exige `deploy.sh ui`.
 - **`DATABASE_URL`** apunta al Postgres del propio stack (`postgres:5432`,
@@ -34,8 +42,8 @@ solo la imagen y su pipeline. Runbook completo: `deploy/README.md` de ese repo.
   Vercel/R2 sigue siendo «nunca».
 - **`NODE_EXTRA_CA_CERTS`** apunta a la raíz interna para que el fetch
   server-side a `https://tienda.jdh.local` confíe en el certificado.
-- **`BACKEND_API_URL=http://api:8080/api/v1`** (favoritos y listas) por la red
-  interna; el API valida el JWT contra `http://ui:3000/api/auth/jwks`.
+- **`BACKEND_API_URL=http://api:8080/api/v1`** (catálogo del lado del
+  servidor, favoritos y listas) por la red interna; el API valida el JWT contra `http://ui:3000/api/auth/jwks`.
 - **Entra ID**: redirect URI `https://tienda.jdh.local/api/auth/callback/microsoft`.
   Mientras no esté registrado, el ingreso de clientes (email + contraseña)
   funciona y el del personal responde `AADSTS50011`.
@@ -57,6 +65,6 @@ quedan en la imagen final).
 
 > El trazado de `output: "standalone"` omite `@swc/helpers/esm` y, con Node ≥
 > 22.12, el contenedor muere con `Cannot find module .../@swc/helpers/esm/
-> _interop_require_default.js`. `next.config.ts` lo incluye con
+_interop_require_default.js`. `next.config.ts` lo incluye con
 > `outputFileTracingIncludes`. Si Next o pnpm cambian la ruta del store
 > virtual y el síntoma reaparece, empezar por ahí.
