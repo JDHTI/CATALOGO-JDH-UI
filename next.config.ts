@@ -69,6 +69,11 @@ const nextConfig: NextConfig = {
   }),
   typedRoutes: true,
   images: {
+    // 5 minutos, el `max-age` con el que el API sube los banners del sitio
+    // (`site/banners/{slug}.webp`): la key es estable y se reemplaza el archivo,
+    // y el 4 h por defecto de Next retrasaría ese cambio. Aplica a todas las
+    // imágenes remotas; el optimizador revalida contra el origen al vencer.
+    minimumCacheTTL: 300,
     dangerouslyAllowLocalIP: permitirHostsLocales,
     remotePatterns: [
       // El bucket en uso, derivado de S3_PUBLIC_URL. Ahí viven TODAS las

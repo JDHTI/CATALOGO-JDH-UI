@@ -54,8 +54,12 @@ const ASPECTO = 2746 / 572
  * Si la pieza no existe (`servicios`, `otros`, 404) cae a `general`, y si
  * tampoco hay `general` o falta `NEXT_PUBLIC_ASSETS_CDN_URL`, no se dibuja.
  *
- * `unoptimized`: el objeto vive con `max-age=300` y se reemplaza sin cambiar
- * de nombre; el optimizador de Next lo recordaría mucho más tiempo.
+ * Pasa por `/_next/image` como el resto de imágenes: así la descarga la hace el
+ * SERVIDOR. Con `unoptimized` el navegador pediría directo `…/media/…`, que en
+ * la VM es `tienda.jdh.local` con certificado de la CA interna: no resuelve o
+ * no es de confianza fuera de la LAN y el banner no carga. El objeto se
+ * reemplaza sin cambiar de nombre; `images.minimumCacheTTL` (next.config.ts)
+ * lo alinea con su `max-age=300`.
  */
 export function CatalogBanner({
   categoriaIds,
@@ -88,7 +92,6 @@ export function CatalogBanner({
         src={src}
         alt=""
         fill
-        unoptimized
         sizes="(min-width: 1024px) 60vw, 100vw"
         className="object-cover"
         onError={() => setFallidos((prev) => new Set(prev).add(slug))}
