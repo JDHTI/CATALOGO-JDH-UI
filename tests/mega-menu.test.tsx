@@ -29,6 +29,9 @@ const subcategoria = (id: number, nombre: string, totalProductos = 10) => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  // Viewport móvil: el toque en una categoría solo abre su panel. En `md+` el
+  // clic navega (ver el test del enlace de la categoría).
+  vi.stubGlobal("matchMedia", () => ({ matches: false }))
   mocks.useCategorias.mockReturnValue({
     data: [
       {
@@ -68,7 +71,10 @@ beforeEach(() => {
   })
 })
 
-afterEach(() => vi.useRealTimers())
+afterEach(() => {
+  vi.useRealTimers()
+  vi.unstubAllGlobals()
+})
 
 function abrir() {
   render(<MegaMenu />)
@@ -134,6 +140,25 @@ it("una categoría con pocas subcategorías solo tiene destacadas", () => {
   fireEvent.click(pestana("Categoría Nueva"))
   expect(panel().getByRole("link", { name: /Única/ })).toBeDefined()
   expect(screen.queryByRole("region", { name: /Más subcategorías/ })).toBeNull()
+})
+
+it("cada categoría de la lista es un enlace a su categoría completa", () => {
+  abrir()
+  expect(pestana("Alimentos").getAttribute("href")).toBe(
+    "/productos?categoria=1"
+  )
+  expect(pestana("Categoría Nueva").getAttribute("href")).toBe(
+    "/productos?categoria=2"
+  )
+  // Marcas y Proveedores no tienen destino propio: siguen siendo botones.
+  expect(pestana("Marcas").getAttribute("href")).toBeNull()
+})
+
+it("en móvil el toque en una categoría no navega: solo abre su panel", () => {
+  abrir()
+  const noCancelado = fireEvent.click(pestana("Categoría Nueva"))
+  expect(noCancelado).toBe(false)
+  expect(pestana("Categoría Nueva").getAttribute("aria-selected")).toBe("true")
 })
 
 it("elegir una pestaña cambia el panel", () => {
