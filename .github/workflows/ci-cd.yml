@@ -1,5 +1,5 @@
 # CI en runners de GitHub; CD en el runner self-hosted del servidor
-# tienda.jdh.local (192.168.100.216). El servidor está en la red interna: el
+# tienda.jdh.local (192.168.100.218). El servidor está en la red interna: el
 # runner se conecta saliendo hacia GitHub, no hay puertos abiertos para esto.
 #
 # La UI se construye desde su clon en el servidor y corre en el stack de
