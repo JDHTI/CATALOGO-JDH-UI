@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import type { Route } from "next"
 import Link from "next/link"
 import { ArrowLeft, ArrowRight, ChevronRight, Store, Tags } from "lucide-react"
 
@@ -149,6 +150,8 @@ export function MegaMenuCatalogo({ onNavigate }: { onNavigate: () => void }) {
               <Pestana
                 key={categoria.id}
                 id={idCategoria(categoria)}
+                href={categoriaHref(categoria)}
+                onNavigate={onNavigate}
                 activa={activo === idCategoria(categoria)}
                 onSeleccionar={seleccionar}
                 onPuntero={alEntrarConPuntero}
@@ -249,8 +252,17 @@ export function MegaMenuCatalogo({ onNavigate }: { onNavigate: () => void }) {
   )
 }
 
+/**
+ * Pestaña de la lista. Con `href` (las categorías) es un enlace de verdad: en
+ * escritorio el clic navega a la categoría completa —el hover ya abre su
+ * panel, así que el clic no tiene otro trabajo— y conserva clic medio y
+ * "abrir en pestaña nueva". Por debajo de `md` el flujo es de dos pasos, y ahí
+ * el toque solo abre el panel. Sin `href` (Marcas, Proveedores) es un botón.
+ */
 function Pestana({
   id,
+  href,
+  onNavigate,
   activa,
   onSeleccionar,
   onPuntero,
@@ -258,35 +270,36 @@ function Pestana({
   children,
 }: {
   id: string
+  href?: Route
+  onNavigate?: () => void
   activa: boolean
   onSeleccionar: (id: string) => void
   onPuntero: (id: string) => void
   onSalirPuntero: () => void
   children: React.ReactNode
 }) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      id={`mega-menu-tab-${id}`}
-      data-tab={id}
-      aria-selected={activa}
-      aria-controls="mega-menu-tabpanel"
-      // Roving tabindex: la lista entera es UNA parada de Tab.
-      tabIndex={activa ? 0 : -1}
-      onClick={() => onSeleccionar(id)}
-      onPointerEnter={(event) => {
-        // Solo ratón: en táctil, el "hover" sintético mandaría el panel sin
-        // que el usuario haya tocado nada.
-        if (event.pointerType === "mouse") onPuntero(id)
-      }}
-      onPointerLeave={onSalirPuntero}
-      className={cn(
-        "flex h-9 w-full items-center gap-2.5 px-2 text-left text-sm md:h-8",
-        CLASES_ENLACE,
-        activa && "bg-accent font-medium"
-      )}
-    >
+  const propiedades = {
+    role: "tab",
+    id: `mega-menu-tab-${id}`,
+    "data-tab": id,
+    "aria-selected": activa,
+    "aria-controls": "mega-menu-tabpanel",
+    // Roving tabindex: la lista entera es UNA parada de Tab.
+    tabIndex: activa ? 0 : -1,
+    onPointerEnter: (event: React.PointerEvent) => {
+      // Solo ratón: en táctil, el "hover" sintético mandaría el panel sin
+      // que el usuario haya tocado nada.
+      if (event.pointerType === "mouse") onPuntero(id)
+    },
+    onPointerLeave: onSalirPuntero,
+    className: cn(
+      "flex h-9 w-full items-center gap-2.5 px-2 text-left text-sm md:h-8",
+      CLASES_ENLACE,
+      activa && "bg-accent font-medium"
+    ),
+  }
+  const contenido = (
+    <>
       {children}
       <ChevronRight
         className={cn(
@@ -295,7 +308,32 @@ function Pestana({
         )}
         aria-hidden="true"
       />
-    </button>
+    </>
+  )
+
+  if (!href) {
+    return (
+      <button type="button" onClick={() => onSeleccionar(id)} {...propiedades}>
+        {contenido}
+      </button>
+    )
+  }
+
+  return (
+    <Link
+      href={href}
+      onClick={(event) => {
+        if (window.matchMedia("(min-width: 768px)").matches) {
+          onNavigate?.()
+          return
+        }
+        event.preventDefault()
+        onSeleccionar(id)
+      }}
+      {...propiedades}
+    >
+      {contenido}
+    </Link>
   )
 }
 

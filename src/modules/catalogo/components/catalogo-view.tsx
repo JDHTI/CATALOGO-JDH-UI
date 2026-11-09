@@ -321,7 +321,12 @@ export function CatalogoView({ marca }: { marca?: Marca } = {}) {
         prominent
         items={[
           { label: "Inicio", href: "/" },
-          { label: "Productos", href: "/productos" },
+          // En `/productos` ya estamos en esa ruta: enlazarla a sí misma no
+          // lleva a ningún lado. En la página de una marca sí es el camino de
+          // vuelta al listado.
+          marca
+            ? { label: "Productos", href: "/productos" }
+            : { label: "Productos" },
           { label: titulo },
         ]}
       />
