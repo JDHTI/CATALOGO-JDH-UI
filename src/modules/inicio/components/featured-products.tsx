@@ -49,9 +49,6 @@ export function FeaturedProducts() {
       <ScrollReveal>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex flex-col gap-2">
-            <p className="font-mono text-xs tracking-[0.08em] text-muted-foreground uppercase">
-              Del portafolio
-            </p>
             <h2
               id="destacados-title"
               className="text-2xl font-bold tracking-tight text-balance sm:text-3xl"

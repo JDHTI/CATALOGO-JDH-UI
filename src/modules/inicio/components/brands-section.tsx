@@ -96,9 +96,6 @@ export function BrandsSection({ marcas }: { marcas: LogoMarca[] | null }) {
     <section aria-labelledby="marcas-title" className="flex flex-col gap-8">
       <ScrollReveal>
         <div className="flex flex-col gap-2">
-          <p className="font-mono text-xs tracking-[0.08em] text-muted-foreground uppercase">
-            Las marcas que ya conoces
-          </p>
           <h2
             id="marcas-title"
             className="text-2xl font-bold tracking-tight text-balance sm:text-3xl"
