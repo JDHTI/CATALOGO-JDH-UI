@@ -18,7 +18,7 @@ const VALUE_PROPS = [
   },
   {
     icon: Boxes,
-    title: "Más de 3.000 referencias",
+    title: "Más de 9.000 referencias",
     description:
       "Despensa, bebidas, aseo, desechables y menaje para tu operación, en un solo proveedor.",
   },
