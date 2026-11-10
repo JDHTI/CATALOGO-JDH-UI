@@ -61,9 +61,6 @@ export function CategoriasSection() {
     >
       <ScrollReveal>
         <div className="flex flex-col gap-2">
-          <p className="font-mono text-xs tracking-[0.08em] text-muted-foreground uppercase">
-            Categorías destacadas
-          </p>
           <h2
             id="categorias-grid-title"
             className="text-2xl font-bold tracking-tight text-balance sm:text-3xl"

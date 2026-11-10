@@ -72,9 +72,6 @@ export function ProviderMarquee() {
       <div className="mx-auto max-w-[var(--container-wide)] px-4 py-[var(--space-16)] sm:px-6 lg:py-[var(--space-24)]">
         <div className="flex flex-col gap-8">
           <div className="flex flex-col gap-2">
-            <p className="font-mono text-xs tracking-[0.08em] text-[var(--color-on-ink-muted)] uppercase dark:text-[var(--color-on-paper-muted)]">
-              Aliados de confianza
-            </p>
             <h2
               id="proveedores-title"
               className="text-2xl font-bold tracking-tight text-balance text-[var(--color-on-ink)] sm:text-3xl dark:text-[var(--color-on-paper)]"
