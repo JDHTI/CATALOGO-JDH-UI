@@ -25,8 +25,8 @@ export function CatalogoPage({
    * y ficha técnica en una pantalla deja el texto en una franja inservible.
    * Ahí la página scrollea como cualquier otra y la foto sube al desplazar.
    *
-   * Requiere que la ruta oculte el footer (ver `SiteFooter`): con él, el
-   * shell suma su alto y la página scrollea igual.
+   * El footer del shell va siempre debajo: la página ocupa la primera
+   * pantalla y el footer queda a un scroll, sin hueco ni solape.
    */
   compacta?: boolean
 }) {
