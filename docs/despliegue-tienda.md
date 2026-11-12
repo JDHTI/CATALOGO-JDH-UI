@@ -6,6 +6,14 @@ TLS de la CA interna. El stack completo (UI, API, Postgres, Redis, storage y
 Caddy) lo define el repo **CATALOGO-JDH-API** en `deploy/`; este repo aporta
 solo la imagen y su pipeline. Runbook completo: `deploy/README.md` de ese repo.
 
+> **Dominio público: `tienda.jdh.com.co`.** La CA interna solo firma
+> `*.jdh.local`, así que el nombre público lleva un certificado público (ACME,
+> Let's Encrypt) y es el dominio canónico de la app. Se activa con
+> `PUBLIC_HOST` en `deploy/.env` del repo del API; `TIENDA_HOST`
+> (`tienda.jdh.local`) sigue sirviéndose con la CA interna. Donde este
+> documento dice «dominio canónico» es `PUBLIC_HOST` si está definido y, si no,
+> `TIENDA_HOST`.
+
 ## Qué aporta este repo
 
 | Archivo                       | Para qué                                                                                                                      |
@@ -25,11 +33,11 @@ solo la imagen y su pipeline. Runbook completo: `deploy/README.md` de ese repo.
   https) y el servidor usa `BACKEND_API_URL` por la red interna. Con un host
   fijo horneado, quien entra desde internet pide los productos a un `.local`
   que no resuelve y el catálogo queda vacío.
-- **`NEXT_PUBLIC_ASSETS_CDN_URL=https://tienda.jdh.local/media`** sigue
+- **`NEXT_PUBLIC_ASSETS_CDN_URL=https://<dominio canónico>/media`** sigue
   absoluta: las imágenes pasan por `/_next/image`, que las descarga el
   servidor, así que el navegador nunca pide ese host.
-- **`NEXT_PUBLIC_*` son `build.args`** del compose (derivadas de `TIENDA_HOST`),
-  no variables del dashboard: cambiarlas exige `deploy.sh ui`.
+- **`NEXT_PUBLIC_*` son `build.args`** del compose (derivadas del dominio
+  canónico), no variables del dashboard: cambiarlas exige `deploy.sh ui`.
 - **`DATABASE_URL`** apunta al Postgres del propio stack (`postgres:5432`,
   base `jdh_auth`), sin pooler: aquí hay un solo proceso Node de larga vida,
   no una función por petición.
@@ -40,12 +48,20 @@ solo la imagen y su pipeline. Runbook completo: `deploy/README.md` de ese repo.
   por defecto la optimización de imágenes de IPs locales. Aquí es correcto; en
   Vercel/R2 sigue siendo «nunca».
 - **`NODE_EXTRA_CA_CERTS`** apunta a la raíz interna para que el fetch
-  server-side a `https://tienda.jdh.local` confíe en el certificado.
+  server-side a `https://tienda.jdh.local` confíe en el certificado. El nombre
+  público no la necesita: su certificado es de una CA pública. Un alias de
+  Caddy en la red de Docker hace que la UI lo resuelva sin salir a la IP
+  pública.
 - **`BACKEND_API_URL=http://api:8080/api/v1`** (catálogo del lado del
   servidor, favoritos y listas) por la red interna; el API valida el JWT contra `http://ui:3000/api/auth/jwks`.
-- **Entra ID**: redirect URI `https://tienda.jdh.local/api/auth/callback/microsoft`.
-  Mientras no esté registrado, el ingreso de clientes (email + contraseña)
-  funciona y el del personal responde `AADSTS50011`.
+- **Entra ID**: redirect URI
+  `https://tienda.jdh.com.co/api/auth/callback/microsoft` (el dominio canónico;
+  antes era `tienda.jdh.local`). `BETTER_AUTH_URL` sale de ahí y debe coincidir
+  byte a byte con el registrado. Mientras no esté registrado, el ingreso de
+  clientes (email + contraseña) funciona y el del personal responde
+  `AADSTS50011`. El personal debe entrar por el dominio canónico: el flujo de
+  OAuth arma el callback con `BETTER_AUTH_URL`, y entrar por la IP o por
+  `tienda.jdh.local` deja la cookie de estado en otro host.
 
 ## Probar la imagen en local
 
