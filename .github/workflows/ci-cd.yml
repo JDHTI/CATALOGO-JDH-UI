@@ -64,7 +64,7 @@ jobs:
     needs: [check, image]
     if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
     runs-on: [self-hosted, tienda-jdh]
-    timeout-minutes: 30
+    timeout-minutes: 60
     environment: produccion
     concurrency:
       group: deploy-tienda-ui
