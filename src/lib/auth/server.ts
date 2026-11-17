@@ -70,10 +70,50 @@ async function enrichFromEntra(
     roles: normalizeRoles(decodeRolesFromIdToken(account.idToken)),
     // Marca de identidad, no de rol: un empleado sin App Role cae en
     // `cliente` igual que un externo, así que `roles` no sirve para esto.
-    // Solo este hook (login de Entra, tenant JDH ya validado por
-    // `mapProfileToUser`) la pone en `true`. Ver el claim en `definePayload`.
+    // Ya la puso `marcarEmpleadoEnEntra` en la sesión; aquí se repite para
+    // que la fila quede bien aunque ese camino cambie. Ver `definePayload`.
     empleado: true,
   })
+}
+
+/**
+ * ¿La escritura ocurre dentro del callback OAuth de Microsoft? Es el ÚNICO
+ * camino que puede marcar a alguien como empleado: el tenant JDH ya lo validó
+ * `mapProfileToUser` (que corre antes, en `getUserInfo`). El contexto es el
+ * del endpoint de Better Auth: `path` es la plantilla de la ruta.
+ */
+export function esCallbackDeEntra(
+  ctx: { path?: string; params?: Record<string, unknown> } | null | undefined
+): boolean {
+  return ctx?.path === "/callback/:id" && ctx.params?.id === "microsoft"
+}
+
+/**
+ * `user.create.before` / `user.update.before`: pone `empleado: true` en la
+ * MISMA escritura del usuario que hace el callback de Microsoft.
+ *
+ * Por qué no basta `enrichFromEntra`: Better Auth encola los hooks `after`
+ * (`queueAfterTransactionHook`) y los corre DESPUÉS de crear la sesión, pero
+ * la cookie de `session.cookieCache` se arma con el usuario que devolvió esa
+ * escritura. Resultado en producción: el primer login de cada empleado veía
+ * `empleado: false` durante los 5 minutos de la caché, y el catálogo no pedía
+ * precios. Un hook `before` se fusiona en la escritura, así que el usuario que
+ * va a la cookie ya trae la marca:
+ *
+ * - usuario nuevo → `createOAuthUser` (create.before);
+ * - usuario existente → la reescritura de `overrideUserInfoOnSignIn`
+ *   (update.before). Sin esa opción el callback usaría la fila leída antes y
+ *   esto no alcanzaría: ver `tests/entra-primer-login.test.ts`.
+ *
+ * Los `roles` no pueden ir por aquí (el hook no ve el id token) y siguen
+ * llegando por `enrichFromEntra`.
+ */
+async function marcarEmpleadoEnEntra(
+  _user: unknown,
+  ctx: { path?: string; params?: Record<string, unknown> } | null
+) {
+  if (!esCallbackDeEntra(ctx)) return
+  return { data: { empleado: true } }
 }
 
 /**
@@ -279,7 +319,9 @@ const options = {
       // `./foto-perfil.ts` para el detalle y la alternativa que se usa.
       disableProfilePhoto: true,
       // Sin esto, un cambio de App Role en Entra solo se refleja tras
-      // desvincular y volver a vincular la cuenta.
+      // desvincular y volver a vincular la cuenta. Además es la escritura
+      // del usuario en la que `marcarEmpleadoEnEntra` pone `empleado` antes
+      // de que se arme la cookie de la sesión: no quitarla.
       overrideUserInfoOnSignIn: true,
       mapProfileToUser(profile) {
         assertJdhTenant(profile)
@@ -298,6 +340,10 @@ const options = {
     },
   },
   databaseHooks: {
+    user: {
+      create: { before: marcarEmpleadoEnEntra },
+      update: { before: marcarEmpleadoEnEntra },
+    },
     account: {
       create: { after: enrichFromEntra },
       update: { after: enrichFromEntra },
