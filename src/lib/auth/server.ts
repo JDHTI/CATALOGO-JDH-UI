@@ -68,6 +68,11 @@ async function enrichFromEntra(
 
   await ctx.context.internalAdapter.updateUser(account.userId, {
     roles: normalizeRoles(decodeRolesFromIdToken(account.idToken)),
+    // Marca de identidad, no de rol: un empleado sin App Role cae en
+    // `cliente` igual que un externo, así que `roles` no sirve para esto.
+    // Solo este hook (login de Entra, tenant JDH ya validado por
+    // `mapProfileToUser`) la pone en `true`. Ver el claim en `definePayload`.
+    empleado: true,
   })
 }
 
@@ -204,6 +209,18 @@ const options = {
       clienteId: { type: "string", input: false, required: false },
       /** Lista de precios negociada, asignada junto con `clienteId`. */
       listaPrecioId: { type: "string", input: false, required: false },
+      /**
+       * La cuenta entró por Entra ID (personal JDH). Lo escribe SOLO
+       * `enrichFromEntra`; `input: false` impide que un registro de cliente
+       * se lo auto-asigne, igual que `clienteId`. Abre la lista de precios
+       * de empleados en el API (claim `empleado` del JWT).
+       */
+      empleado: {
+        type: "boolean",
+        input: false,
+        required: false,
+        defaultValue: false,
+      },
       /** Preferencia del cliente: mostrar precios con IVA incluido. */
       preferenciaMostrarIva: {
         type: "boolean",
@@ -411,6 +428,12 @@ export const auth = betterAuth({
             permissions: permissionsForRoles(roles),
             clienteId: user.clienteId ?? null,
             listaPrecioId: user.listaPrecioId ?? null,
+            /**
+             * El API solo acepta el booleano `true`: con él añade
+             * `precioEmpleado` a `/products`. Se emite `false` explícito (no
+             * se omite) para que un token de cliente sea inequívoco al leerlo.
+             */
+            empleado: user.empleado === true,
           }
         },
       },

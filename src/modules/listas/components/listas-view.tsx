@@ -31,10 +31,12 @@ import {
 import {
   useBusquedaProductos,
 } from "@/modules/catalogo/hooks/use-productos"
+import { PrecioEmpleado } from "@/modules/catalogo/components/precio-empleado"
 import { ProductoImagen } from "@/modules/catalogo/components/producto-imagen"
 import { formatNombreComercial } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { useCurrentUser } from "@/hooks/use-current-user"
+import { ComprarListaBoton } from "@/modules/carrito/components/comprar-lista-boton"
 
 import {
   useCrearLista,
@@ -330,10 +332,17 @@ function ListasEditor() {
                     </JdhButton>
                   </div>
                 ) : (
-                  <JdhButton variant="ghost" size="sm" onClick={() => setDeleteArmed(true)}>
-                    <Trash2 aria-hidden="true" />
-                    Eliminar
-                  </JdhButton>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Solo personal JDH: el botón se oculta solo para el resto. */}
+                    <ComprarListaBoton
+                      listaId={active.id}
+                      deshabilitado={!items.data?.data.length}
+                    />
+                    <JdhButton variant="ghost" size="sm" onClick={() => setDeleteArmed(true)}>
+                      <Trash2 aria-hidden="true" />
+                      Eliminar
+                    </JdhButton>
+                  </div>
                 )}
               </header>
 
@@ -653,6 +662,8 @@ function ListItems({
                     {item.product.nombre}
                   </Link>
                   <p className="truncate text-xs text-muted-foreground">SKU {item.product.sku} · {formatNombreComercial(item.product.proveedor.nombre)}</p>
+                  {/* Solo personal JDH: el dato solo trae precio para ellos. */}
+                  <PrecioEmpleado producto={item.product} variante="linea" className="mt-0.5" />
                   {!item.productActive ? <p className="mt-1 text-xs font-medium text-destructive">Producto no disponible</p> : null}
                 </div>
               </div>

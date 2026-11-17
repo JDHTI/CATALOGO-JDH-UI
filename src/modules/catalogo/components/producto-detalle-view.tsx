@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 import { formatNombreComercial } from "@/lib/format"
 
 import type { Producto } from "../types"
+import { PrecioEmpleado } from "./precio-empleado"
 import { ProductoGaleria } from "./producto-galeria"
 import { ProductoDescripcion } from "./producto-descripcion"
 import { ProductoAcciones } from "./producto-acciones"
@@ -14,8 +15,8 @@ import { ProductoAcciones } from "./producto-acciones"
 /**
  * Detalle de un producto real del API. El catálogo es referencia visual para
  * vendedores y clientes: identifica el producto (foto, códigos, marca,
- * fabricante, proveedor) — sin precios publicados. Cuando el backend defina
- * precios, el slot va debajo del encabezado (ver comentario en el JSX).
+ * fabricante, proveedor). El único precio es el de empleados, debajo del
+ * encabezado y solo cuando el dato lo trae (ver `PrecioEmpleado`).
  *
  * La ficha tiene DOS comportamientos según el ancho, y la diferencia es
  * deliberada:
@@ -106,9 +107,10 @@ export function ProductoDetalleView({ producto }: { producto: Producto }) {
             </div>
           </header>
 
-          {/* SLOT DE PRECIO (oculto a propósito): los precios aún no están
-              definidos en el backend. Cuando existan, aquí va el bloque de
-              precio según la audiencia del PriceContext — nunca antes. */}
+          {/* Precio de EMPLEADOS: la ruta pide el producto según el
+              PriceContext, y solo para un empleado trae `precioEmpleado`.
+              Para el resto no pinta nada. */}
+          <PrecioEmpleado producto={producto} variante="ficha" />
 
           <ProductoDescripcion texto={producto.descripcionLarga} />
 

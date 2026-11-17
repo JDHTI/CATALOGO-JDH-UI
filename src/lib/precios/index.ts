@@ -18,13 +18,23 @@ export type { Audiencia, Precio, PriceContext } from "./types"
  * módulo filtre precios de cliente en la superficie pública por olvidarse de
  * comprobar la sesión.
  *
- * Sin sesión → `publico`. Con sesión de cliente → su lista negociada. Un
- * asesor o admin viendo el catálogo se comporta como `publico` salvo que
- * suplante a un cliente explícitamente (`clienteId` por parámetro), caso que
- * aún no está implementado.
+ * Sin sesión → `publico`. Con sesión de cliente → su lista negociada. Con
+ * sesión de Entra (personal JDH) → `empleado`: el catálogo se pide al API con
+ * el JWT del usuario, que lleva el claim `empleado`, y el API añade
+ * `precioEmpleado` a cada producto. Suplantar a un cliente (`clienteId` por
+ * parámetro) aún no está implementado.
  */
 export async function getPriceContext(): Promise<PriceContext> {
   const user = await getCurrentUser()
+
+  if (user?.empleado) {
+    return {
+      audiencia: "empleado",
+      clienteId: null,
+      listaPrecioId: null,
+      mostrarIva: true,
+    }
+  }
 
   if (!user?.clienteId) {
     return {
@@ -49,6 +59,7 @@ export async function getPriceContext(): Promise<PriceContext> {
  * no se contaminen entre sí.
  */
 export function priceCacheKey(context: PriceContext): string {
+  if (context.audiencia === "empleado") return "precios:empleado"
   return context.listaPrecioId
     ? `precios:lista:${context.listaPrecioId}`
     : "precios:publico"

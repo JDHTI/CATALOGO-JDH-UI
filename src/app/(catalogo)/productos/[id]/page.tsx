@@ -8,6 +8,8 @@ import {
   productoMetadata,
   serializarJsonLd,
 } from "@/modules/catalogo/seo"
+import { getPriceContext } from "@/lib/precios"
+import { obtenerProductoPara } from "@/modules/catalogo/server/empleado"
 import { obtenerProductoPublico } from "@/modules/catalogo/server/queries"
 
 export async function generateMetadata({
@@ -36,7 +38,10 @@ export async function generateMetadata({
 }
 
 /**
- * Página y metadatos comparten la misma lectura pública en servidor.
+ * Metadatos y JSON-LD salen siempre de la lectura PÚBLICA (lo indexable no
+ * puede depender de quién mira). El cuerpo sale de la lectura de la audiencia:
+ * para un empleado trae además `precioEmpleado`; para el resto es la misma
+ * lectura pública, compartida con `generateMetadata` por `cache`.
  */
 export default async function ProductoDetallePage({
   params,
@@ -44,7 +49,7 @@ export default async function ProductoDetallePage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const producto = await obtenerProductoPublico(id)
+  const producto = await obtenerProductoPara(id, await getPriceContext())
   if (!producto) notFound()
   // La ficha llena la primera pantalla (`compacta`) y "Más de la marca" va
   // DEBAJO, en su propio contenedor: la página scrollea hasta ella sin que la

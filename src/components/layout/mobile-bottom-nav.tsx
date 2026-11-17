@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { useEsEmpleado } from "@/modules/carrito/hooks/use-carrito"
 
 const items = [
   { href: "/", label: "Inicio", icon: House },
@@ -21,16 +22,25 @@ const items = [
   { href: "/cuenta", label: "Perfil", icon: UserRound },
 ] satisfies { href: Route; label: string; icon: typeof House }[]
 
-/** Accesos móviles estables; las rutas privadas gestionan el inicio de sesión. */
+/**
+ * Accesos móviles estables; las rutas privadas gestionan el inicio de sesión.
+ * El carrito es la excepción: solo existe para personal JDH, así que para el
+ * resto no se ofrece (llevaría a un 404) y la barra queda en cuatro columnas.
+ */
 export function MobileBottomNav() {
   const pathname = usePathname()
+  const empleado = useEsEmpleado()
+  const visibles = items.filter((mod) => mod.href !== "/carrito" || empleado)
 
   return (
     <nav
       aria-label="Navegación inferior"
-      className="fixed inset-x-0 bottom-0 z-[var(--z-sticky)] grid grid-cols-5 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
+      className={cn(
+        "fixed inset-x-0 bottom-0 z-[var(--z-sticky)] grid border-t border-border bg-background pb-[env(safe-area-inset-bottom)] md:hidden",
+        visibles.length === 5 ? "grid-cols-5" : "grid-cols-4"
+      )}
     >
-      {items.map((mod) => {
+      {visibles.map((mod) => {
         const Icon = mod.icon
         const active =
           pathname === mod.href ||

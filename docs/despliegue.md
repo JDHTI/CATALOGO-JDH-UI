@@ -15,7 +15,7 @@ Fuera de Vercel tienen que estar, accesibles por internet y por HTTPS:
 | Pieza                  | Quién la consume                                       | Estado                                                                           |
 | ---------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------- |
 | Postgres `jdh_auth`    | Better Auth, desde las funciones de Vercel             | ❌ Solo `localhost:5435`. Sin él no hay ingreso; el catálogo público sí funciona |
-| API `jdh-catalogo-api` | El navegador y el servidor, vía `NEXT_PUBLIC_API_URL`  | ✅ En Railway, pero **sin datos** (§7.2)                                         |
+| API `jdh-catalogo-api` | El navegador y el servidor, vía `NEXT_PUBLIC_API_URL`  | ✅ En la VM de producción (`docs/despliegue-tienda.md`)                          |
 | Bucket R2              | El navegador, y `next.config.ts` para `remotePatterns` | ✅ Dominio público de R2                                                         |
 
 Lo que hoy bloquea un despliegue útil está en §7.
@@ -34,7 +34,7 @@ incrusta en el bundle **en tiempo de build**: cambiarla exige redespliegue.
 | `BETTER_AUTH_URL`                   | ✅ dominio real  | ❌ **dejar vacía** | Ver §3                                                                                     |
 | `DATABASE_URL`                      | ✅ _(Sensitive)_ | ✅ _(Sensitive)_   | Puerto del **pooler**, `sslmode=require`. Ver §4                                           |
 | `NEXT_PUBLIC_SITE_URL`              | ❌ hasta el DNS  | ❌ hasta el DNS    | Origen de `og:image`/canónicas. Vacía → dominio de producción de Vercel                    |
-| `NEXT_PUBLIC_API_URL`               | ✅ HTTPS         | ✅ HTTPS           | Con el prefijo `/api/v1`. Hoy: `https://catalogo-jdh-api-production.up.railway.app/api/v1` |
+| `NEXT_PUBLIC_API_URL`               | ✅ HTTPS         | ✅ HTTPS           | Con el prefijo `/api/v1`                                                                   |
 | `NEXT_PUBLIC_ASSETS_CDN_URL`        | ✅               | ✅                 | De aquí sale el host de `images.remotePatterns`                                            |
 | `BACKEND_API_URL`                   | —                | —                  | `backend-fetch.ts` existe pero nadie lo llama todavía                                      |
 | `ALLOW_LOCAL_IMAGE_HOSTS`           | ❌ **nunca**     | ❌ **nunca**       | Solo para probar un build de producción en local                                           |
@@ -178,19 +178,9 @@ Bloqueantes, en orden:
 
 1. **Postgres `jdh_auth` administrado**, con pooler, y `pnpm auth:migrate`
    aplicado. Sin esto no hay ingreso (el catálogo público sí funciona).
-2. ~~**`jdh-catalogo-api` desplegado en HTTPS público.**~~ **Hecho** — está en
-   Railway: `https://catalogo-jdh-api-production.up.railway.app/api/v1`.
-   Verificado el 2026-09-07: `/health` responde `status: ok` con `database`,
-   `cache` y `storage` en `up`, y devuelve `access-control-allow-origin: *`, así
-   que por CORS no hay nada que configurar.
-
-   **Pero está VACÍO:** `products`, `suppliers` y `brands` devuelven 0
-   registros, y `/health` reporta `datawarehouse: "disabled"` — la sincronización
-   que puebla el catálogo no tiene origen de datos en ese despliegue. La UI
-   responderá 200 y pintará su estado **vacío** (no de error: `{ total: 0 }` es
-   una respuesta válida), lo cual no se distingue de un catálogo roto para quien
-   lo abra. Habilitar el DWH en Railway (`DWH_HOST` y compañía) y correr la
-   sincronización es lo que queda para que el despliegue sirva de algo.
+2. ~~**`jdh-catalogo-api` desplegado en HTTPS público.**~~ **Hecho** — corre en
+   la VM de producción, detrás del mismo Caddy que la UI
+   (`docs/despliegue-tienda.md`).
 
 3. **Redirect URI de producción registrado en Entra** (§5).
 4. **Secretos nuevos para producción:** `BETTER_AUTH_SECRET` propio (no el de

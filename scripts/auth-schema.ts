@@ -33,6 +33,12 @@ export const auth = betterAuth({
       },
       clienteId: { type: "string", input: false, required: false },
       listaPrecioId: { type: "string", input: false, required: false },
+      empleado: {
+        type: "boolean",
+        input: false,
+        required: false,
+        defaultValue: false,
+      },
       preferenciaMostrarIva: {
         type: "boolean",
         input: true,

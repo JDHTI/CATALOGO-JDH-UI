@@ -6,6 +6,7 @@ import type {
   ImagenProducto,
   Marca,
   Paginado,
+  PrecioEmpleado,
   Producto,
   Proveedor,
 } from "../types"
@@ -78,6 +79,26 @@ const imagenProductoDtoSchema = z.object({
   esPrincipal: z.boolean(),
 })
 
+/**
+ * Lista de precios de EMPLEADOS. Pesos ENTEROS sin centavos (el mapper los
+ * pasa a centavos). Solo viaja con un JWT `empleado: true`.
+ */
+const precioEmpleadoDtoSchema = z.object({
+  precio: z.number(),
+  precioConIva: z.number(),
+  // 19, 5 o 0 (0 = Sin IVA, se factura al 0 %); null = tasa DESCONOCIDA.
+  // Son cosas distintas: comparar siempre contra null, nunca por falsedad.
+  ivaPct: z.number().nullable(),
+  // «IVA 19 %», «IVA 5 %», «Sin IVA» o «IVA por confirmar». Nullish para
+  // que un API anterior al campo siga validando (el mapper la deriva).
+  ivaEtiqueta: z.string().nullish(),
+  // String y no `literal("COP")`: una moneda inesperada en UN producto no
+  // debe tumbar el parseo de la página entera. El mapper la descarta.
+  moneda: z.string(),
+  unidad: z.string().nullish(),
+  fechaFoto: z.string(),
+})
+
 export const productoDtoSchema = z.object({
   id: idSchema,
   sku: z.string(),
@@ -104,6 +125,10 @@ export const productoDtoSchema = z.object({
   imagenUrl: z.string().nullish(),
   imagenUrlFallback: z.string().nullish(),
   imagenes: z.array(imagenProductoDtoSchema).nullish(),
+  // Ausente = no es empleado; `null` = empleado sin precio en la lista. Las
+  // dos cosas son distintas en la UI, así que NO se usa `nullish` hacia el
+  // dominio: el mapper conserva la diferencia.
+  precioEmpleado: precioEmpleadoDtoSchema.nullable().optional(),
 })
 
 export const paginacionMetaDtoSchema = z.object({
@@ -190,8 +215,41 @@ function aImagenProducto(
   }
 }
 
+/**
+ * Etiqueta de respaldo, solo para un API que aún no manda `ivaEtiqueta`.
+ * Mismo texto que el API. `=== null` y no `!ivaPct`: el 0 es «Sin IVA» y el
+ * null «IVA por confirmar», y confundirlos afirma algo falso sobre la tarifa.
+ */
+function etiquetaIva(ivaPct: number | null): string {
+  if (ivaPct === null) return "IVA por confirmar"
+  if (ivaPct === 0) return "Sin IVA"
+  return `IVA ${ivaPct} %`
+}
+
+function aPrecioEmpleado(
+  dto: z.infer<typeof precioEmpleadoDtoSchema>
+): PrecioEmpleado | null {
+  // Formatear otra moneda como COP sería un precio falso: mejor ninguno.
+  if (dto.moneda !== "COP") return null
+  return {
+    // Pesos → centavos: convención del proyecto (`src/lib/format.ts`).
+    valor: Math.round(dto.precio * 100),
+    valorConIva: Math.round(dto.precioConIva * 100),
+    ivaPct: dto.ivaPct,
+    ivaEtiqueta: dto.ivaEtiqueta?.trim() || etiquetaIva(dto.ivaPct),
+    moneda: "COP",
+    unidad: dto.unidad?.trim() || null,
+    fechaFoto: dto.fechaFoto,
+  }
+}
+
 export function aProducto(dto: ProductoDto): Producto {
   return {
+    ...(dto.precioEmpleado !== undefined && {
+      precioEmpleado: dto.precioEmpleado
+        ? aPrecioEmpleado(dto.precioEmpleado)
+        : null,
+    }),
     id: dto.id,
     sku: dto.sku,
     nombre: dto.nombre,

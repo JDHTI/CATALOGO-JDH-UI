@@ -8,7 +8,7 @@
  * se ve la página: la estructura del catálogo público y la del catálogo de
  * clientes es la misma (misma ruta, mismo shell, mismos componentes).
  */
-export type Audiencia = "publico" | "cliente"
+export type Audiencia = "publico" | "cliente" | "empleado"
 
 /**
  * Contexto resuelto una sola vez por request en el servidor y bajado a la

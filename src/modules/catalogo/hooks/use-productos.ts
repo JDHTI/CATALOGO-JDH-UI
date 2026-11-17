@@ -2,6 +2,8 @@
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
+import { useCurrentUser } from "@/hooks/use-current-user"
+
 import { recomendarAlternativas } from "../api/recomendaciones"
 
 import { CatalogoApiError } from "../api/errors"
@@ -13,6 +15,7 @@ import {
   listarProductos,
   listarProveedores,
   obtenerProducto,
+  type FuenteProductos,
 } from "../api/client"
 import type {
   CategoriasQueryParams,
@@ -32,18 +35,62 @@ import type {
  * secciones de la homepage).
  */
 
+/**
+ * `fuente` va SIEMPRE al final de la clave: una respuesta de empleado (con
+ * `precioEmpleado`) nunca comparte entrada de caché con la pública, y
+ * `soloCambioDeFuente` puede comparar el resto de la clave.
+ */
 export const catalogoKeys = {
-  productos: (params: ProductosQueryParams) =>
-    ["catalogo", "productos", params] as const,
-  producto: (id: string) => ["catalogo", "producto", id] as const,
-  destacados: (limite: number) => ["catalogo", "destacados", limite] as const,
-  mismaMarca: (marcaId: string, limite: number) =>
-    ["catalogo", "misma-marca", marcaId, limite] as const,
+  productos: (
+    params: ProductosQueryParams,
+    fuente: FuenteProductos = "publico"
+  ) => ["catalogo", "productos", params, fuente] as const,
+  producto: (id: string, fuente: FuenteProductos = "publico") =>
+    ["catalogo", "producto", id, fuente] as const,
+  destacados: (limite: number, fuente: FuenteProductos = "publico") =>
+    ["catalogo", "destacados", limite, fuente] as const,
+  mismaMarca: (
+    marcaId: string,
+    limite: number,
+    fuente: FuenteProductos = "publico"
+  ) => ["catalogo", "misma-marca", marcaId, limite, fuente] as const,
   proveedores: ["catalogo", "proveedores"] as const,
   marcas: (params: MarcasQueryParams) =>
     ["catalogo", "marcas", params] as const,
   categorias: (params: CategoriasQueryParams) =>
     ["catalogo", "categorias", params] as const,
+}
+
+/**
+ * Empleado (sesión de Entra) → los productos se piden por `/api/productos`
+ * para traer `precioEmpleado`; cualquier otro → API público.
+ *
+ * No se espera a que la sesión resuelva: mientras tanto se pide lo público.
+ * Esperar retrasaría el catálogo de TODOS los anónimos un ida y vuelta a
+ * `get-session` para beneficiar a unos pocos empleados, que en cambio ven el
+ * precio aparecer un instante después (ver `soloCambioDeFuente`).
+ */
+export function useFuenteProductos(): FuenteProductos {
+  const { user } = useCurrentUser()
+  return user?.empleado === true ? "empleado" : "publico"
+}
+
+/**
+ * `placeholderData` que conserva lo ya pintado SOLO si lo único que cambió en
+ * la clave es la fuente (público → empleado al resolverse la sesión). Así las
+ * cards no vuelven a esqueleto para ganar un precio, y un cambio real de
+ * consulta (otra marca, otro producto) no muestra datos ajenos.
+ */
+function soloCambioDeFuente<T>(
+  previo: T | undefined,
+  consultaPrevia: { queryKey: readonly unknown[] } | undefined,
+  clave: readonly unknown[]
+): T | undefined {
+  if (!consultaPrevia) return undefined
+  const sinFuente = (k: readonly unknown[]) => JSON.stringify(k.slice(0, -1))
+  return sinFuente(consultaPrevia.queryKey) === sinFuente(clave)
+    ? previo
+    : undefined
 }
 
 /** Los ejes de clasificación son conjuntos pequeños y estables frente a los
@@ -57,9 +104,10 @@ export function useProductos(
   params: ProductosQueryParams,
   options: { enabled?: boolean } = {}
 ) {
+  const fuente = useFuenteProductos()
   return useQuery({
-    queryKey: catalogoKeys.productos(params),
-    queryFn: ({ signal }) => listarProductos(params, signal),
+    queryKey: catalogoKeys.productos(params, fuente),
+    queryFn: ({ signal }) => listarProductos(params, signal, fuente),
     enabled: options.enabled ?? true,
     placeholderData: keepPreviousData,
   })
@@ -74,10 +122,14 @@ export function useProductos(
 const DESTACADOS_STALE_MS = 30 * 60 * 1000
 
 export function useDestacados(limite: number) {
+  const fuente = useFuenteProductos()
+  const queryKey = catalogoKeys.destacados(limite, fuente)
   return useQuery({
-    queryKey: catalogoKeys.destacados(limite),
-    queryFn: ({ signal }) => listarDestacados(limite, signal),
+    queryKey,
+    queryFn: ({ signal }) => listarDestacados(limite, signal, fuente),
     staleTime: DESTACADOS_STALE_MS,
+    placeholderData: (previo, consultaPrevia) =>
+      soloCambioDeFuente(previo, consultaPrevia, queryKey),
   })
 }
 
@@ -114,15 +166,20 @@ export function useMismaMarca(producto: Producto, limite: number) {
       ?.id ??
     null
 
+  const fuente = useFuenteProductos()
+  const queryKey = catalogoKeys.mismaMarca(marcaId ?? "", limite, fuente)
   const query = useQuery({
-    queryKey: catalogoKeys.mismaMarca(marcaId ?? "", limite),
+    queryKey,
     queryFn: ({ signal }) =>
       listarProductos(
         { brandId: marcaId!, orderBy: "conImagen", limit: limite + 1 },
-        signal
+        signal,
+        fuente
       ),
     enabled: marcaId != null,
     staleTime: DESTACADOS_STALE_MS,
+    placeholderData: (previo, consultaPrevia) =>
+      soloCambioDeFuente(previo, consultaPrevia, queryKey),
     select: (pagina) =>
       pagina.data
         .filter((p) => p.id !== producto.id && tieneImagen(p))
@@ -221,9 +278,13 @@ export function useBusquedaProductos(
 
 /** Detalle de un producto. */
 export function useProducto(id: string) {
+  const fuente = useFuenteProductos()
+  const queryKey = catalogoKeys.producto(id, fuente)
   return useQuery({
-    queryKey: catalogoKeys.producto(id),
-    queryFn: ({ signal }) => obtenerProducto(id, signal),
+    queryKey,
+    queryFn: ({ signal }) => obtenerProducto(id, signal, fuente),
+    placeholderData: (previo, consultaPrevia) =>
+      soloCambioDeFuente(previo, consultaPrevia, queryKey),
     // Un 404 no se resuelve reintentando (el id no existe).
     retry: false,
   })
@@ -298,17 +359,23 @@ export function useCategorias(
 export function useRecomendacionesProducto(producto: Producto, limite: number) {
   const marca = useMismaMarca(producto, limite)
   const necesitaAlternativas = !marca.isPending && marca.productos.length === 0
+  const fuente = useFuenteProductos()
+  const queryKey = [
+    "catalogo",
+    "recomendaciones",
+    producto.id,
+    producto.proveedor.id,
+    limite,
+    fuente,
+  ] as const
   const alternativas = useQuery({
-    queryKey: [
-      "catalogo",
-      "recomendaciones",
-      producto.id,
-      producto.proveedor.id,
-      limite,
-    ],
-    queryFn: ({ signal }) => recomendarAlternativas(producto, limite, signal),
+    queryKey,
+    queryFn: ({ signal }) =>
+      recomendarAlternativas(producto, limite, signal, fuente),
     enabled: necesitaAlternativas,
     staleTime: DESTACADOS_STALE_MS,
+    placeholderData: (previo, consultaPrevia) =>
+      soloCambioDeFuente(previo, consultaPrevia, queryKey),
   })
   if (!necesitaAlternativas) return { ...marca, origen: "marca" as const }
   return {

@@ -156,6 +156,67 @@ export function DestacadosCatalogo({ className }: { className?: string }) {
   )
 }
 
+/** Tope de productos que se piden para poder descartar los ya elegidos. */
+const LIMITE_CON_EXCLUSIONES = 20
+
+/**
+ * Al pie del carrito: la MISMA vitrina de recomendados de la ficha (marca →
+ * proveedor → catálogo), titulada «¿Olvidaste algo?» y sin los productos que
+ * ya están en el carrito. Toma como referencia el primer producto del
+ * carrito: es estable mientras se agregan otros, así la sección no vuelve a
+ * esqueleto con cada clic.
+ *
+ * Pide de más (`LIMITE_VITRINA` + los ya elegidos, con tope) porque las
+ * exclusiones se aplican después: sin eso, un carrito con tres productos de
+ * la misma marca dejaba la vitrina con dos.
+ */
+export function OlvidasteAlgoSection({
+  productos,
+  className,
+}: {
+  productos: Producto[]
+  className?: string
+}) {
+  const base = productos[0]
+  if (!base) return null
+  return (
+    <OlvidasteAlgoContenido
+      key={base.id}
+      base={base}
+      excluir={new Set(productos.map((p) => p.id))}
+      className={className}
+    />
+  )
+}
+
+function OlvidasteAlgoContenido({
+  base,
+  excluir,
+  className,
+}: {
+  base: Producto
+  excluir: Set<string>
+  className?: string
+}) {
+  const { productos, isPending, isError } = useRecomendacionesProducto(
+    base,
+    Math.min(LIMITE_VITRINA + excluir.size, LIMITE_CON_EXCLUSIONES)
+  )
+  return (
+    <VitrinaProductos
+      id="olvidaste-algo-title"
+      eyebrow="Antes de finalizar"
+      titulo="¿Olvidaste algo?"
+      productos={productos
+        .filter((p) => !excluir.has(p.id))
+        .slice(0, LIMITE_VITRINA)}
+      isPending={isPending}
+      isError={isError}
+      className={className}
+    />
+  )
+}
+
 /** Al pie de la ficha: cinco productos con imagen de la misma marca. */
 export function MismaMarcaSection({
   producto,

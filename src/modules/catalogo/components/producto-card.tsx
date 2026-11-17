@@ -3,9 +3,15 @@ import type { Route } from "next"
 import { Package, Store } from "lucide-react"
 
 import { formatNombreComercial } from "@/lib/format"
+import { cn } from "@/lib/utils"
+import {
+  AgregarAlCarritoIcono,
+  sePuedeComprar,
+} from "@/modules/carrito/components/agregar-al-carrito"
 import { FavoritoBoton } from "@/modules/favoritos/components/favorito-boton"
 
 import type { Producto } from "../types"
+import { PrecioEmpleado } from "./precio-empleado"
 import { ProductoImagen } from "./producto-imagen"
 
 /**
@@ -48,6 +54,14 @@ export function ProductoCard({ producto }: { producto: Producto }) {
         nombreProducto={producto.nombre}
         className="absolute top-2 right-2 z-10"
       />
+      {/* Carrito de EMPLEADOS: fuera del `<article>` por la misma razón que
+          el corazón (ver arriba). Solo aparece si el dato trae precio de
+          empleado; se apoya sobre la franja del proveedor, que le reserva
+          el hueco con `pr-12`. */}
+      <AgregarAlCarritoIcono
+        producto={producto}
+        className="absolute right-3 bottom-2.5 z-10"
+      />
       <article className="group h-full overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] transition-transform duration-200 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:-translate-y-0.5">
         <Link
           href={`/productos/${encodeURIComponent(producto.id)}` as Route}
@@ -87,11 +101,17 @@ export function ProductoCard({ producto }: { producto: Producto }) {
               </p>
             </div>
 
-            {/* SLOT DE PRECIO (oculto a propósito): sin precios definidos en el
-              backend todavía. Cuando existan, el bloque va aquí, encima del
-              proveedor, resuelto vía PriceContext — nunca improvisado. */}
+            {/* Precio de EMPLEADOS: solo existe en el dato cuando quien mira
+              es personal JDH (ver `PrecioEmpleado`). Para el resto no pinta
+              nada y la card queda exactamente igual. */}
+            <PrecioEmpleado producto={producto} variante="card" />
 
-            <p className="mt-auto flex items-center gap-1.5 border-t border-[var(--color-border)] pt-3 text-xs text-muted-foreground">
+            <p
+              className={cn(
+                "mt-auto flex min-h-9 items-center gap-1.5 border-t border-[var(--color-border)] pt-3 text-xs text-muted-foreground",
+                sePuedeComprar(producto) && "pr-12"
+              )}
+            >
               <Store className="size-3.5 shrink-0" aria-hidden="true" />
               <span className="truncate">
                 {formatNombreComercial(producto.proveedor.nombre)}

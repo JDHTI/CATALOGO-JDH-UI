@@ -38,6 +38,8 @@ export interface CurrentUser {
   listaPrecioId: string | null
   /** Preferencia de visualización: precios con IVA incluido. */
   preferenciaMostrarIva: boolean
+  /** Sesión de personal JDH (login con Entra). Abre el precio de empleados. */
+  empleado: boolean
 }
 
 /**
@@ -82,6 +84,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     clienteId: user.clienteId ?? null,
     listaPrecioId: user.listaPrecioId ?? null,
     preferenciaMostrarIva: user.preferenciaMostrarIva ?? true,
+    empleado: user.empleado === true,
   }
 }
 
@@ -107,6 +110,17 @@ export async function requireUser(): Promise<CurrentUser> {
 export async function hasPermissions(required: string[]): Promise<boolean> {
   if (required.length === 0) return true
   return hasAll(await getEffectivePermissions(), required)
+}
+
+/**
+ * Superficies SOLO de personal JDH (carrito y pedidos de empleados): exige
+ * sesión de Entra (`empleado`). Una cuenta de cliente recibe 404, igual que
+ * `requirePermissions`, para no revelar que la ruta existe.
+ */
+export async function requireEmpleado(): Promise<CurrentUser> {
+  const user = await requireUser()
+  if (!user.empleado) notFound()
+  return user
 }
 
 /**
