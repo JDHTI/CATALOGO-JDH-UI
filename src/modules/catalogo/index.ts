@@ -1,7 +1,10 @@
 export { catalogoModule } from "./catalogo.module"
 export { CatalogoView, CatalogoViewFallback } from "./components/catalogo-view"
 export { ProductoDetalleView } from "./components/producto-detalle-view"
-export { MismaMarcaSection } from "./components/productos-vitrina"
+export {
+  MismaMarcaSection,
+  OlvidasteAlgoSection,
+} from "./components/productos-vitrina"
 
 /* Superficie pública para OTROS módulos. Favoritos guarda productos del
  * catálogo, así que reusa su tipo, su card y el schema de página en vez de

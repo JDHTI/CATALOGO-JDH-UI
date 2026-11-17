@@ -1,2 +1,5 @@
 export { carritoModule } from "./carrito.module"
 export { CarritoView } from "./components/carrito-view"
+export { FinalizarPedidoView } from "./components/finalizar-pedido-view"
+export { PedidoConfirmacionView } from "./components/pedido-confirmacion-view"
+export { ComprarListaBoton } from "./components/comprar-lista-boton"

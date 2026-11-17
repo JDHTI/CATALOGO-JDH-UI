@@ -1,11 +1,12 @@
-import { listarProductos } from "./client"
+import { listarProductos, type FuenteProductos } from "./client"
 import type { Producto } from "../types"
 
 /** Primero el proveedor; sin alternativas se elige una pagina aleatoria del catalogo. */
 export async function recomendarAlternativas(
   producto: Producto,
   limite: number,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  fuente: FuenteProductos = "publico"
 ) {
   const otros = (items: Producto[]) =>
     items.filter((p) => p.id !== producto.id).slice(0, limite)
@@ -15,18 +16,23 @@ export async function recomendarAlternativas(
       limit: limite + 1,
       orderBy: "conImagen",
     },
-    signal
+    signal,
+    fuente
   )
   const productos = otros(proveedor.data)
   if (productos.length) return { origen: "proveedor" as const, productos }
 
-  const primera = await listarProductos({ limit: limite + 1 }, signal)
+  const primera = await listarProductos({ limit: limite + 1 }, signal, fuente)
   const paginas = Math.max(1, primera.meta.totalPages)
   const pagina = 1 + Math.floor(Math.random() * paginas)
   const candidatos =
     pagina === 1
       ? primera
-      : await listarProductos({ page: pagina, limit: limite + 1 }, signal)
+      : await listarProductos(
+          { page: pagina, limit: limite + 1 },
+          signal,
+          fuente
+        )
   // Barajado dentro de la pagina elegida, sin repetir el producto actual.
   const mezclados = [...candidatos.data]
   for (let i = mezclados.length - 1; i > 0; i--) {

@@ -26,6 +26,7 @@ const PROTECTED_PREFIXES = [
   "/listas",
   "/favoritos",
   "/carrito",
+  "/pedidos",
   "/admin",
 ]
 

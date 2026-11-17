@@ -28,21 +28,17 @@ it.each([false, true])(
     })
   }
 )
-it("respeta la disponibilidad de favoritos y no promete un carrito operativo", () => {
+it("sin precio de empleado (anónimo, cliente o fuera de la lista) no ofrece carrito", () => {
   mocks.useEsFavorito.mockReturnValue({ activo: false, esFavorito: false })
-  render(<ProductoAcciones producto={producto} />)
-  expect(
-    screen.getByRole("button", { name: /Favoritos no disponibles/ })
-  ).toBeDefined()
-  expect(
-    (
-      screen.getByRole("button", {
-        name: "Agregar al carrito",
-      }) as HTMLButtonElement
-    ).disabled
-  ).toBe(true)
-  expect(
-    (screen.getByRole("spinbutton", { name: "Cantidad" }) as HTMLInputElement)
-      .disabled
-  ).toBe(true)
+  for (const precioEmpleado of [undefined, null]) {
+    const { unmount } = render(
+      <ProductoAcciones producto={{ ...producto, precioEmpleado }} />
+    )
+    expect(
+      screen.getByRole("button", { name: /Favoritos no disponibles/ })
+    ).toBeDefined()
+    expect(screen.queryByRole("button", { name: /carrito/i })).toBeNull()
+    expect(screen.queryByRole("spinbutton")).toBeNull()
+    unmount()
+  }
 })

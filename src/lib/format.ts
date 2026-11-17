@@ -23,6 +23,34 @@ export function formatPrecio(precio: Precio): string {
   return formatCentavos(precio.valor)
 }
 
+const MESES_CORTOS = [
+  "ene",
+  "feb",
+  "mar",
+  "abr",
+  "may",
+  "jun",
+  "jul",
+  "ago",
+  "sep",
+  "oct",
+  "nov",
+  "dic",
+]
+
+/**
+ * Fecha de calendario `YYYY-MM-DD` → "17 nov 2026". A mano y no con
+ * `Intl.DateTimeFormat`: `new Date("2026-11-17")` es medianoche UTC, que en
+ * Colombia (UTC−5) se pinta como el día ANTERIOR, y `es-CO` además produce
+ * "17 de nov. de 2026". Si el texto no tiene esa forma se devuelve tal cual.
+ */
+export function formatFechaCorta(fecha: string): string {
+  const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(fecha)
+  const mes = partes ? MESES_CORTOS[Number(partes[2]) - 1] : undefined
+  if (!partes || !mes) return fecha
+  return `${Number(partes[3])} ${mes} ${partes[1]}`
+}
+
 const numberFormatter = new Intl.NumberFormat(siteConfig.locale)
 
 export function formatNumero(value: number): string {

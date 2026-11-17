@@ -4,9 +4,9 @@
  * Estos tipos son el DOMINIO de la UI, no el DTO del API: la forma del
  * API se valida en `schemas/api.ts` y se traduce aquí vía mappers, de
  * modo que un rename de campos en el backend se absorbe en un solo
- * lugar. El catálogo es solo referencia visual (sin venta): NO hay
- * precio en estos tipos — cuando el backend defina precios se añadirá
- * el campo aquí y en el mapper, nunca improvisado en componentes.
+ * lugar. El catálogo es solo referencia visual (sin venta): el único
+ * precio es el de EMPLEADOS (`PrecioEmpleado`), que el API solo envía a
+ * personal JDH autenticado.
  */
 
 /** Proveedor tal como viaja embebido en un producto y en `GET /suppliers`. */
@@ -96,6 +96,32 @@ export interface ImagenProducto {
   esPrincipal: boolean
 }
 
+/**
+ * Precio de la lista de EMPLEADOS JDH (costo / (1 − 13 %), calculado por la
+ * intranet). Solo lo envía el API a un JWT con `empleado: true`. Valores en
+ * CENTAVOS de COP como todo precio del proyecto: el API manda pesos enteros y
+ * el mapper los convierte en la frontera.
+ */
+export interface PrecioEmpleado {
+  /** Sin IVA, en centavos. */
+  valor: number
+  /** Con IVA, en centavos. Igual a `valor` cuando `ivaPct` es 0 o null. */
+  valorConIva: number
+  /**
+   * 19, 5 o 0 (0 = Sin IVA, se factura al 0 %). `null` = tasa DESCONOCIDA
+   * («IVA por confirmar»), que NO es lo mismo que 0: comparar contra null,
+   * nunca por falsedad.
+   */
+  ivaPct: number | null
+  /** Texto del API para pintar tal cual: «IVA 19 %», «Sin IVA», «IVA por confirmar»… */
+  ivaEtiqueta: string
+  moneda: "COP"
+  /** Unidad de inventario a la que corresponde el precio. */
+  unidad: string | null
+  /** Fecha de la foto de costos, `YYYY-MM-DD`. */
+  fechaFoto: string
+}
+
 /** Producto real del catálogo (listado y detalle comparten forma). */
 export interface Producto {
   id: string
@@ -135,6 +161,11 @@ export interface Producto {
   imagenUrlFallback: string | null
   /** Galería completa, primaria primero. Vacío si el producto no tiene fotos. */
   imagenes: ImagenProducto[]
+  /**
+   * Ausente = quien mira no es empleado (anónimo o cliente): no se pinta
+   * nada. `null` = empleado, pero el producto no está en la lista.
+   */
+  precioEmpleado?: PrecioEmpleado | null
 }
 
 /** Meta de paginación estándar de los listados del API. */

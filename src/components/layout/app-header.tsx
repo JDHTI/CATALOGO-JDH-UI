@@ -1,10 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { ClipboardList, ShoppingCart } from "lucide-react"
+import { ClipboardList } from "lucide-react"
 
 import { Logo } from "@/components/common/logo"
 import { ThemeSwitcher } from "@/components/common/theme-switcher"
+import { CarritoNavLink } from "@/modules/carrito/components/carrito-nav-link"
 import { FavoritosNavLink } from "@/modules/favoritos/components/favoritos-nav-link"
 
 import { AuthActions } from "./auth-actions"
@@ -47,11 +48,7 @@ export function AppHeader() {
               icon={ClipboardList}
               label="Mis listas"
             />
-            <IconNavLink
-              href="/carrito"
-              icon={ShoppingCart}
-              label="Carrito de compras"
-            />
+            <CarritoNavLink />
             <span
               aria-hidden
               className="mx-1 h-6 w-px bg-[var(--color-ink-border)]"

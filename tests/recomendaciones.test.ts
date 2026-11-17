@@ -21,7 +21,8 @@ it("recomienda otros productos del proveedor sin incluir el actual", async () =>
   expect(listarProductos).toHaveBeenCalledTimes(1)
   expect(listarProductos).toHaveBeenCalledWith(
     expect.objectContaining({ supplierId: producto.proveedor.id }),
-    undefined
+    undefined,
+    "publico"
   )
 })
 it("elige una pagina aleatoria del catalogo si el proveedor solo tiene el producto actual", async () => {
@@ -35,7 +36,8 @@ it("elige una pagina aleatoria del catalogo si el proveedor solo tiene el produc
   expect(result.productos.map((p) => p.id)).toEqual(["aleatorio"])
   expect(listarProductos).toHaveBeenLastCalledWith(
     { page: 4, limit: 6 },
-    undefined
+    undefined,
+    "publico"
   )
 })
 it("no recomienda el propio producto si es el unico del catalogo", async () => {

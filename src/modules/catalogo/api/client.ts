@@ -103,13 +103,46 @@ function avisarDegradacion(motivo: string, detalle: string) {
  * compitiendo por pintar el mismo panel: trabajo que el backend ya hizo para
  * nada y, con muchos usuarios simultáneos, carga puramente desperdiciada.
  */
+/**
+ * De dónde salen los productos.
+ *
+ * - `publico`: directo al API, sin token. Cacheable y compartido — es la
+ *   inmensa mayoría del tráfico (anónimos y clientes).
+ * - `empleado`: por el route handler `/api/productos/*` de ESTA app, que
+ *   reenvía al API con el JWT del usuario (`backendFetch`). El token no sale
+ *   del servidor; desde el navegador la autoridad sigue siendo la cookie. El
+ *   API responde lo mismo más `precioEmpleado`.
+ *
+ * Solo `/products*` tiene variante de empleado: el resto de endpoints no lleva
+ * precio y sigue público.
+ */
+export type FuenteProductos = "publico" | "empleado"
+
+/** `/products/x` → `/api/productos/x` en el origen actual. */
+function urlEmpleado(path: `/${string}`): string | null {
+  if (typeof window === "undefined") return null
+  if (path !== "/products" && !path.startsWith("/products/")) return null
+  return `${window.location.origin}/api/productos${path.slice("/products".length)}`
+}
+
+/**
+ * Fallos del puente de empleados que NO deben dejar el catálogo en blanco: sin
+ * sesión (401, p. ej. la cookie caducó), puente sin configurar (501) o API
+ * inalcanzable (502/503). Se cae al público: el empleado ve el catálogo sin
+ * su precio en vez de un error. Un 404 o un 400 sí se propagan — dicen algo
+ * del recurso, no del puente.
+ */
+const FALLOS_DEL_PUENTE = new Set([401, 501, 502, 503])
+
 async function apiGet<Schema extends z.ZodType>(
   path: `/${string}`,
   schema: Schema,
   params?: Record<string, string | number | undefined>,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  fuente: FuenteProductos = "publico"
 ): Promise<z.infer<Schema>> {
-  const url = new URL(`${apiBaseUrl()}${path}`)
+  const viaEmpleado = fuente === "empleado" ? urlEmpleado(path) : null
+  const url = new URL(viaEmpleado ?? `${apiBaseUrl()}${path}`)
   for (const [clave, valor] of Object.entries(params ?? {})) {
     if (valor !== undefined && valor !== "") {
       url.searchParams.set(clave, String(valor))
@@ -119,7 +152,17 @@ async function apiGet<Schema extends z.ZodType>(
   const respuesta = await fetch(url, {
     headers: { Accept: "application/json" },
     signal,
+    // Respuesta privada del empleado: nunca a ninguna caché compartida.
+    ...(viaEmpleado && { cache: "no-store" as const }),
   })
+
+  if (viaEmpleado && FALLOS_DEL_PUENTE.has(respuesta.status)) {
+    avisarDegradacion(
+      `empleado-${respuesta.status}`,
+      `/api/productos respondió ${respuesta.status}: el catálogo cae al API público, SIN precio de empleado`
+    )
+    return apiGet(path, schema, params, signal, "publico")
+  }
 
   if (!respuesta.ok) {
     // Formato de error estándar de NestJS; si no matchea, cae al statusText.
@@ -163,7 +206,8 @@ export async function buscarProductos(
 
 export async function listarProductos(
   params: ProductosQueryParams = {},
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  fuente: FuenteProductos = "publico"
 ): Promise<Paginado<Producto>> {
   const query = {
     page: params.page,
@@ -187,7 +231,8 @@ export async function listarProductos(
           "/products",
           paginaProductosDtoSchema,
           { ...query, orderBy: params.orderBy },
-          signal
+          signal,
+          fuente
         )
       )
     } catch (error) {
@@ -202,7 +247,7 @@ export async function listarProductos(
   }
 
   return aPaginaProductos(
-    await apiGet("/products", paginaProductosDtoSchema, query, signal)
+    await apiGet("/products", paginaProductosDtoSchema, query, signal, fuente)
   )
 }
 
@@ -225,17 +270,18 @@ export async function listarProductos(
  */
 export async function listarDestacados(
   limit?: number,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  fuente: FuenteProductos = "publico"
 ): Promise<Paginado<Producto>> {
   try {
-    return await pedirDestacados(limit, signal)
+    return await pedirDestacados(limit, signal, fuente)
   } catch (error) {
     if (error instanceof CatalogoApiError && error.statusCode === 404) {
       avisarDegradacion(
         "destacados",
         "el API no publica GET /products/destacados (404): la vitrina cae al listado, sin reparto por marca ni rotación"
       )
-      return listarProductos({ limit, orderBy: "conImagen" }, signal)
+      return listarProductos({ limit, orderBy: "conImagen" }, signal, fuente)
     }
     throw error
   }
@@ -243,13 +289,15 @@ export async function listarDestacados(
 
 async function pedirDestacados(
   limit?: number,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  fuente: FuenteProductos = "publico"
 ): Promise<Paginado<Producto>> {
   const dto = await apiGet(
     "/products/destacados",
     paginaProductosDtoSchema,
     { limit },
-    signal
+    signal,
+    fuente
   )
   return aPaginaProductos(dto)
 }
@@ -257,13 +305,15 @@ async function pedirDestacados(
 /** `GET /products/:id` — detalle de un producto. */
 export async function obtenerProducto(
   id: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  fuente: FuenteProductos = "publico"
 ): Promise<Producto> {
   const dto = await apiGet(
     `/products/${encodeURIComponent(id)}`,
     productoDtoSchema,
     undefined,
-    signal
+    signal,
+    fuente
   )
   return aProducto(dto)
 }
