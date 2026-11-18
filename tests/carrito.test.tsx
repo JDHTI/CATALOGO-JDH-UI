@@ -312,6 +312,60 @@ describe("pantalla del carrito", () => {
     ).toBe("/carrito/finalizar")
   })
 
+  it("escribir una cantidad y salir del campo la fija en el API", async () => {
+    const fetch = stubFetch({
+      "/api/carrito": () => Response.json(carritoDto()),
+    })
+    render(<CarritoView />)
+    const campo = await screen.findByRole("spinbutton", { name: "Cantidad" })
+    fireEvent.change(campo, { target: { value: "30" } })
+    fireEvent.blur(campo)
+    await waitFor(() =>
+      expect(fetch.mock.calls.some(([, init]) => init?.method === "PUT")).toBe(
+        true
+      )
+    )
+    const [url, init] = fetch.mock.calls.find(
+      ([, init]) => init?.method === "PUT"
+    )!
+    expect(String(url)).toBe("/api/carrito/items/42")
+    expect(JSON.parse(init!.body as string)).toEqual({ quantity: 30 })
+  })
+
+  it("envío gratis: con $ 208.173 está desbloqueado y la barra va llena", async () => {
+    stubFetch({ "/api/carrito": () => Response.json(carritoDto()) })
+    render(<CarritoView />)
+    expect(
+      await screen.findByText(
+        "¡Desbloqueaste el envío gratuito a tu domicilio!"
+      )
+    ).toBeDefined()
+    expect(screen.getByRole("progressbar").getAttribute("aria-valuenow")).toBe(
+      "100"
+    )
+  })
+
+  it("envío gratis: por debajo del mínimo dice cuánto falta", async () => {
+    stubFetch({
+      "/api/carrito": () =>
+        Response.json(
+          carritoDto([linea({ cantidad: 2, totalLinea: 150000 })], {
+            unidades: 2,
+            subtotal: 150000,
+          })
+        ),
+    })
+    render(<CarritoView />)
+    expect(
+      await screen.findByText("Desbloquea envío gratuito a tu domicilio")
+    ).toBeDefined()
+    const barra = screen.getByRole("progressbar")
+    expect(barra.getAttribute("aria-valuenow")).toBe("75")
+    expect(barra.getAttribute("aria-valuetext")).toMatch(
+      /Te faltan \$\s?50\.000/
+    )
+  })
+
   it("una línea no disponible bloquea finalizar y se puede quitar", async () => {
     stubFetch({
       "/api/carrito": () =>
