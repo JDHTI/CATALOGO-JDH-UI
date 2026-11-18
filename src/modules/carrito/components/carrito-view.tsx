@@ -16,6 +16,7 @@ import { toast } from "sonner"
 
 import { EmptyState } from "@/components/common/empty-state"
 import { JdhButton } from "@/components/common/jdh-button"
+import { Breadcrumbs } from "@/components/navigation/breadcrumbs"
 import { formatCentavos, formatNombreComercial } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { OlvidasteAlgoSection } from "@/modules/catalogo"
@@ -29,6 +30,7 @@ import {
 import { CANTIDAD_MAXIMA } from "../limites"
 import type { LineaCarrito } from "../types"
 import { mensajeErrorCarrito } from "./agregar-al-carrito"
+import { EnvioGratisProgreso } from "./envio-gratis-progreso"
 
 /**
  * Pantalla general del carrito del empleado. Precios ANTES de impuestos
@@ -37,6 +39,10 @@ import { mensajeErrorCarrito } from "./agregar-al-carrito"
  *
  * Toda operación devuelve el carrito completo y se pinta tal cual: no hay
  * cálculo de totales en la UI.
+ *
+ * Desde `md` los productos y el resumen comparten fila: el panel de productos
+ * a la izquierda y el resumen fijo (`sticky`) a la derecha. En un teléfono no
+ * caben dos columnas y el resumen va debajo.
  */
 export function CarritoView() {
   const carrito = useCarrito()
@@ -44,15 +50,20 @@ export function CarritoView() {
   const lineas = data?.lineas ?? []
 
   return (
-    <div className="flex flex-col gap-8">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold tracking-tight uppercase sm:text-4xl">
-          Mi carrito
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Lista de precios de empleados
-        </p>
-      </header>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4">
+        <Breadcrumbs
+          items={[{ label: "Inicio", href: "/" }, { label: "Mi carrito" }]}
+        />
+        <header className="flex flex-col gap-1">
+          <h1 className="text-3xl font-bold tracking-tight uppercase sm:text-4xl">
+            Mi carrito
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Lista de precios de empleados
+          </p>
+        </header>
+      </div>
 
       {carrito.isError ? (
         <EmptyState
@@ -82,40 +93,27 @@ export function CarritoView() {
           </JdhButton>
         </EmptyState>
       ) : (
-        <div className="flex flex-col gap-6">
+        <div className={COLUMNAS}>
           <section
             aria-label="Productos en el carrito"
-            className="overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)]"
+            className="@container min-w-0"
           >
-            {/* Encabezado de columnas: solo con la fila en una línea (lg).
-                Decorativo: cada celda lleva su propio rótulo para lectores
-                de pantalla. */}
-            <div
-              aria-hidden="true"
-              className={cn(
-                "hidden border-b border-[var(--color-border)] bg-[var(--color-surface-subtle)] px-5 py-2.5 text-xs font-medium tracking-wide text-muted-foreground uppercase lg:grid",
-                COLUMNAS_LG
-              )}
-            >
-              <span className="col-span-2">Producto</span>
-              <span className="text-center">SKU</span>
-              <span className="text-center">Precio unitario</span>
-              <span className="text-center">Cantidad</span>
-              <span className="text-right">Total</span>
-            </div>
-            <ul className="divide-y divide-[var(--color-border)]">
+            <ul className="divide-y divide-[var(--color-border)] rounded-[var(--jdh-radius-md)] border border-[var(--color-border)]">
               {lineas.map((linea) => (
                 <LineaItem key={linea.productoId} linea={linea} />
               ))}
             </ul>
           </section>
 
-          <ResumenCarritoPanel
-            unidades={data!.resumen.unidades}
-            lineas={data!.resumen.lineas}
-            subtotal={data!.resumen.subtotal}
-            noDisponibles={data!.resumen.lineasNoDisponibles}
-          />
+          <div className="flex flex-col gap-3 md:sticky md:top-[calc(var(--catalogo-chrome-height)+1rem)]">
+            <EnvioGratisProgreso subtotal={data!.resumen.subtotal} />
+            <ResumenCarritoPanel
+              unidades={data!.resumen.unidades}
+              lineas={data!.resumen.lineas}
+              subtotal={data!.resumen.subtotal}
+              noDisponibles={data!.resumen.lineasNoDisponibles}
+            />
+          </div>
         </div>
       )}
 
@@ -129,15 +127,9 @@ export function CarritoView() {
   )
 }
 
-/**
- * Columnas de la fila en pantallas anchas: imagen · producto · SKU · precio
- * unitario · cantidad · total · quitar. El encabezado y cada fila comparten
- * esta plantilla, y por eso ninguna columna es `auto`: cada grid mediría su
- * propio contenido (el rótulo «Cantidad» frente al selector) y los títulos
- * quedarían corridos respecto a los valores.
- */
-const COLUMNAS_LG =
-  "lg:grid-cols-[7rem_minmax(0,1fr)_6.5rem_8rem_9rem_8rem_2.25rem] lg:gap-x-4"
+/** Productos a la izquierda, resumen a la derecha desde `md`. */
+const COLUMNAS =
+  "grid items-start gap-4 md:grid-cols-[minmax(0,1fr)_17rem] lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-6"
 
 function ResumenCarritoPanel({
   unidades,
@@ -154,12 +146,12 @@ function ResumenCarritoPanel({
   return (
     <aside
       aria-labelledby="resumen-carrito"
-      className="flex w-full flex-col gap-4 rounded-[var(--jdh-radius-md)] border border-[var(--color-border-strong)] p-5 lg:ml-auto lg:max-w-sm"
+      className="flex flex-col gap-3 rounded-[var(--jdh-radius-md)] border border-[var(--color-border-strong)] p-4 lg:p-5"
     >
       <h2 id="resumen-carrito" className="text-base font-semibold">
         Resumen
       </h2>
-      <dl className="flex flex-col gap-2 text-sm">
+      <dl className="flex flex-col gap-1.5 text-sm">
         <div className="flex justify-between gap-4">
           <dt className="text-muted-foreground">Productos</dt>
           <dd className="tabular-nums">{lineas}</dd>
@@ -168,7 +160,7 @@ function ResumenCarritoPanel({
           <dt className="text-muted-foreground">Unidades</dt>
           <dd className="tabular-nums">{unidades}</dd>
         </div>
-        <div className="flex items-baseline justify-between gap-4 border-t border-[var(--color-border)] pt-3">
+        <div className="flex items-baseline justify-between gap-4 border-t border-[var(--color-border)] pt-2.5">
           <dt className="font-medium">Subtotal</dt>
           <dd className="text-xl font-bold tabular-nums">
             {formatCentavos(subtotal)}
@@ -204,15 +196,13 @@ function ResumenCarritoPanel({
 }
 
 /**
- * Una fila del carrito, con la misma marca en dos distribuciones:
+ * Una fila compacta del carrito. Se acomoda al ANCHO DEL PANEL (container
+ * query), no al de la pantalla: el panel comparte fila con el resumen, así que
+ * su ancho no sigue al viewport.
  *
- * - angosta: imagen a la izquierda; a la derecha el producto (con quitar
- *   arriba) y debajo SKU · precio unitario; al pie, a todo el ancho,
- *   cantidad · total;
- * - lg: una sola línea en columnas (`COLUMNAS_LG`), centradas en vertical.
- *
- * El orden del DOM es el de lectura en las dos: imagen, producto, SKU,
- * precio unitario, cantidad, total, quitar.
+ * - panel angosto: imagen | producto | quitar; debajo, cantidad | total.
+ * - panel ancho (`@xl`): imagen | producto | cantidad | total | quitar, en una
+ *   sola línea centrada en vertical.
  */
 function LineaItem({ linea }: { linea: LineaCarrito }) {
   const fijar = useFijarCantidad()
@@ -244,8 +234,8 @@ function LineaItem({ linea }: { linea: LineaCarrito }) {
   return (
     <li
       className={cn(
-        "grid grid-cols-[5rem_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 p-4 sm:grid-cols-[6rem_minmax(0,1fr)_auto] sm:p-5",
-        COLUMNAS_LG,
+        "grid grid-cols-[4rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 p-3",
+        "@xl:grid-cols-[4.5rem_minmax(0,1fr)_auto_7rem_auto] @xl:gap-x-4 @xl:px-4",
         !linea.disponible && "bg-[var(--color-surface-subtle)]"
       )}
     >
@@ -254,14 +244,14 @@ function LineaItem({ linea }: { linea: LineaCarrito }) {
         tabIndex={-1}
         aria-hidden="true"
         className={cn(
-          "col-start-1 row-span-2 row-start-1 self-start overflow-hidden rounded-[var(--jdh-radius-sm)] border border-[var(--color-border)] bg-background lg:row-span-1 lg:self-center",
+          "col-start-1 row-span-2 row-start-1 self-start overflow-hidden rounded-[var(--jdh-radius-sm)] border border-[var(--color-border)] bg-background @xl:row-span-1 @xl:self-center",
           !linea.disponible && "opacity-50"
         )}
       >
         <ProductoImagen
           producto={producto}
           variant="miniatura"
-          sizes="112px"
+          sizes="72px"
           className="aspect-square w-full"
         />
       </Link>
@@ -272,49 +262,39 @@ function LineaItem({ linea }: { linea: LineaCarrito }) {
           !linea.disponible && "opacity-60"
         )}
       >
-        {producto.marca ? (
-          <p className="truncate text-xs font-medium tracking-wide text-muted-foreground">
-            {formatNombreComercial(producto.marca)}
-          </p>
-        ) : null}
         <Link
           href={href}
-          className="line-clamp-2 text-sm font-medium hover:underline focus-visible:underline focus-visible:outline-none sm:text-base"
+          className="line-clamp-2 text-sm leading-snug font-bold hover:underline focus-visible:underline focus-visible:outline-none"
         >
           {producto.nombre}
         </Link>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground tabular-nums">
+          {producto.marca ? (
+            <>
+              <span className="sr-only">Marca </span>
+              {formatNombreComercial(producto.marca)} ·{" "}
+            </>
+          ) : null}
+          SKU {producto.sku}
+        </p>
+        {linea.disponible && linea.precioUnitario !== null ? (
+          <p className="text-xs text-muted-foreground tabular-nums">
+            <span className="sr-only">Precio unitario </span>
+            {formatCentavos(linea.precioUnitario)} c/u
+          </p>
+        ) : null}
         {linea.precioCambio ? (
-          <p className="mt-1 flex items-center gap-1 text-xs font-medium">
+          <p className="mt-0.5 flex items-center gap-1 text-xs font-medium">
             <RefreshCw className="size-3" aria-hidden="true" />
             El precio se actualizó
           </p>
         ) : null}
         {!linea.disponible ? (
-          <p className="mt-1 text-xs font-medium">Ya no disponible</p>
+          <p className="mt-0.5 text-xs font-medium">Ya no disponible</p>
         ) : null}
       </div>
 
-      <p className="col-start-2 row-start-2 text-xs text-muted-foreground tabular-nums lg:col-start-3 lg:row-start-1 lg:text-center lg:text-sm">
-        <span className="lg:sr-only">SKU </span>
-        {producto.sku}
-      </p>
-
-      <p className="col-start-3 row-start-2 text-right tabular-nums lg:col-start-4 lg:row-start-1 lg:text-center">
-        {linea.disponible && linea.precioUnitario !== null ? (
-          <>
-            <span className="sr-only">Precio unitario </span>
-            <span className="text-base font-semibold">
-              {formatCentavos(linea.precioUnitario)}
-            </span>
-            <span className="text-xs text-muted-foreground lg:sr-only">
-              {" "}
-              c/u
-            </span>
-          </>
-        ) : null}
-      </p>
-
-      <div className="col-span-2 col-start-1 row-start-3 lg:col-span-1 lg:col-start-5 lg:row-start-1 lg:justify-self-center">
+      <div className="col-start-2 row-start-2 @xl:col-start-3 @xl:row-start-1">
         {linea.disponible ? (
           <div
             role="group"
@@ -326,9 +306,9 @@ function LineaItem({ linea }: { linea: LineaCarrito }) {
               aria-label="Quitar una unidad"
               disabled={ocupada || linea.cantidad <= 1}
               onClick={() => fijarCantidad(linea.cantidad - 1)}
-              className="flex size-10 items-center justify-center rounded-l-lg hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-40"
+              className="flex size-8 items-center justify-center rounded-l-lg hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-40"
             >
-              <Minus className="size-4" aria-hidden="true" />
+              <Minus className="size-3.5" aria-hidden="true" />
             </button>
             <input
               type="number"
@@ -346,22 +326,22 @@ function LineaItem({ linea }: { linea: LineaCarrito }) {
                 if (event.key === "Enter") event.currentTarget.blur()
                 if (event.key === "Escape") setBorrador(null)
               }}
-              className="h-10 w-14 [appearance:textfield] border-x border-[var(--color-border)] bg-background text-center text-base tabular-nums focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="h-8 w-12 [appearance:textfield] border-x border-[var(--color-border)] bg-background text-center text-sm tabular-nums focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <button
               type="button"
               aria-label="Agregar una unidad"
               disabled={ocupada || linea.cantidad >= CANTIDAD_MAXIMA}
               onClick={() => fijarCantidad(linea.cantidad + 1)}
-              className="flex size-10 items-center justify-center rounded-r-lg hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-40"
+              className="flex size-8 items-center justify-center rounded-r-lg hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-40"
             >
-              <Plus className="size-4" aria-hidden="true" />
+              <Plus className="size-3.5" aria-hidden="true" />
             </button>
           </div>
         ) : null}
       </div>
 
-      <p className="col-start-3 row-start-3 text-right text-lg font-bold tabular-nums lg:col-start-6 lg:row-start-1">
+      <p className="col-start-3 row-start-2 text-right text-base font-bold tabular-nums @xl:col-start-4 @xl:row-start-1">
         {linea.totalLinea !== null ? (
           <>
             <span className="sr-only">Total </span>
@@ -370,9 +350,9 @@ function LineaItem({ linea }: { linea: LineaCarrito }) {
         ) : null}
       </p>
 
-      <div className="col-start-3 row-start-1 self-start justify-self-end lg:col-start-7 lg:self-center">
+      <div className="col-start-3 row-start-1 self-start justify-self-end @xl:col-start-5 @xl:self-center">
         <JdhButton
-          variant="ghost"
+          variant="destructive"
           size={linea.disponible ? "icon-sm" : "sm"}
           loading={quitar.isPending}
           aria-label={`Quitar ${producto.nombre} del carrito`}
@@ -396,22 +376,24 @@ function CarritoSkeleton() {
     <div
       role="status"
       aria-label="Cargando carrito"
-      className="flex animate-pulse flex-col gap-6"
+      className={cn("animate-pulse", COLUMNAS)}
     >
       <span className="sr-only">Cargando carrito…</span>
       <div className="flex flex-col gap-px overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)]">
         {Array.from({ length: 3 }, (_, i) => (
-          <div key={i} className="flex items-center gap-4 p-5">
-            <div className="size-24 shrink-0 rounded bg-[var(--color-surface-subtle)] lg:size-28" />
+          <div key={i} className="flex items-center gap-3 p-3">
+            <div className="size-16 shrink-0 rounded bg-[var(--color-surface-subtle)]" />
             <div className="flex flex-1 flex-col gap-2">
-              <div className="h-3 w-24 rounded bg-[var(--color-surface-subtle)]" />
               <div className="h-4 w-3/4 rounded bg-[var(--color-surface-subtle)]" />
-              <div className="h-3 w-20 rounded bg-[var(--color-surface-subtle)]" />
+              <div className="h-3 w-32 rounded bg-[var(--color-surface-subtle)]" />
             </div>
           </div>
         ))}
       </div>
-      <div className="h-56 w-full rounded-[var(--jdh-radius-md)] bg-[var(--color-surface-subtle)] lg:ml-auto lg:max-w-sm" />
+      <div className="flex flex-col gap-3">
+        <div className="h-24 rounded-[var(--jdh-radius-md)] bg-[var(--color-surface-subtle)]" />
+        <div className="h-56 rounded-[var(--jdh-radius-md)] bg-[var(--color-surface-subtle)]" />
+      </div>
     </div>
   )
 }
