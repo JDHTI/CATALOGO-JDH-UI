@@ -3,6 +3,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query"
 
 import { useCurrentUser } from "@/hooks/use-current-user"
+import { useMontado } from "@/hooks/use-montado"
 import { getQueryClient } from "@/lib/query-client"
 
 import {
@@ -14,7 +15,6 @@ import {
   obtenerPedido,
   obtenerResumenFinalizar,
   quitarDelCarrito,
-  vaciarCarrito,
 } from "../api/client"
 import type { Carrito, Pedido } from "../types"
 
@@ -33,10 +33,18 @@ export const carritoKeys = {
   pedido: (id: string) => ["pedidos", id] as const,
 }
 
-/** La sesión es de personal JDH (Entra): única audiencia del carrito. */
+/**
+ * La sesión es de personal JDH (Entra): única audiencia del carrito.
+ *
+ * `false` hasta montar: el servidor pinta el header sin sesión, y si el
+ * navegador ya la tiene en caché al hidratar, el ícono del carrito aparecería
+ * en el primer render del cliente y React descartaría el árbol por diferencia
+ * de HTML.
+ */
 export function useEsEmpleado(): boolean {
+  const montado = useMontado()
   const { user } = useCurrentUser()
-  return user?.empleado === true
+  return montado && user?.empleado === true
 }
 
 /**
@@ -104,13 +112,6 @@ export function useQuitarDelCarrito() {
       mutationFn: (productoId: string) => quitarDelCarrito(productoId),
       onSuccess: guardarCarrito,
     },
-    getQueryClient()
-  )
-}
-
-export function useVaciarCarrito() {
-  return useMutation(
-    { mutationFn: vaciarCarrito, onSuccess: guardarCarrito },
     getQueryClient()
   )
 }

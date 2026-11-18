@@ -128,12 +128,6 @@ export async function quitarDelCarrito(productoId: string): Promise<Carrito> {
   )
 }
 
-export async function vaciarCarrito(): Promise<Carrito> {
-  return aCarrito(
-    await pedir("/api/carrito", carritoDtoSchema, { method: "DELETE" })
-  )
-}
-
 export async function comprarLista(
   listaId: string,
   modo: "sumar" | "reemplazar"
