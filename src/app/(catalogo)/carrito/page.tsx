@@ -5,7 +5,7 @@ import { requireEmpleado } from "@/lib/auth"
 import { CarritoView } from "@/modules/carrito"
 
 export const metadata: Metadata = {
-  title: "Carrito de compras",
+  title: "Mi carrito",
   robots: { index: false, follow: false },
 }
 

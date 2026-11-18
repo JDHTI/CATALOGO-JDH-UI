@@ -16,7 +16,6 @@ import { toast } from "sonner"
 
 import { EmptyState } from "@/components/common/empty-state"
 import { JdhButton } from "@/components/common/jdh-button"
-import { PageHeader } from "@/components/common/page-header"
 import { formatCentavos, formatNombreComercial } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { OlvidasteAlgoSection } from "@/modules/catalogo"
@@ -26,7 +25,6 @@ import {
   useCarrito,
   useFijarCantidad,
   useQuitarDelCarrito,
-  useVaciarCarrito,
 } from "../hooks/use-carrito"
 import { CANTIDAD_MAXIMA } from "../limites"
 import type { LineaCarrito } from "../types"
@@ -42,55 +40,19 @@ import { mensajeErrorCarrito } from "./agregar-al-carrito"
  */
 export function CarritoView() {
   const carrito = useCarrito()
-  const vaciar = useVaciarCarrito()
-  const [vaciarArmado, setVaciarArmado] = React.useState(false)
-
   const data = carrito.data
   const lineas = data?.lineas ?? []
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Carrito de compras"
-        description="Precios de empleados JDH, antes de impuestos."
-      >
-        {lineas.length > 0 ? (
-          vaciarArmado ? (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-muted-foreground">¿Vaciar el carrito?</span>
-              <JdhButton
-                variant="destructive"
-                size="sm"
-                loading={vaciar.isPending}
-                onClick={() =>
-                  vaciar.mutate(undefined, {
-                    onSuccess: () => setVaciarArmado(false),
-                    onError: (error) => toast.error(mensajeErrorCarrito(error)),
-                  })
-                }
-              >
-                Vaciar
-              </JdhButton>
-              <JdhButton
-                variant="ghost"
-                size="sm"
-                onClick={() => setVaciarArmado(false)}
-              >
-                Cancelar
-              </JdhButton>
-            </div>
-          ) : (
-            <JdhButton
-              variant="ghost"
-              size="sm"
-              onClick={() => setVaciarArmado(true)}
-            >
-              <Trash2 aria-hidden="true" />
-              Vaciar carrito
-            </JdhButton>
-          )
-        ) : null}
-      </PageHeader>
+      <header className="flex flex-col gap-1">
+        <h1 className="text-3xl font-bold tracking-tight uppercase sm:text-4xl">
+          Mi carrito
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Lista de precios de empleados
+        </p>
+      </header>
 
       {carrito.isError ? (
         <EmptyState
@@ -120,9 +82,28 @@ export function CarritoView() {
           </JdhButton>
         </EmptyState>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-          <section aria-label="Productos en el carrito">
-            <ul className="divide-y divide-[var(--color-border)] rounded-[var(--jdh-radius-md)] border border-[var(--color-border)]">
+        <div className="flex flex-col gap-6">
+          <section
+            aria-label="Productos en el carrito"
+            className="overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)]"
+          >
+            {/* Encabezado de columnas: solo con la fila en una línea (lg).
+                Decorativo: cada celda lleva su propio rótulo para lectores
+                de pantalla. */}
+            <div
+              aria-hidden="true"
+              className={cn(
+                "hidden border-b border-[var(--color-border)] bg-[var(--color-surface-subtle)] px-5 py-2.5 text-xs font-medium tracking-wide text-muted-foreground uppercase lg:grid",
+                COLUMNAS_LG
+              )}
+            >
+              <span className="col-span-2">Producto</span>
+              <span className="text-center">SKU</span>
+              <span className="text-center">Precio unitario</span>
+              <span className="text-center">Cantidad</span>
+              <span className="text-right">Total</span>
+            </div>
+            <ul className="divide-y divide-[var(--color-border)]">
               {lineas.map((linea) => (
                 <LineaItem key={linea.productoId} linea={linea} />
               ))}
@@ -148,6 +129,16 @@ export function CarritoView() {
   )
 }
 
+/**
+ * Columnas de la fila en pantallas anchas: imagen · producto · SKU · precio
+ * unitario · cantidad · total · quitar. El encabezado y cada fila comparten
+ * esta plantilla, y por eso ninguna columna es `auto`: cada grid mediría su
+ * propio contenido (el rótulo «Cantidad» frente al selector) y los títulos
+ * quedarían corridos respecto a los valores.
+ */
+const COLUMNAS_LG =
+  "lg:grid-cols-[7rem_minmax(0,1fr)_6.5rem_8rem_9rem_8rem_2.25rem] lg:gap-x-4"
+
 function ResumenCarritoPanel({
   unidades,
   lineas,
@@ -163,7 +154,7 @@ function ResumenCarritoPanel({
   return (
     <aside
       aria-labelledby="resumen-carrito"
-      className="flex flex-col gap-4 rounded-[var(--jdh-radius-md)] border border-[var(--color-border-strong)] p-5 lg:sticky lg:top-[calc(var(--catalogo-chrome-height)+1rem)]"
+      className="flex w-full flex-col gap-4 rounded-[var(--jdh-radius-md)] border border-[var(--color-border-strong)] p-5 lg:ml-auto lg:max-w-sm"
     >
       <h2 id="resumen-carrito" className="text-base font-semibold">
         Resumen
@@ -212,6 +203,17 @@ function ResumenCarritoPanel({
   )
 }
 
+/**
+ * Una fila del carrito, con la misma marca en dos distribuciones:
+ *
+ * - angosta: imagen a la izquierda; a la derecha el producto (con quitar
+ *   arriba) y debajo SKU · precio unitario; al pie, a todo el ancho,
+ *   cantidad · total;
+ * - lg: una sola línea en columnas (`COLUMNAS_LG`), centradas en vertical.
+ *
+ * El orden del DOM es el de lectura en las dos: imagen, producto, SKU,
+ * precio unitario, cantidad, total, quitar.
+ */
 function LineaItem({ linea }: { linea: LineaCarrito }) {
   const fijar = useFijarCantidad()
   const quitar = useQuitarDelCarrito()
@@ -242,7 +244,8 @@ function LineaItem({ linea }: { linea: LineaCarrito }) {
   return (
     <li
       className={cn(
-        "grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-4 gap-y-3 p-4 sm:grid-cols-[5rem_minmax(0,1fr)_auto]",
+        "grid grid-cols-[5rem_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 p-4 sm:grid-cols-[6rem_minmax(0,1fr)_auto] sm:p-5",
+        COLUMNAS_LG,
         !linea.disponible && "bg-[var(--color-surface-subtle)]"
       )}
     >
@@ -251,19 +254,24 @@ function LineaItem({ linea }: { linea: LineaCarrito }) {
         tabIndex={-1}
         aria-hidden="true"
         className={cn(
-          "row-span-2 overflow-hidden rounded-[var(--jdh-radius-sm)] border border-[var(--color-border)] sm:row-span-1",
+          "col-start-1 row-span-2 row-start-1 self-start overflow-hidden rounded-[var(--jdh-radius-sm)] border border-[var(--color-border)] bg-background lg:row-span-1 lg:self-center",
           !linea.disponible && "opacity-50"
         )}
       >
         <ProductoImagen
           producto={producto}
           variant="miniatura"
-          sizes="80px"
+          sizes="112px"
           className="aspect-square w-full"
         />
       </Link>
 
-      <div className={cn("min-w-0", !linea.disponible && "opacity-60")}>
+      <div
+        className={cn(
+          "col-start-2 row-start-1 min-w-0",
+          !linea.disponible && "opacity-60"
+        )}
+      >
         {producto.marca ? (
           <p className="truncate text-xs font-medium tracking-wide text-muted-foreground">
             {formatNombreComercial(producto.marca)}
@@ -271,18 +279,10 @@ function LineaItem({ linea }: { linea: LineaCarrito }) {
         ) : null}
         <Link
           href={href}
-          className="line-clamp-2 text-sm font-medium hover:underline focus-visible:underline focus-visible:outline-none"
+          className="line-clamp-2 text-sm font-medium hover:underline focus-visible:underline focus-visible:outline-none sm:text-base"
         >
           {producto.nombre}
         </Link>
-        <p className="text-xs text-muted-foreground tabular-nums">
-          SKU {producto.sku}
-        </p>
-        {linea.disponible && linea.precioUnitario !== null ? (
-          <p className="mt-1 text-xs text-muted-foreground tabular-nums">
-            {formatCentavos(linea.precioUnitario)} c/u
-          </p>
-        ) : null}
         {linea.precioCambio ? (
           <p className="mt-1 flex items-center gap-1 text-xs font-medium">
             <RefreshCw className="size-3" aria-hidden="true" />
@@ -294,19 +294,39 @@ function LineaItem({ linea }: { linea: LineaCarrito }) {
         ) : null}
       </div>
 
-      <div className="col-start-2 flex flex-wrap items-center justify-between gap-3 sm:col-start-3 sm:row-start-1 sm:flex-col sm:items-end sm:justify-start">
+      <p className="col-start-2 row-start-2 text-xs text-muted-foreground tabular-nums lg:col-start-3 lg:row-start-1 lg:text-center lg:text-sm">
+        <span className="lg:sr-only">SKU </span>
+        {producto.sku}
+      </p>
+
+      <p className="col-start-3 row-start-2 text-right tabular-nums lg:col-start-4 lg:row-start-1 lg:text-center">
+        {linea.disponible && linea.precioUnitario !== null ? (
+          <>
+            <span className="sr-only">Precio unitario </span>
+            <span className="text-base font-semibold">
+              {formatCentavos(linea.precioUnitario)}
+            </span>
+            <span className="text-xs text-muted-foreground lg:sr-only">
+              {" "}
+              c/u
+            </span>
+          </>
+        ) : null}
+      </p>
+
+      <div className="col-span-2 col-start-1 row-start-3 lg:col-span-1 lg:col-start-5 lg:row-start-1 lg:justify-self-center">
         {linea.disponible ? (
           <div
             role="group"
             aria-label={`Cantidad de ${producto.nombre}`}
-            className="flex items-center rounded-lg border border-[var(--color-border-strong)]"
+            className="flex w-fit items-center rounded-lg border border-[var(--color-border-strong)]"
           >
             <button
               type="button"
               aria-label="Quitar una unidad"
               disabled={ocupada || linea.cantidad <= 1}
               onClick={() => fijarCantidad(linea.cantidad - 1)}
-              className="flex size-9 items-center justify-center rounded-l-lg hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-40"
+              className="flex size-10 items-center justify-center rounded-l-lg hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-40"
             >
               <Minus className="size-4" aria-hidden="true" />
             </button>
@@ -326,42 +346,46 @@ function LineaItem({ linea }: { linea: LineaCarrito }) {
                 if (event.key === "Enter") event.currentTarget.blur()
                 if (event.key === "Escape") setBorrador(null)
               }}
-              className="h-9 w-14 [appearance:textfield] border-x border-[var(--color-border)] bg-background text-center text-sm tabular-nums focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="h-10 w-14 [appearance:textfield] border-x border-[var(--color-border)] bg-background text-center text-base tabular-nums focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <button
               type="button"
               aria-label="Agregar una unidad"
               disabled={ocupada || linea.cantidad >= CANTIDAD_MAXIMA}
               onClick={() => fijarCantidad(linea.cantidad + 1)}
-              className="flex size-9 items-center justify-center rounded-r-lg hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-40"
+              className="flex size-10 items-center justify-center rounded-r-lg hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-40"
             >
               <Plus className="size-4" aria-hidden="true" />
             </button>
           </div>
         ) : null}
+      </div>
 
-        <div className="flex items-center gap-2">
-          {linea.totalLinea !== null ? (
-            <p className="text-sm font-semibold tabular-nums">
-              {formatCentavos(linea.totalLinea)}
-            </p>
-          ) : null}
-          <JdhButton
-            variant="ghost"
-            size={linea.disponible ? "icon-sm" : "sm"}
-            loading={quitar.isPending}
-            aria-label={`Quitar ${producto.nombre} del carrito`}
-            title="Quitar del carrito"
-            onClick={() =>
-              quitar.mutate(linea.productoId, {
-                onError: (error) => toast.error(mensajeErrorCarrito(error)),
-              })
-            }
-          >
-            {quitar.isPending ? null : <Trash2 aria-hidden="true" />}
-            {linea.disponible ? null : "Quitar"}
-          </JdhButton>
-        </div>
+      <p className="col-start-3 row-start-3 text-right text-lg font-bold tabular-nums lg:col-start-6 lg:row-start-1">
+        {linea.totalLinea !== null ? (
+          <>
+            <span className="sr-only">Total </span>
+            {formatCentavos(linea.totalLinea)}
+          </>
+        ) : null}
+      </p>
+
+      <div className="col-start-3 row-start-1 self-start justify-self-end lg:col-start-7 lg:self-center">
+        <JdhButton
+          variant="ghost"
+          size={linea.disponible ? "icon-sm" : "sm"}
+          loading={quitar.isPending}
+          aria-label={`Quitar ${producto.nombre} del carrito`}
+          title="Quitar del carrito"
+          onClick={() =>
+            quitar.mutate(linea.productoId, {
+              onError: (error) => toast.error(mensajeErrorCarrito(error)),
+            })
+          }
+        >
+          {quitar.isPending ? null : <Trash2 aria-hidden="true" />}
+          {linea.disponible ? null : "Quitar"}
+        </JdhButton>
       </div>
     </li>
   )
@@ -372,13 +396,13 @@ function CarritoSkeleton() {
     <div
       role="status"
       aria-label="Cargando carrito"
-      className="grid animate-pulse gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]"
+      className="flex animate-pulse flex-col gap-6"
     >
       <span className="sr-only">Cargando carrito…</span>
       <div className="flex flex-col gap-px overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)]">
         {Array.from({ length: 3 }, (_, i) => (
-          <div key={i} className="flex gap-4 p-4">
-            <div className="size-20 rounded bg-[var(--color-surface-subtle)]" />
+          <div key={i} className="flex items-center gap-4 p-5">
+            <div className="size-24 shrink-0 rounded bg-[var(--color-surface-subtle)] lg:size-28" />
             <div className="flex flex-1 flex-col gap-2">
               <div className="h-3 w-24 rounded bg-[var(--color-surface-subtle)]" />
               <div className="h-4 w-3/4 rounded bg-[var(--color-surface-subtle)]" />
@@ -387,7 +411,7 @@ function CarritoSkeleton() {
           </div>
         ))}
       </div>
-      <div className="h-56 rounded-[var(--jdh-radius-md)] bg-[var(--color-surface-subtle)]" />
+      <div className="h-56 w-full rounded-[var(--jdh-radius-md)] bg-[var(--color-surface-subtle)] lg:ml-auto lg:max-w-sm" />
     </div>
   )
 }

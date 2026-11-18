@@ -111,46 +111,43 @@ describe("card y ficha", () => {
     expect(container.textContent).not.toMatch(/precio|\$|IVA/i)
   })
 
-  it("la card destaca el precio con IVA y deja sin IVA + tasa en pequeño", () => {
-    render(<ProductoCard producto={conPrecio(precioDto)} />)
+  it("la card muestra solo el precio final: ni sin IVA ni la tarifa", () => {
+    const { container } = render(
+      <ProductoCard producto={conPrecio(precioDto)} />
+    )
     expect(screen.getByText("Precio empleado")).toBeDefined()
     expect(screen.getByText(/59\.337/)).toBeDefined()
-    expect(screen.getByText(/49\.863 sin IVA · IVA 19/)).toBeDefined()
+    expect(container.textContent).not.toMatch(/49\.863|IVA/)
     // "UNIDAD" no aporta en la card.
     expect(screen.queryByText(/por unidad/)).toBeNull()
   })
 
-  it("ivaPct 0: la card dice «Sin IVA» y muestra la unidad cuando aporta", () => {
+  it("la card muestra la unidad cuando aporta", () => {
     render(
       <ProductoCard
         producto={conPrecio({ ...sinIvaDto, unidad: "CAJA X 12" })}
       />
     )
-    expect(screen.getByText(/^Sin IVA · por caja x 12$/)).toBeDefined()
-    expect(screen.queryByText(/por confirmar/)).toBeNull()
+    expect(screen.getByText("por caja x 12")).toBeDefined()
   })
 
-  it("ivaPct null: la card dice «IVA por confirmar», nunca «Sin IVA»", () => {
-    const { container } = render(
-      <ProductoCard producto={conPrecio(porConfirmarDto)} />
-    )
-    expect(screen.getByText("IVA por confirmar")).toBeDefined()
-    expect(container.textContent).not.toMatch(/Sin IVA/)
+  it("ninguna tarifa (19, 0 o por confirmar) se pinta en card ni ficha", () => {
+    for (const dto of [precioDto, sinIvaDto, porConfirmarDto]) {
+      const card = render(<ProductoCard producto={conPrecio(dto)} />)
+      expect(card.container.textContent).not.toMatch(/IVA/)
+      card.unmount()
+    }
   })
 
-  it("la ficha no dice «IVA incluido» con 0 ni con null", () => {
-    for (const dto of [sinIvaDto, porConfirmarDto]) {
+  it("la ficha no muestra la tarifa con ninguna tasa", () => {
+    for (const dto of [precioDto, sinIvaDto, porConfirmarDto]) {
       const { unmount } = render(
         <ProductoDetalleView producto={conPrecio(dto)} />
       )
       const bloque = screen.getByRole("region", {
         name: "Precio para empleados JDH",
       })
-      expect(bloque.textContent).not.toMatch(/IVA incluido/)
-      // La etiqueta se pinta con espacios no separables («IVA 19 %» no se parte).
-      expect(bloque.textContent?.replace(/ /g, " ")).toContain(
-        dto.ivaEtiqueta
-      )
+      expect(bloque.textContent).not.toMatch(/IVA/)
       unmount()
     }
   })
@@ -167,7 +164,7 @@ describe("card y ficha", () => {
       name: "Precio para empleados JDH",
     })
     expect(bloque.textContent).toMatch(/59\.337/)
-    expect(bloque.textContent).toMatch(/IVA incluido/)
+    expect(bloque.textContent).not.toMatch(/49\.863/)
     expect(bloque.textContent).toMatch(/por unidad/)
     expect(bloque.textContent).toMatch(/costos del 17 nov 2026/)
   })

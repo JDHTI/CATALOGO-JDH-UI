@@ -287,7 +287,18 @@ describe("pantalla del carrito", () => {
     expect(
       await screen.findByText(/208\.173/, { selector: "dd" })
     ).toBeDefined()
-    expect(screen.getByText(/69\.391 c\/u/)).toBeDefined()
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Mi carrito" })
+    ).toBeDefined()
+    expect(screen.getByText("Lista de precios de empleados")).toBeDefined()
+    // Precio unitario de la fila, con su rótulo para lectores de pantalla.
+    const fila = within(
+      screen.getByRole("region", { name: "Productos en el carrito" })
+    ).getByRole("listitem")
+    expect(fila.textContent).toMatch(/Precio unitario \$\s?69\.391/)
+    expect(fila.textContent).toMatch(/SKU /)
+    // Ya no hay «Vaciar carrito».
+    expect(screen.queryByRole("button", { name: /Vaciar/ })).toBeNull()
     expect(
       screen.getByText(/Los impuestos se calculan al finalizar el pedido/)
     ).toBeDefined()
