@@ -13,13 +13,19 @@ import { FavoritoBoton } from "@/modules/favoritos/components/favorito-boton"
 import type { Producto } from "../types"
 import { PrecioEmpleado } from "./precio-empleado"
 import { ProductoImagen } from "./producto-imagen"
+import { ProductoVistaPrevia } from "./producto-vista-previa"
 
 /**
  * Card de producto del catálogo — única card de producto de la app, usada
  * por el listado (`/productos`) y por la muestra del homepage. El catálogo
  * es solo referencia visual: identifica el producto (imagen, marca, nombre,
  * sku) y su proveedor, el eje principal de clasificación. Toda la card
- * navega al detalle.
+ * navega al detalle; con el ratón encima abre además una vista previa
+ * (`ProductoVistaPrevia`) con el nombre completo y la ficha resumida.
+ *
+ * La franja inferior es del PRECIO de empleado, no del proveedor: es el dato
+ * que se compara de card a card y queda alineado en la base de la grilla.
+ * Para anónimos y clientes no hay precio y la franja no se pinta.
  *
  * El contrato no publica un resumen editorial para tarjetas. La descripción
  * SEO pertenece a los metadatos y la larga a la ficha; ninguna se reutiliza
@@ -28,6 +34,9 @@ import { ProductoImagen } from "./producto-imagen"
 export function ProductoCard({ producto }: { producto: Producto }) {
   return (
     /*
+     * La vista previa envuelve el contenedor completo (corazón y carrito
+     * incluidos): pasar el ratón por esos botones no debe cerrarla.
+     *
      * El botón de favorito va FUERA del `<article>`, no dentro.
      *
      * El anillo de foco de la card es `focus-within`, así que lo dispara
@@ -47,28 +56,29 @@ export function ProductoCard({ producto }: { producto: Producto }) {
      * HTML inválido y deja el foco y los lectores de pantalla en un estado
      * ambiguo.
      */
-    <div className="relative h-full">
-      <FavoritoBoton
-        sobreImagen
-        productoId={producto.id}
-        nombreProducto={producto.nombre}
-        className="absolute top-2 right-2 z-10"
-      />
-      {/* Carrito de EMPLEADOS: fuera del `<article>` por la misma razón que
+    <ProductoVistaPrevia producto={producto}>
+      <div className="relative h-full">
+        <FavoritoBoton
+          sobreImagen
+          productoId={producto.id}
+          nombreProducto={producto.nombre}
+          className="absolute top-2 right-2 z-10"
+        />
+        {/* Carrito de EMPLEADOS: fuera del `<article>` por la misma razón que
           el corazón (ver arriba). Solo aparece si el dato trae precio de
-          empleado; se apoya sobre la franja del proveedor, que le reserva
-          el hueco con `pr-12`. */}
-      <AgregarAlCarritoIcono
-        producto={producto}
-        className="absolute right-3 bottom-2.5 z-10"
-      />
-      <article className="group h-full overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] transition-transform duration-200 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:-translate-y-0.5">
-        <Link
-          href={`/productos/${encodeURIComponent(producto.id)}` as Route}
-          aria-label={`Ver detalle de ${producto.nombre}`}
-          className="flex h-full flex-col focus-visible:outline-none"
-        >
-          {/* Recuadro CUADRADO, igual que el detalle y la miniatura del
+          empleado; se apoya sobre la franja del precio, que le reserva el
+          hueco con `pr-12`. */}
+        <AgregarAlCarritoIcono
+          producto={producto}
+          className="absolute right-4 bottom-4 z-10"
+        />
+        <article className="group h-full overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] transition-transform duration-200 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:-translate-y-0.5">
+          <Link
+            href={`/productos/${encodeURIComponent(producto.id)}` as Route}
+            aria-label={`Ver detalle de ${producto.nombre}`}
+            className="flex h-full flex-col focus-visible:outline-none"
+          >
+            {/* Recuadro CUADRADO, igual que el detalle y la miniatura del
             buscador: el master de producto es 1:1 y las tres variantes que
             genera el API (`thumb`/`card`/`full`) son cuadradas con relleno
             blanco, así que aquí no se recorta nada. Con el `aspect-[4/3]`
@@ -77,50 +87,59 @@ export function ProductoCard({ producto }: { producto: Producto }) {
             alrededor del producto. Las tres siluetas de este archivo (real,
             fantasma y esqueleto) tienen que compartir esta relación o la
             card salta de alto al terminar de cargar. */}
-          <ProductoImagen
-            producto={producto}
-            sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
-            className="aspect-square w-full"
-          />
+            <ProductoImagen
+              producto={producto}
+              sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
+              className="aspect-square w-full"
+            />
 
-          <div className="flex flex-1 flex-col gap-2 p-4">
-            <div className="flex flex-col gap-1">
-              {/* La marca va SIN `uppercase`: el nombre real del ERP ya viene
+            <div className="flex flex-1 flex-col gap-2 p-4">
+              <div className="flex flex-col gap-1">
+                {/* La marca va SIN `uppercase`: el nombre real del ERP ya viene
                 en mayúsculas y puede traer forma jurídica ("NESTLE DE
                 COLOMBIA S.A."); forzarlas otra vez lo hace ilegible. */}
-              {producto.marca ? (
-                <p className="truncate text-xs font-medium tracking-wide text-muted-foreground">
-                  {formatNombreComercial(producto.marca)}
+                {producto.marca ? (
+                  <p className="truncate text-xs font-medium tracking-wide text-muted-foreground">
+                    {formatNombreComercial(producto.marca)}
+                  </p>
+                ) : null}
+                {/* Máximo dos renglones con «…»: hay nombres del ERP muy largos
+                que empujaban el resto de la card. El alto mínimo de dos
+                renglones alinea SKU y proveedor entre cards de la misma
+                fila. El texto completo sigue en el DOM (lectores de
+                pantalla) y en la vista previa. */}
+                <h3 className="line-clamp-2 min-h-[2lh] text-sm font-medium break-words">
+                  {producto.nombre}
+                </h3>
+                <p className="text-xs text-muted-foreground tabular-nums">
+                  {producto.sku}
                 </p>
+                <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Store className="size-3.5 shrink-0" aria-hidden="true" />
+                  <span className="truncate">
+                    {formatNombreComercial(producto.proveedor.nombre)}
+                  </span>
+                </p>
+              </div>
+
+              {/* Precio de EMPLEADOS: solo existe en el dato cuando quien mira
+              es personal JDH (ver `PrecioEmpleado`). Para el resto
+              (`undefined`) no se pinta ni la franja. */}
+              {producto.precioEmpleado !== undefined ? (
+                <div
+                  className={cn(
+                    "mt-auto flex min-h-9 items-end border-t border-[var(--color-border)] pt-3",
+                    sePuedeComprar(producto) && "pr-12"
+                  )}
+                >
+                  <PrecioEmpleado producto={producto} variante="card" />
+                </div>
               ) : null}
-              <h3 className="text-sm font-medium text-balance">
-                {producto.nombre}
-              </h3>
-              <p className="text-xs text-muted-foreground tabular-nums">
-                {producto.sku}
-              </p>
             </div>
-
-            {/* Precio de EMPLEADOS: solo existe en el dato cuando quien mira
-              es personal JDH (ver `PrecioEmpleado`). Para el resto no pinta
-              nada y la card queda exactamente igual. */}
-            <PrecioEmpleado producto={producto} variante="card" />
-
-            <p
-              className={cn(
-                "mt-auto flex min-h-9 items-center gap-1.5 border-t border-[var(--color-border)] pt-3 text-xs text-muted-foreground",
-                sePuedeComprar(producto) && "pr-12"
-              )}
-            >
-              <Store className="size-3.5 shrink-0" aria-hidden="true" />
-              <span className="truncate">
-                {formatNombreComercial(producto.proveedor.nombre)}
-              </span>
-            </p>
-          </div>
-        </Link>
-      </article>
-    </div>
+          </Link>
+        </article>
+      </div>
+    </ProductoVistaPrevia>
   )
 }
 
@@ -147,7 +166,7 @@ export function ProductoCardFantasma() {
         <div className="h-3 w-16 rounded bg-[var(--color-surface-subtle)]" />
         <div className="h-4 w-4/5 rounded bg-[var(--color-surface-subtle)]" />
         <div className="h-3 w-24 rounded bg-[var(--color-surface-subtle)]" />
-        <div className="mt-3 h-3 w-28 rounded bg-[var(--color-surface-subtle)]" />
+        <div className="mt-1 h-3 w-28 rounded bg-[var(--color-surface-subtle)]" />
       </div>
     </div>
   )
@@ -165,7 +184,7 @@ export function ProductoCardSkeleton() {
         <div className="h-3 w-16 rounded bg-[var(--color-surface-subtle)]" />
         <div className="h-4 w-4/5 rounded bg-[var(--color-surface-subtle)]" />
         <div className="h-3 w-24 rounded bg-[var(--color-surface-subtle)]" />
-        <div className="mt-3 h-3 w-28 rounded bg-[var(--color-surface-subtle)]" />
+        <div className="mt-1 h-3 w-28 rounded bg-[var(--color-surface-subtle)]" />
       </div>
     </div>
   )
