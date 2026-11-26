@@ -100,12 +100,14 @@ export function MainNav({ className }: { className?: string }) {
             <span className="whitespace-nowrap">Promociones</span>
           </Link>
           {/* El blog vive en el sitio corporativo: es un `<a>` externo, en
-              pestaña nueva, y la flecha diagonal lo anuncia antes del clic. */}
+              pestaña nueva, y la flecha diagonal lo anuncia antes del clic.
+              Desde `sm`: en un teléfono le quitaba el ancho a "Explorar
+              catálogo", que quedaba cortado; ahí el blog sigue en el footer. */}
           <a
             href={contactConfig.blogUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-medium text-[var(--color-on-ink)] transition-colors hover:bg-transparent hover:text-[var(--color-on-ink-muted)]"
+            className="hidden h-9 shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-medium text-[var(--color-on-ink)] transition-colors hover:bg-transparent hover:text-[var(--color-on-ink-muted)] sm:inline-flex"
           >
             <span className="whitespace-nowrap">Blog</span>
             <ArrowUpRight className="size-4 shrink-0" aria-hidden />
