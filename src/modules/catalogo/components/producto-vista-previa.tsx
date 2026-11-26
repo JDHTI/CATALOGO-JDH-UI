@@ -130,6 +130,13 @@ function ContenidoVistaPrevia({ producto }: { producto: Producto }) {
       <DialogOverlay className="bg-black/40 supports-backdrop-filter:backdrop-blur-md" />
       <DialogPrimitive.Content
         data-slot="dialog-content"
+        // Lo abrió el ratón, no el teclado: el foco va al contenedor y no a
+        // la X, que si no aparecía rodeada de su anillo como si alguien la
+        // hubiera tabulado. Tab sigue recorriendo el contenido desde ahí.
+        onOpenAutoFocus={(evento) => {
+          evento.preventDefault()
+          ;(evento.currentTarget as HTMLElement | null)?.focus()
+        }}
         className="fixed top-1/2 left-1/2 z-50 flex max-h-[85vh] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-foreground shadow-xl duration-150 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
       >
         <div
