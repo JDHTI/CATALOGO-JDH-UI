@@ -5,6 +5,7 @@ import { CategoriasSection } from "./categorias-section"
 import { CtaSection } from "./cta-section"
 import { FeaturedProducts } from "./featured-products"
 import { HeroSection } from "./hero-section"
+import { NewsletterSection } from "./newsletter-section"
 import { PromoBanner } from "./promo-banner"
 import { ValueProps } from "./value-props"
 
@@ -14,7 +15,8 @@ import { ValueProps } from "./value-props"
  * Orden: hero a MEDIA altura (full-bleed) → categorías (grilla) → muestra del
  * catálogo (grilla 4×3) → banners publicitarios → cobertura full-bleed
  * (`ValueProps`, negra en claro y blanca en oscuro) → marcas (tablero
- * rotativo de logos) → CTA de crear cuenta.
+ * rotativo de logos) → CTA de crear cuenta → formulario de contacto tipo
+ * newsletter (`NewsletterSection`, guarda en `POST /contact-leads`).
  *
  * El hero dejó de ocupar toda la primera vista para que las categorías asomen
  * sin hacer scroll. La cinta infinita de proveedores se retiró: repetía lo
@@ -90,6 +92,7 @@ export function InicioView({
       <div className="mx-auto flex w-full max-w-[var(--container-wide)] flex-col gap-[var(--space-16)] px-6 py-[var(--space-16)] pb-24 md:pb-[var(--space-32)] lg:gap-[var(--space-32)] lg:py-[var(--space-32)]">
         <BrandsSection marcas={marcas} />
         <CtaSection />
+        <NewsletterSection />
       </div>
     </div>
   )
