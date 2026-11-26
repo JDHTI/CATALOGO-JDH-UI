@@ -260,6 +260,9 @@ export function CatalogFilters({
               onRetry={() => {}}
               seleccionado={subcategoriaIds}
               onSeleccionar={onSubcategoriaChange}
+              // Aparece justo cuando se elige una categoría: es el siguiente
+              // paso natural, así que se muestra abierto.
+              desplegadoInicial
               nota={
                 padres.length === 1
                   ? `Dentro de ${formatNombreComercial(padres[0].nombre)}.`
@@ -356,6 +359,7 @@ function EjeFiltro({
   seleccionado,
   onSeleccionar,
   nota,
+  desplegadoInicial,
 }: {
   icono: typeof Store
   titulo: string
@@ -368,9 +372,18 @@ function EjeFiltro({
   seleccionado: string[]
   onSeleccionar: (id: string[]) => void
   nota?: string
+  /**
+   * Por defecto el eje arranca PLEGADO, salvo que ya tenga algo elegido (un
+   * filtro que llegó en la URL no debe quedar escondido). Con todos abiertos
+   * el panel era un muro de tres listas largas y lo primero que se veía de
+   * `/productos` eran filtros, no productos.
+   */
+  desplegadoInicial?: boolean
 }) {
   const [filtro, setFiltro] = useState("")
-  const [desplegado, setDesplegado] = useState(true)
+  const [desplegado, setDesplegado] = useState(
+    () => desplegadoInicial ?? seleccionado.length > 0
+  )
 
   const { visibles, ocultos, hayItems } = useMemo(() => {
     const lista = items ?? []
