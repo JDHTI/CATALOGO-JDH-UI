@@ -4,13 +4,6 @@ import Link from "next/link"
 
 import { JdhButton } from "@/components/common/jdh-button"
 import { ScrollReveal } from "@/components/motion/scroll-reveal"
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel"
 import { useDestacados } from "@/modules/catalogo/hooks/use-productos"
 import {
   ProductoCard,
@@ -20,20 +13,25 @@ import {
 
 import { SECTION_EMPTY_COPY, SectionNota } from "./section-empty"
 
-/** Cuántas referencias trae el carrusel de la primera página del catálogo. */
-const MUESTRA = 8
+/** Cuántas referencias trae la muestra: 4 columnas × 3 filas en escritorio. */
+const MUESTRA = 12
+
+/** Una sola grilla para los tres estados (real, cargando y fantasma), para que
+ *  la sección no cambie de alto al llegar los datos. */
+const GRILLA = "grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4"
 
 /**
- * Muestra del portafolio en CARRUSEL, con productos REALES del API:
- * `GET /products/destacados`. Arrastre nativo (embla) en móvil; flechas en
- * ≥sm a los costados. Usa la misma card que el listado (`ProductoCard`) — sin
- * precio y sin carrito, porque el catálogo es referencia visual.
+ * Muestra del portafolio en GRILLA 4×3 (3 columnas en tablet, 2 en móvil), con
+ * productos REALES del API: `GET /products/destacados?limit=12`. Usa la misma
+ * card que el listado (`ProductoCard`) en su variante `compacta`, que deja
+ * entrar doce referencias sin que la sección pese más que el carrusel de
+ * tres que reemplaza.
  *
  * Antes pedía la primera página de `GET /products`, que alfabéticamente son
  * productos sin foto: una vitrina de ocho placeholders. El endpoint propio
  * existe porque el criterio necesita ver todo el conjunto — reparte por marca
  * y rota con semilla del día, así que la home no queda clavada en las mismas
- * ocho referencias de un solo proveedor.
+ * doce referencias de un solo proveedor.
  *
  * Sin datos la sección NO desaparece: conserva su encabezado y muestra un
  * `SectionEmpty`. Ocultarla dejaba la homepage sin cuerpo cuando el catálogo
@@ -76,12 +74,9 @@ export function FeaturedProducts() {
           // marco de la imagen), para que la sección tenga cuerpo antes de
           // que existan productos.
           <div className="flex flex-col gap-4">
-            <div
-              className="grid grid-cols-2 gap-4 md:grid-cols-3"
-              aria-hidden="true"
-            >
-              {Array.from({ length: 3 }, (_, i) => (
-                <ProductoCardFantasma key={i} />
+            <div className={GRILLA} aria-hidden="true">
+              {Array.from({ length: 4 }, (_, i) => (
+                <ProductoCardFantasma key={i} densidad="compacta" />
               ))}
             </div>
             <SectionNota
@@ -93,26 +88,19 @@ export function FeaturedProducts() {
             />
           </div>
         ) : (
-          <Carousel opts={{ align: "start" }}>
-            <CarouselContent>
-              {isPending
-                ? Array.from({ length: 4 }, (_, i) => (
-                    <CarouselItem key={i} className="basis-1/2 md:basis-1/3">
-                      <ProductoCardSkeleton />
-                    </CarouselItem>
-                  ))
-                : productos.map((producto) => (
-                    <CarouselItem
-                      key={producto.id}
-                      className="basis-1/2 md:basis-1/3"
-                    >
-                      <ProductoCard producto={producto} />
-                    </CarouselItem>
-                  ))}
-            </CarouselContent>
-            <CarouselPrevious className="hidden sm:-left-6 sm:inline-flex" />
-            <CarouselNext className="hidden sm:-right-6 sm:inline-flex" />
-          </Carousel>
+          <ul className={GRILLA} aria-busy={isPending || undefined}>
+            {isPending
+              ? Array.from({ length: MUESTRA }, (_, i) => (
+                  <li key={i}>
+                    <ProductoCardSkeleton densidad="compacta" />
+                  </li>
+                ))
+              : productos.map((producto) => (
+                  <li key={producto.id}>
+                    <ProductoCard producto={producto} densidad="compacta" />
+                  </li>
+                ))}
+          </ul>
         )}
       </ScrollReveal>
     </section>

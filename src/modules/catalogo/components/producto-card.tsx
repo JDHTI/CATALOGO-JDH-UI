@@ -31,7 +31,20 @@ import { ProductoVistaPrevia } from "./producto-vista-previa"
  * SEO pertenece a los metadatos y la larga a la ficha; ninguna se reutiliza
  * aquí para evitar llamadas comerciales y texto genérico en el listado.
  */
-export function ProductoCard({ producto }: { producto: Producto }) {
+export function ProductoCard({
+  producto,
+  densidad = "normal",
+}: {
+  producto: Producto
+  /**
+   * `compacta` la usa la muestra del homepage (grilla 4×3): menos relleno y
+   * texto un punto más chico para que entren doce referencias sin que la
+   * sección se vuelva un muro. La SILUETA no cambia (imagen cuadrada arriba,
+   * datos abajo), así que fantasma y esqueleto siguen sirviendo.
+   */
+  densidad?: "normal" | "compacta"
+}) {
+  const compacta = densidad === "compacta"
   return (
     /*
      * La vista previa envuelve el contenedor completo (corazón y carrito
@@ -70,7 +83,10 @@ export function ProductoCard({ producto }: { producto: Producto }) {
           hueco con `pr-12`. */}
         <AgregarAlCarritoIcono
           producto={producto}
-          className="absolute right-4 bottom-4 z-10"
+          className={cn(
+            "absolute z-10",
+            compacta ? "right-3 bottom-3" : "right-4 bottom-4"
+          )}
         />
         <article className="group h-full overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] transition-transform duration-200 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:-translate-y-0.5">
           <Link
@@ -89,11 +105,20 @@ export function ProductoCard({ producto }: { producto: Producto }) {
             card salta de alto al terminar de cargar. */}
             <ProductoImagen
               producto={producto}
-              sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
+              sizes={
+                compacta
+                  ? "(min-width: 1024px) 20vw, (min-width: 768px) 33vw, 50vw"
+                  : "(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
+              }
               className="aspect-square w-full"
             />
 
-            <div className="flex flex-1 flex-col gap-2 p-4">
+            <div
+              className={cn(
+                "flex flex-1 flex-col",
+                compacta ? "gap-1.5 p-3" : "gap-2 p-4"
+              )}
+            >
               <div className="flex flex-col gap-1">
                 {/* La marca va SIN `uppercase`: el nombre real del ERP ya viene
                 en mayúsculas y puede traer forma jurídica ("NESTLE DE
@@ -108,7 +133,12 @@ export function ProductoCard({ producto }: { producto: Producto }) {
                 renglones alinea SKU y proveedor entre cards de la misma
                 fila. El texto completo sigue en el DOM (lectores de
                 pantalla) y en la vista previa. */}
-                <h3 className="line-clamp-2 min-h-[2lh] text-sm font-medium break-words">
+                <h3
+                  className={cn(
+                    "line-clamp-2 min-h-[2lh] font-medium break-words",
+                    compacta ? "text-[0.8125rem] leading-snug" : "text-sm"
+                  )}
+                >
                   {producto.nombre}
                 </h3>
                 <p className="text-xs text-muted-foreground tabular-nums">
@@ -128,7 +158,8 @@ export function ProductoCard({ producto }: { producto: Producto }) {
               {producto.precioEmpleado !== undefined ? (
                 <div
                   className={cn(
-                    "mt-auto flex min-h-9 items-end border-t border-[var(--color-border)] pt-3",
+                    "mt-auto flex min-h-9 items-end border-t border-[var(--color-border)]",
+                    compacta ? "pt-2" : "pt-3",
                     sePuedeComprar(producto) && "pr-12"
                   )}
                 >
@@ -149,7 +180,11 @@ export function ProductoCard({ producto }: { producto: Producto }) {
  * está cargando" y no es el caso — aquí no hay nada que esperar, solo se
  * está mostrando la forma que tendrá la sección.
  */
-export function ProductoCardFantasma() {
+export function ProductoCardFantasma({
+  densidad = "normal",
+}: {
+  densidad?: "normal" | "compacta"
+}) {
   return (
     <div
       aria-hidden="true"
@@ -162,7 +197,12 @@ export function ProductoCardFantasma() {
           aria-hidden="true"
         />
       </div>
-      <div className="flex flex-col gap-2 p-4">
+      <div
+        className={cn(
+          "flex flex-col",
+          densidad === "compacta" ? "gap-1.5 p-3" : "gap-2 p-4"
+        )}
+      >
         <div className="h-3 w-16 rounded bg-[var(--color-surface-subtle)]" />
         <div className="h-4 w-4/5 rounded bg-[var(--color-surface-subtle)]" />
         <div className="h-3 w-24 rounded bg-[var(--color-surface-subtle)]" />
@@ -173,14 +213,23 @@ export function ProductoCardFantasma() {
 }
 
 /** Esqueleto de la card mientras responde el API (misma silueta). */
-export function ProductoCardSkeleton() {
+export function ProductoCardSkeleton({
+  densidad = "normal",
+}: {
+  densidad?: "normal" | "compacta"
+}) {
   return (
     <div
       aria-hidden="true"
       className="h-full animate-pulse overflow-hidden rounded-[var(--jdh-radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]"
     >
       <div className="aspect-square w-full bg-[var(--color-surface-subtle)]" />
-      <div className="flex flex-col gap-2 p-4">
+      <div
+        className={cn(
+          "flex flex-col",
+          densidad === "compacta" ? "gap-1.5 p-3" : "gap-2 p-4"
+        )}
+      >
         <div className="h-3 w-16 rounded bg-[var(--color-surface-subtle)]" />
         <div className="h-4 w-4/5 rounded bg-[var(--color-surface-subtle)]" />
         <div className="h-3 w-24 rounded bg-[var(--color-surface-subtle)]" />
