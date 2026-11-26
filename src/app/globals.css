@@ -282,8 +282,12 @@
 /* Tema oscuro — mismo sistema invertido (DESIGN.md §2.3).
    El proyecto usa la clase `.dark` (convención next-themes/shadcn) como
    mecanismo de activación en vez de [data-theme], sobre el mismo árbol de
-   variables — un solo interruptor, un solo set de tokens. */
-.dark {
+   variables — un solo interruptor, un solo set de tokens.
+
+   El mismo bloque aplica a `.tema-invertido` en el tema CLARO: ver la nota
+   de ese ámbito justo debajo. */
+.dark,
+:root:not(.dark) .tema-invertido {
   --color-bg: var(--neutral-900);
   --color-bg-subtle: var(--neutral-700);
   --color-surface: var(--neutral-900);
@@ -327,6 +331,68 @@
   --color-info-subtle: rgba(59, 130, 246, 0.12);
   --color-error: #f87171;
   --color-error-subtle: rgba(239, 68, 68, 0.14);
+}
+
+/* Ámbito de tema INVERTIDO (`.tema-invertido`): un bloque que se ve en el
+   tema contrario al de la página — oscuro en claro y claro en oscuro. Lo usa
+   la tarjeta del formulario de contacto del homepage para destacarse del
+   lienzo sin salir del monocromo.
+
+   Funciona reasignando los MISMOS tokens semánticos en el ámbito, así que
+   todo lo que hay dentro (inputs, select, checkbox, botón) se invierte sin
+   clases propias:
+   - en claro recibe el bloque `.dark` de arriba (selector compartido);
+   - en oscuro recibe este bloque, que repite los valores del tema claro de
+     `:root` SOLO para los tokens que `.dark` sobreescribe.
+   El mapeo shadcn (`--background`, `--primary`…) se redeclara en el ámbito
+   por la misma vía (ver los selectores de los bloques de `:root`/`.dark` de
+   más abajo): una variable que referencia a otra se resuelve donde se
+   declara, y heredada desde `html` seguiría apuntando al tema de la página.
+
+   Límite conocido: el variant `dark:` de Tailwind sigue el tema de la PÁGINA,
+   no el del ámbito. Dentro solo se usan los tintes `dark:bg-input/30` de los
+   primitivos shadcn, que no alteran el resultado; no meter aquí componentes
+   que dependan de `dark:` para su color principal. */
+.dark .tema-invertido {
+  --color-bg: var(--neutral-0);
+  --color-bg-subtle: var(--neutral-100);
+  --color-surface: var(--neutral-0);
+  --color-surface-subtle: var(--neutral-100);
+  --color-border: var(--neutral-200);
+  --color-border-strong: var(--neutral-300);
+  --color-text: var(--neutral-900);
+  --color-text-secondary: var(--neutral-700);
+  --color-text-tertiary: var(--neutral-500);
+  --color-text-disabled: var(--neutral-300);
+  --color-focus: var(--neutral-900);
+  --color-selection: var(--neutral-900);
+  --color-selection-text: var(--neutral-0);
+  --color-ink-border: var(--overlay-on-dark-12);
+  --color-primary-surface: var(--color-ink);
+  --color-primary-surface-hover: var(--color-ink-hover);
+  --color-on-primary-surface: var(--color-on-ink);
+  --color-success: #15803d;
+  --color-success-subtle: #f0fdf4;
+  --color-warning: #b45309;
+  --color-warning-subtle: #fffbeb;
+  --color-info: #1d4ed8;
+  --color-info-subtle: #eff6ff;
+  --color-error: #b91c1c;
+  --color-error-subtle: #fef2f2;
+}
+
+/* El tinte `dark:bg-input/30` de los primitivos shadcn sigue el tema de la
+   PÁGINA (ver "límite conocido" arriba): dentro del ámbito claro sobre página
+   oscura pintaba los campos de gris, como deshabilitados. Fuera de capa a
+   propósito, para ganarle a la utilidad (que vive en `@layer utilities`). */
+.dark
+  .tema-invertido
+  :is(
+    [data-slot="input"],
+    [data-slot="select-trigger"],
+    [data-slot="checkbox"]:not([data-state="checked"], [data-checked])
+  ) {
+  background-color: transparent;
 }
 
 /* ==========================================================================
@@ -378,7 +444,8 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-:root {
+:root,
+.dark .tema-invertido {
   --background: var(--color-bg);
   --foreground: var(--color-text);
   --card: var(--color-surface);
@@ -420,7 +487,8 @@
   --sidebar-ring: var(--color-focus-on-ink);
 }
 
-.dark {
+.dark,
+:root:not(.dark) .tema-invertido {
   --background: var(--color-bg);
   --foreground: var(--color-text);
   --card: var(--color-surface);

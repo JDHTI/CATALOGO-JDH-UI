@@ -478,5 +478,22 @@ En la misma tanda, sin impacto estructural:
 - El hero quedó a media altura.
 - La cinta de proveedores (`ProviderMarquee`) se retiró del homepage, y los proveedores quedan solo en los filtros de `/productos`.
 - La barra inferior del header pasó de marcas a categorías: muestra solo las que caben, medidas con `useDesbordados`.
-- La vista previa de producto pasó de `HoverCard` a un modal centrado que se abre tras 2 s de hover.
+- La vista previa de producto pasó de `HoverCard` a un modal centrado que se abre tras 1 s de hover (empezó en 2 s; se sentía lenta).
 - `/promociones` existe como módulo y solo muestra un estado vacío.
+
+## 2026-11-26 — Ámbito `.tema-invertido`: un bloque en el tema contrario al de la página
+
+**Contexto:** la tarjeta del formulario de contacto del homepage debe verse oscura en el tema claro y clara en el oscuro. Los controles comunes (`JdhInput`, `JdhSelect`, `JdhCheckbox`, `JdhButton`) no tienen variantes "sobre tinta", y crearlas para un solo bloque duplicaría estilos.
+
+**Decisión:** la clase `.tema-invertido` (en `globals.css`) reasigna los tokens semánticos en su subárbol.
+
+- **En el tema claro** recibe los valores del bloque `.dark`: se agregó como segundo selector de ese bloque.
+- **En el tema oscuro** recibe un bloque propio con los valores claros, solo de los tokens que `.dark` sobreescribe.
+- **El mapeo shadcn** (`--background`, `--primary`…) se redeclara en el ámbito con los mismos selectores. Si no, heredaría lo que ya resolvió `html`.
+- **Alternativa descartada:** cambiar el `@custom-variant dark` para que también respete el ámbito. Habría subido la especificidad de todas las utilidades `dark:` de la app.
+
+**Consecuencias:**
+
+- El variant `dark:` sigue el tema de la página, no el del ámbito. El único caso que lo nota, el tinte `dark:bg-input/30` de inputs, select y checkbox, se neutraliza con una regla fuera de capa.
+- No meter en el ámbito componentes que dependan de `dark:` para su color principal.
+- Los portales (el desplegable del select, los toasts) salen del ámbito y se ven en el tema de la página.

@@ -23,11 +23,11 @@ import { ProductoImagen } from "./producto-imagen"
 
 /**
  * Cuánto tiene que DESCANSAR el ratón sobre la card para abrir la vista
- * previa. Es largo a propósito: al recorrer una grilla con el ratón no debe
+ * previa (1 s; con 2 s se sentía lenta). Sigue siendo largo a propósito: al recorrer una grilla con el ratón no debe
  * ir saltando un modal por cada card que se cruza, solo cuando alguien se
  * detiene a mirar una.
  */
-export const VISTA_PREVIA_DELAY_MS = 2000
+export const VISTA_PREVIA_DELAY_MS = 1000
 
 /**
  * Vista previa de un producto: un modal CENTRADO, con el fondo desenfocado,
@@ -49,8 +49,7 @@ export const VISTA_PREVIA_DELAY_MS = 2000
  *   lleva a la ficha completa.
  *
  * Se cierra con clic fuera, Esc o la X. Al cerrarse, el ratón casi siempre
- * vuelve a quedar sobre la misma card; para que no se reabra a los dos
- * segundos, el temporizador no se rearma hasta que el puntero sale de ella.
+ * vuelve a quedar sobre la misma card; para que no se reabra al segundo, el temporizador no se rearma hasta que el puntero sale de ella.
  *
  * El contenido solo se monta con el modal abierto (el portal de Radix no
  * renderiza nada cerrado), así que la card cerrada no lleva al DOM ni la

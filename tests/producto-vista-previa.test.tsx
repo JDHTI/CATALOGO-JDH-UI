@@ -47,7 +47,7 @@ function contenedorDeLaCard() {
 }
 
 describe("vista previa de producto", () => {
-  it("no se abre antes de que el ratón descanse 2 s sobre la card", () => {
+  it("no se abre antes de que el ratón descanse VISTA_PREVIA_DELAY_MS sobre la card", () => {
     render(<ProductoCard producto={producto} />)
     fireEvent.pointerEnter(contenedorDeLaCard(), { pointerType: "mouse" })
 
@@ -70,7 +70,7 @@ describe("vista previa de producto", () => {
     const card = contenedorDeLaCard()
     fireEvent.pointerEnter(card, { pointerType: "mouse" })
     act(() => {
-      vi.advanceTimersByTime(1500)
+      vi.advanceTimersByTime(VISTA_PREVIA_DELAY_MS - 300)
     })
     fireEvent.pointerLeave(card, { pointerType: "mouse" })
     act(() => {
