@@ -478,5 +478,5 @@ En la misma tanda, sin impacto estructural:
 - El hero quedó a media altura.
 - La cinta de proveedores (`ProviderMarquee`) se retiró del homepage, y los proveedores quedan solo en los filtros de `/productos`.
 - La barra inferior del header pasó de marcas a categorías: muestra solo las que caben, medidas con `useDesbordados`.
-- La vista previa de producto pasó de `HoverCard` a un modal centrado que se abre tras 2 s de hover.
+- La vista previa de producto pasó de `HoverCard` a un modal centrado que se abre tras 1 s de hover (empezó en 2 s; se sentía lenta).
 - `/promociones` existe como módulo y solo muestra un estado vacío.
