@@ -81,7 +81,10 @@ export function InicioView({
     <div>
       <HeroSection imagenes={hero} />
 
-      <div className="mx-auto flex w-full max-w-[var(--container-wide)] flex-col gap-[var(--space-16)] px-6 py-[var(--space-16)] pb-24 md:pb-[var(--space-32)] lg:gap-[var(--space-32)] lg:py-[var(--space-32)]">
+      {/* Arriba, menos aire que entre secciones (`pt` propio): con el hero a
+          media altura, el hueco de 8rem lo despegaba de las categorías y la
+          primera vista se leía como dos bloques sueltos. */}
+      <div className="mx-auto flex w-full max-w-[var(--container-wide)] flex-col gap-[var(--space-16)] px-6 pt-[var(--space-8)] pb-24 md:pb-[var(--space-32)] lg:gap-[var(--space-32)] lg:pt-[var(--space-12)] lg:pb-[var(--space-32)]">
         <CategoriasSection />
         <FeaturedProducts />
         <PromoBanner banners={banners} />
