@@ -1,7 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { Compass, Tag } from "lucide-react"
+import { ArrowUpRight, Compass, Tag } from "lucide-react"
+
+import { contactConfig } from "@/config/contact.config"
 
 import { useDesbordados } from "@/hooks/use-desbordados"
 import { useCategorias } from "@/modules/catalogo/hooks/use-productos"
@@ -97,6 +99,18 @@ export function MainNav({ className }: { className?: string }) {
             <Tag className="size-4 shrink-0" aria-hidden />
             <span className="whitespace-nowrap">Promociones</span>
           </Link>
+          {/* El blog vive en el sitio corporativo: es un `<a>` externo, en
+              pestaña nueva, y la flecha diagonal lo anuncia antes del clic. */}
+          <a
+            href={contactConfig.blogUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-medium text-[var(--color-on-ink)] transition-colors hover:bg-transparent hover:text-[var(--color-on-ink-muted)]"
+          >
+            <span className="whitespace-nowrap">Blog</span>
+            <ArrowUpRight className="size-4 shrink-0" aria-hidden />
+            <span className="sr-only">(abre en una pestaña nueva)</span>
+          </a>
         </div>
       </nav>
     </div>

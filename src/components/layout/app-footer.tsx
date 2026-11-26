@@ -73,9 +73,18 @@ export function AppFooter() {
                 <li key={link.href}>
                   <a
                     href={link.href}
+                    {...(link.externo
+                      ? { target: "_blank", rel: "noopener noreferrer" }
+                      : {})}
                     className="text-sm text-[var(--color-on-ink)] transition-colors hover:text-[var(--color-on-ink-muted)] dark:text-[var(--color-on-paper)] dark:hover:text-[var(--color-on-paper-muted)]"
                   >
                     {link.label}
+                    {link.externo ? (
+                      <span className="sr-only">
+                        {" "}
+                        (abre en una pestaña nueva)
+                      </span>
+                    ) : null}
                   </a>
                 </li>
               ))}

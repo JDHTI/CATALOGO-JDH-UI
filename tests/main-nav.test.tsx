@@ -69,4 +69,12 @@ describe("accesos a categorías del header", () => {
       ).toBe("/promociones")
     }
   )
+
+  it("enlaza el blog corporativo en una pestaña nueva", () => {
+    render(<MainNav />)
+    const blog = screen.getByRole("link", { name: /^Blog/ })
+    expect(blog.getAttribute("href")).toBe("https://jdh.com.co")
+    expect(blog.getAttribute("target")).toBe("_blank")
+    expect(blog.getAttribute("rel")).toContain("noopener")
+  })
 })
