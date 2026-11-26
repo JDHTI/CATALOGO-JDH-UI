@@ -5,7 +5,7 @@ import { AlertCircle, CircleAlert, MailCheck } from "lucide-react"
 import { toast } from "sonner"
 
 import { JdhButton } from "@/components/common/jdh-button"
-import { Field } from "@/components/forms/field"
+import { Field, INVALID_CONTROL_CLASSES } from "@/components/forms/field"
 import { JdhCheckbox } from "@/components/forms/jdh-checkbox"
 import { JdhInput } from "@/components/forms/jdh-input"
 import { JdhSelect } from "@/components/forms/jdh-select"
@@ -210,6 +210,13 @@ export function NewsletterSection() {
               name="aceptaTratamientoDatos"
               required
               aria-invalid={errores?.aceptaTratamientoDatos ? true : undefined}
+              // Error monocromo (DESIGN.md §4.5): borde de 2px en tinta, no el
+              // rojo que shadcn pone a `aria-invalid`.
+              className={
+                errores?.aceptaTratamientoDatos
+                  ? INVALID_CONTROL_CLASSES
+                  : undefined
+              }
               aria-describedby={
                 errores?.aceptaTratamientoDatos
                   ? "contacto-autorizacion-error"
