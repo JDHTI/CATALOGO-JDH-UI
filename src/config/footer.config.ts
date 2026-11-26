@@ -1,3 +1,5 @@
+import { contactConfig } from "./contact.config"
+
 /**
  * Columnas de enlaces del footer (DESIGN.md §4.2). La columna de marca y la de
  * sedes las deriva el componente de `siteConfig`; estas son las columnas de
@@ -10,6 +12,8 @@
 export interface FooterLink {
   label: string
   href: string
+  /** Sitio fuera del catálogo: se abre en pestaña nueva. */
+  externo?: boolean
 }
 
 export interface FooterColumn {
@@ -50,6 +54,7 @@ export const footerConfig: FooterConfig = {
         { label: "Privacidad", href: "/privacidad" },
         { label: "Términos y condiciones", href: "/terminos" },
         { label: "Contacto", href: "/#contacto" },
+        { label: "Blog", href: contactConfig.blogUrl, externo: true },
       ],
     },
   ],

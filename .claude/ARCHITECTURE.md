@@ -459,3 +459,24 @@ Se descartó exponer el JWT al cliente para llamar al API directo (contradice el
 - «¿Olvidaste algo?» reutiliza la vitrina de recomendados de la ficha (`OlvidasteAlgoSection`), tomando el primer producto del carrito como referencia y excluyendo los que ya están.
 
 **Consecuencias:** con un correo fallido o apagado (`correo !== "enviado"`) la confirmación dice que el pedido quedó registrado y no pide repetirlo. No hay historial de pedidos en la UI todavía (`GET /orders` ya tiene puente).
+
+## 2026-11-26 — Primera escritura pública anónima: contacto del homepage por Server Action y `publicFetch`
+
+**Contexto:** el homepage gana un formulario de contacto tipo newsletter (nombre, correo, celular, ciudad, identificación opcional). Los datos se guardan en el API (`POST /api/v1/contact-leads`, PR #25 de `CATALOGO-JDH-API`). Es la primera escritura que no exige sesión: quien deja sus datos en la portada casi nunca la tiene.
+
+**Decisión:**
+
+- **Server Action, no `fetch` desde el navegador.** `enviarContacto` (`modules/inicio/server/acciones.ts`) valida con el esquema isomórfico `modules/inicio/schemas/contacto.ts`, normaliza (celular a diez dígitos, correo en minúsculas, `""` a `null`) y envía exactamente los ocho campos del contrato, porque el API rechaza campos de más (`forbidNonWhitelisted`). Es la misma forma que el registro de clientes: el esquema que pinta los errores es el que decide.
+- **`publicFetch` (`lib/api/public-fetch.ts`), separado de `backendFetch`.** `backendFetch` exige sesión y firma un JWT, así que no sirve aquí. `publicFetch` usa la misma base (`BACKEND_API_URL`, con `NEXT_PUBLIC_API_URL` absoluta como respaldo local), no manda identidad y corta a los 8 s. Solo se usa para escrituras públicas. Las lecturas públicas siguen yendo directo al API desde el cliente del catálogo.
+- **Antispam en dos capas.** El API limita a 5 envíos cada 10 minutos por IP. Como la llamada sale del servidor de Next, la acción reenvía la IP del visitante como último valor de `X-Forwarded-For`, que el API lee con `TRUST_PROXY`. La UI añade un campo trampa oculto (`sitioWeb`): si llega lleno, responde éxito sin enviar nada.
+- **Habeas data explícito.** La autorización (Ley 1581 de 2012) es una casilla obligatoria que arranca sin marcar, y el API guarda cuándo se aceptó. La respuesta es `201 { ok: true }`, sin id, para no revelar si el correo ya estaba registrado (el API hace upsert por correo).
+
+**Consecuencias:** los datos solo se guardan; no hay lectura ni exportación todavía. El enlace a `/privacidad` del formulario y del footer apunta a una página que aún no existe. Con `BACKEND_API_URL` sin configurar y `NEXT_PUBLIC_API_URL` relativa, el formulario responde con un error genérico y lo registra en el log del servidor.
+
+En la misma tanda, sin impacto estructural:
+
+- El hero quedó a media altura.
+- La cinta de proveedores (`ProviderMarquee`) se retiró del homepage, y los proveedores quedan solo en los filtros de `/productos`.
+- La barra inferior del header pasó de marcas a categorías: muestra solo las que caben, medidas con `useDesbordados`.
+- La vista previa de producto pasó de `HoverCard` a un modal centrado que se abre tras 2 s de hover.
+- `/promociones` existe como módulo y solo muestra un estado vacío.

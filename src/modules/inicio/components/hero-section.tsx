@@ -16,8 +16,8 @@ import { cn } from "@/lib/utils"
 import type { PiezaHero } from "../types"
 
 /**
- * Primer slide del homepage: la fotografía llena el viewport restante bajo el
- * chrome (`100svh - --catalogo-chrome-height`) en cualquier dispositivo.
+ * Primer slide del homepage: la fotografía ocupa la mitad del viewport
+ * restante bajo el chrome (`(100svh - --catalogo-chrome-height) / 2`).
  *
  * **El copy vuelve a ser TEXTO.** Hasta ahora iba horneado en el arte y el
  * componente no ponía nada encima. Eso tenía dos costos que la pieza actual
@@ -59,7 +59,12 @@ import type { PiezaHero } from "../types"
  */
 
 /**
- * Alto del hero: el viewport menos el chrome sticky. La clase va en cada SLIDE
+ * Alto del hero: la MITAD del viewport que queda bajo el chrome sticky, para
+ * que la primera vista ya asome las categorías debajo en vez de ser solo
+ * fotografía. El `max()` con 20rem evita que en una pantalla baja (laptop
+ * apaisado, móvil horizontal) la banda quede más corta que el copy.
+ *
+ * La clase va en cada SLIDE
  * y no en un ancestro porque el envoltorio con `overflow-hidden` de `Carousel`
  * no acepta clases — la altura tiene que subir desde los hijos. El `min-h` de
  * la `section` la repite para que la banda conserve su alto cuando no hay
@@ -69,8 +74,10 @@ import type { PiezaHero } from "../types"
  * busca de clases completas y una compuesta (`min-${ALTO_SLIDE}`) no genera
  * CSS.
  */
-const ALTO_SLIDE = "h-[calc(100svh-var(--catalogo-chrome-height))]"
-const ALTO_MINIMO = "min-h-[calc(100svh-var(--catalogo-chrome-height))]"
+const ALTO_SLIDE =
+  "h-[max(20rem,calc((100svh-var(--catalogo-chrome-height))/2))]"
+const ALTO_MINIMO =
+  "min-h-[max(20rem,calc((100svh-var(--catalogo-chrome-height))/2))]"
 
 /** Cada cuánto cambia la pieza. Mismo criterio que los banners: es una
  *  fotografía institucional, no un carrusel de navegación, y un cambio rápido
@@ -167,16 +174,20 @@ export function HeroSection({ imagenes }: { imagenes: PiezaHero[] }) {
 
       {/* `pointer-events-none` en el bloque de texto: encima va el arrastre del
           carrusel, y una capa a pantalla completa lo tragaría entero. */}
-      <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-start pt-[var(--space-12)] md:justify-center md:pt-0">
+      <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-center">
         {/* Se sale del `--container-wide` del resto de la página A PROPÓSITO:
             el hero es la única sección full-bleed y el arte original apoyaba
             el copy a ~5% del borde. Metido en el contenedor arrancaba a 13.75%
-            en un monitor de 1920 y el titular se leía pequeño y desplazado. */}
+            en un monitor de 1920 y el titular se leía pequeño y desplazado.
+
+            La escala va a ~2/3 de la que tenía con el hero a pantalla
+            completa: con la mitad de alto, titular y texto tienen que caber
+            sin tocar los dots. */}
         <div className="w-full px-6 md:px-[5vw]">
-          <h1 className="max-w-[17ch] text-[2.75rem] leading-[0.95] font-bold tracking-[-0.02em] text-[var(--color-on-ink)] sm:text-[3.5rem] md:text-[min(5.8vw,5.25rem)] lg:text-[clamp(2.75rem,4.375vw,5.25rem)]">
+          <h1 className="max-w-[20ch] text-[2rem] leading-[0.95] font-bold tracking-[-0.02em] text-[var(--color-on-ink)] sm:text-[2.5rem] md:text-[min(4vw,3.5rem)] lg:text-[clamp(2.25rem,2.9vw,3.5rem)]">
             Acompañar en todo momento a nuestros clientes,
           </h1>
-          <p className="mt-[var(--space-6)] max-w-[34ch] text-lg leading-[1.5] text-[var(--color-on-ink)] md:text-[min(2.2vw,1.875rem)] lg:text-[clamp(1.125rem,1.5625vw,1.875rem)]">
+          <p className="mt-[var(--space-4)] max-w-[40ch] text-base leading-[1.5] text-[var(--color-on-ink)] md:text-[min(1.6vw,1.25rem)] lg:text-[clamp(1rem,1.05vw,1.25rem)]">
             Y garantizar un servicio con los mejores estándares,{" "}
             <strong className="font-bold">
               ha sido y será nuestra mayor promesa.

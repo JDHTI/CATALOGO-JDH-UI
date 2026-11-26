@@ -21,4 +21,6 @@ export const contactConfig = {
   location: "Itagüí, Antioquia",
   address: "Cra 42 #54 A 155 Int C Oficina 501",
   instagramUrl: "https://www.instagram.com/juand.hoyosdistribuciones",
+  /** Blog institucional (sitio corporativo). Lo enlazan el header y el footer. */
+  blogUrl: "https://jdh.com.co",
 } as const

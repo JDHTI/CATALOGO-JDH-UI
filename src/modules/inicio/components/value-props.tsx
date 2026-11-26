@@ -38,17 +38,17 @@ const VALUE_PROPS = [
 
 /**
  * Sección de cifras institucionales: full-bleed negra en tema claro y
- * blanca en tema oscuro, pegada al hero. Las 4 propuestas de valor son
+ * blanca en tema oscuro, entre los banners y las marcas. Las 4 propuestas de valor son
  * CARDS INDEPENDIENTES (cada una con su borde hairline `--color-ink-border`,
  * separadas por gap) con texto en tokens on-ink y hover con overlay sutil.
  *
  * El padding vertical es simétrico (--space-16 móvil / --space-24 desktop):
- * el margen contra el hero arriba y contra la siguiente sección abajo es el
+ * el margen contra la sección de arriba y contra la de abajo es el
  * mismo.
  *
  * En MÓVIL (<`sm`) las cards NO se apilan: el contenedor colapsa a una pista
  * deslizable horizontal, de scroll LIBRE. Apiladas, la franja negra medía
- * cuatro pantallas justo debajo del hero y empujaba el resto del catálogo
+ * cuatro pantallas y empujaba el resto de la portada
  * fuera de la vista; en carrusel ocupa una. Desde `sm` el mismo contenedor
  * vuelve a ser la grilla (2 columnas, 4 en `lg`) sin duplicar el marcado:
  * `flex` → `sm:grid` y el ancho porcentual de las cards → `sm:w-auto`.
@@ -70,7 +70,7 @@ export function ValueProps() {
         // de pantalla solo se alcanzaría con el dedo (WCAG 2.2 SC 2.1.1). El
         // precio es un tab stop de más en desktop, donde ya no hay nada que
         // desplazar — se acepta antes que decidir el layout con JS y arriesgar
-        // un salto de hidratación en la sección pegada al hero.
+        // un salto de hidratación en una banda full-bleed.
         tabIndex={0}
         role="group"
         aria-label="Propuestas de valor"

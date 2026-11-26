@@ -1,4 +1,7 @@
+import { Phone } from "lucide-react"
+
 import { Logo } from "@/components/common/logo"
+import { InstagramIcon } from "@/components/icons/instagram-icon"
 import { contactConfig } from "@/config/contact.config"
 import { footerConfig } from "@/config/footer.config"
 import { siteConfig } from "@/config/site"
@@ -11,6 +14,18 @@ import { siteConfig } from "@/config/site"
  * no icons, so nothing crosses the RSC boundary; the inversion is pure `dark:`
  * CSS. Institutional/support links are plain `<a>` until their pages exist.
  */
+/**
+ * Títulos de columna en Centrale Sans Medium, versalitas con tracking amplio
+ * (DESIGN.md §4.2: `--fs-sm`, `--fw-medium`, `--ls-wide`). Antes iban en la
+ * fuente mono del sistema, que no es de la marca y se leía como código.
+ */
+const TITULO_COLUMNA =
+  "mb-4 text-sm font-medium tracking-[var(--ls-wide)] text-[var(--color-on-ink-muted)] uppercase dark:text-[var(--color-on-paper-muted)]"
+
+/** Enlaces de contacto con ícono: el ícono es decorativo, el texto lo nombra. */
+const ENLACE_CONTACTO =
+  "flex w-fit items-center gap-2 underline-offset-4 hover:underline"
+
 export function AppFooter() {
   const year = new Date().getFullYear()
 
@@ -31,36 +46,45 @@ export function AppFooter() {
               <span className="block">{contactConfig.address}</span>
               <span className="block">{contactConfig.location}</span>
             </p>
-            <a
-              href={contactConfig.phoneHref}
-              className="block w-fit underline-offset-4 hover:underline"
-            >
-              Teléfono: {contactConfig.phone}
+            <a href={contactConfig.phoneHref} className={ENLACE_CONTACTO}>
+              <Phone className="size-4 shrink-0" aria-hidden="true" />
+              <span>
+                <span className="sr-only">Teléfono: </span>
+                {contactConfig.phone}
+              </span>
             </a>
             <a
               href={contactConfig.instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-fit underline-offset-4 hover:underline"
+              className={ENLACE_CONTACTO}
             >
-              Instagram
+              <InstagramIcon className="size-4 shrink-0" />
+              <span>Instagram</span>
             </a>
           </address>
         </div>
 
         {footerConfig.columns.map((column) => (
           <div key={column.title}>
-            <p className="mb-4 font-mono text-xs tracking-[0.08em] text-[var(--color-on-ink-muted)] uppercase dark:text-[var(--color-on-paper-muted)]">
-              {column.title}
-            </p>
+            <p className={TITULO_COLUMNA}>{column.title}</p>
             <ul className="space-y-2">
               {column.links.map((link) => (
                 <li key={link.href}>
                   <a
                     href={link.href}
+                    {...(link.externo
+                      ? { target: "_blank", rel: "noopener noreferrer" }
+                      : {})}
                     className="text-sm text-[var(--color-on-ink)] transition-colors hover:text-[var(--color-on-ink-muted)] dark:text-[var(--color-on-paper)] dark:hover:text-[var(--color-on-paper-muted)]"
                   >
                     {link.label}
+                    {link.externo ? (
+                      <span className="sr-only">
+                        {" "}
+                        (abre en una pestaña nueva)
+                      </span>
+                    ) : null}
                   </a>
                 </li>
               ))}
@@ -70,9 +94,7 @@ export function AppFooter() {
 
         {footerConfig.showSedes ? (
           <div>
-            <p className="mb-4 font-mono text-xs tracking-[0.08em] text-[var(--color-on-ink-muted)] uppercase dark:text-[var(--color-on-paper-muted)]">
-              Sedes
-            </p>
+            <p className={TITULO_COLUMNA}>Sedes</p>
             <p className="text-sm text-[var(--color-on-ink-muted)] dark:text-[var(--color-on-paper-muted)]">
               {siteConfig.sedes.join(" · ")}
             </p>

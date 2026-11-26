@@ -11,6 +11,11 @@ beforeEach(() => {
   }))
 })
 
+/** Los ejes arrancan plegados: abre uno por su encabezado. */
+function desplegar(titulo: string) {
+  fireEvent.click(screen.getByRole("button", { name: titulo, expanded: false }))
+}
+
 function Filters() {
   const [suppliers, setSuppliers] = useState<string[]>([])
   const [brands, setBrands] = useState<string[]>([])
@@ -110,9 +115,37 @@ function FiltersConCategorias({
   )
 }
 
+describe("estado inicial de los ejes", () => {
+  it("al entrar todos los ejes están plegados", () => {
+    render(<FiltersConCategorias />)
+    for (const titulo of ["Categorías", "Proveedores", "Marcas"]) {
+      expect(
+        screen
+          .getByRole("button", { name: titulo })
+          .getAttribute("aria-expanded")
+      ).toBe("false")
+    }
+    expect(screen.queryByRole("button", { name: /^Alimentos/ })).toBeNull()
+    expect(screen.queryByText("Todas las categorías")).toBeNull()
+  })
+
+  it("un eje con un filtro llegado por la URL arranca abierto", () => {
+    render(<FiltersConCategorias inicial={{ categoria: ["2"], sub: [] }} />)
+    expect(
+      screen.getByRole("button", { name: /^Menaje/, pressed: true })
+    ).toBeDefined()
+    expect(
+      screen
+        .getByRole("button", { name: "Proveedores" })
+        .getAttribute("aria-expanded")
+    ).toBe("false")
+  })
+})
+
 describe("categorías y subcategorías", () => {
   it("muestra las categorías con su conteo y no muestra subcategorías hasta elegir una", () => {
     render(<FiltersConCategorias />)
+    desplegar("Categorías")
     expect(
       screen.getByRole("button", { name: /^Alimentos\s*30$/ })
     ).toBeDefined()
@@ -123,6 +156,7 @@ describe("categorías y subcategorías", () => {
 
   it("al elegir una categoría aparecen solo sus subcategorías, con conteo", () => {
     render(<FiltersConCategorias />)
+    desplegar("Categorías")
     fireEvent.click(screen.getByRole("button", { name: /^Alimentos/ }))
     expect(screen.getByText("Subcategorías")).toBeDefined()
     expect(screen.getByRole("button", { name: /^Granos\s*20$/ })).toBeDefined()
@@ -132,6 +166,7 @@ describe("categorías y subcategorías", () => {
 
   it("cambiar de categoría limpia la subcategoría elegida", () => {
     render(<FiltersConCategorias />)
+    desplegar("Categorías")
     fireEvent.click(screen.getByRole("button", { name: /^Alimentos/ }))
     fireEvent.click(screen.getByRole("button", { name: /^Granos/ }))
     expect(
@@ -150,6 +185,7 @@ describe("categorías y subcategorías", () => {
 
   it("deseleccionar la categoría oculta las subcategorías", () => {
     render(<FiltersConCategorias />)
+    desplegar("Categorías")
     fireEvent.click(screen.getByRole("button", { name: /^Alimentos/ }))
     fireEvent.click(screen.getByRole("button", { name: /^Alimentos/ }))
     expect(screen.queryByText("Subcategorías")).toBeNull()
@@ -199,6 +235,8 @@ describe("categorías y subcategorías", () => {
 
 it("elegir otra opción reemplaza la anterior en vez de acumularla", () => {
   render(<Filters />)
+  desplegar("Proveedores")
+  desplegar("Marcas")
   fireEvent.click(screen.getByRole("button", { name: "Proveedor A" }))
   fireEvent.click(screen.getByRole("button", { name: "Proveedor B" }))
   expect(
@@ -211,6 +249,8 @@ it("elegir otra opción reemplaza la anterior en vez de acumularla", () => {
 
 it("pulsar la opción activa la quita, y limpiar reinicia ambos grupos", () => {
   render(<Filters />)
+  desplegar("Proveedores")
+  desplegar("Marcas")
   for (const name of ["Proveedor A", "Marca A", "Marca B"]) {
     fireEvent.click(screen.getByRole("button", { name }))
   }
