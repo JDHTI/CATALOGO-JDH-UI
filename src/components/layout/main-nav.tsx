@@ -4,26 +4,41 @@ import type { Route } from "next"
 import Link from "next/link"
 import { Compass, Tag } from "lucide-react"
 
-import { useMarcas } from "@/modules/catalogo/hooks/use-productos"
+import { useDesbordados } from "@/hooks/use-desbordados"
+import { useCategorias } from "@/modules/catalogo/hooks/use-productos"
 import { formatNombreComercial } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import { marcaHref } from "@/modules/catalogo/navigation"
+import { categoriaHref } from "@/modules/catalogo/navigation"
 
 import { MegaMenu } from "./mega-menu"
 
-const MAX_ACCESOS = 8
+/** Candidatas a la barra. Se pintan todas y se muestran las que quepan. */
+const MAX_ACCESOS = 10
 
-/** Ocho marcas destacadas alineadas con el buscador; deslizables si no caben. */
+/**
+ * Barra inferior del header: las categorías principales, alineadas con el
+ * buscador. Antes mostraba marcas; las categorías describen mejor un catálogo
+ * de menaje, aseo y dotación, y son pocas, así que la barra no depende de
+ * elegir 8 entre cientos.
+ *
+ * Se muestran SOLO las que caben completas en el renglón (`useDesbordados`):
+ * el ancho de la columna cambia con la ventana y los nombres no miden lo
+ * mismo, así que un número fijo dejaba nombres cortados o huecos.
+ */
 export function MainNav({ className }: { className?: string }) {
-  const { data: marcas } = useMarcas()
+  const { data: categorias } = useCategorias()
 
-  // Las de mayor catálogo primero: con cientos de marcas, el orden
-  // alfabético del API no dice nada en una barra de 8 accesos.
-  const destacados = (marcas ?? [])
+  // Las de mayor catálogo primero: son las que más gente busca, y el orden
+  // del API es el de navegación, no el de peso.
+  const destacadas = (categorias ?? [])
     .slice()
     .sort((a, b) => (b.totalProductos ?? 0) - (a.totalProductos ?? 0))
     .slice(0, MAX_ACCESOS)
+
+  const [filaRef, visibles] = useDesbordados<HTMLDivElement>([
+    destacadas.map((c) => c.id).join(),
+  ])
 
   return (
     <div
@@ -48,14 +63,25 @@ export function MainNav({ className }: { className?: string }) {
           </Link>
         </div>
 
-        <div className="hidden min-w-0 [scrollbar-width:none] items-center gap-1 overflow-x-auto lg:flex [&::-webkit-scrollbar]:hidden">
-          {destacados.map((marca) => (
+        {/* Alto fijo + `flex-wrap` + `overflow-hidden`: lo que no cabe baja a
+            un segundo renglón que no se ve, y el hook lo marca `invisible`
+            para que tampoco se alcance con Tab. */}
+        <div
+          ref={filaRef}
+          className="hidden h-9 min-w-0 flex-wrap justify-center gap-x-1 overflow-hidden lg:flex"
+        >
+          {destacadas.map((categoria, i) => (
             <Link
-              key={marca.id}
-              href={marcaHref(marca)}
-              className="inline-flex h-9 max-w-[9rem] shrink-0 items-center truncate rounded-lg px-2 text-sm font-medium text-[var(--color-on-ink-muted)] transition-colors first:ml-auto last:mr-auto hover:bg-transparent hover:text-[var(--color-on-ink)]"
+              key={categoria.id}
+              href={categoriaHref(categoria)}
+              className={cn(
+                "inline-flex h-9 max-w-[12rem] shrink-0 items-center rounded-lg px-2 text-sm font-medium whitespace-nowrap text-[var(--color-on-ink-muted)] transition-colors hover:bg-transparent hover:text-[var(--color-on-ink)]",
+                visibles !== null && i >= visibles && "invisible"
+              )}
             >
-              {formatNombreComercial(marca.nombre)}
+              <span className="truncate">
+                {formatNombreComercial(categoria.nombre)}
+              </span>
             </Link>
           ))}
         </div>
