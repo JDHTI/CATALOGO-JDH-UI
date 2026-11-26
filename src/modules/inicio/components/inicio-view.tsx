@@ -6,23 +6,26 @@ import { CtaSection } from "./cta-section"
 import { FeaturedProducts } from "./featured-products"
 import { HeroSection } from "./hero-section"
 import { PromoBanner } from "./promo-banner"
-import { ProviderMarquee } from "./provider-marquee"
 import { ValueProps } from "./value-props"
 
 /**
- * Vista del homepage (Server Component): el primer slide es full-bleed
- * (imagen de fondo a viewport); le sigue la sección de cobertura full-bleed
- * (`ValueProps`) pegada al hero, negra en tema claro y blanca en oscuro.
+ * Vista del homepage (Server Component).
  *
- * Orden: hero → cobertura negra → categorías (grilla) → muestra del catálogo
- * (carrusel) → banners publicitarios → cinta INFINITA de proveedores
- * (negra en claro, blanca en oscuro) → marcas (tablero rotativo de logos) →
- * CTA final.
+ * Orden: hero a MEDIA altura (full-bleed) → categorías (grilla) → muestra del
+ * catálogo (grilla 4×3) → banners publicitarios → cobertura full-bleed
+ * (`ValueProps`, negra en claro y blanca en oscuro) → marcas (tablero
+ * rotativo de logos) → CTA de crear cuenta.
  *
- * Las secciones que dependen del CATÁLOGO (`FeaturedProducts`,
- * `ProviderMarquee`) piden sus datos ellas mismas al API desde el cliente y
- * se OCULTAN si no hay: así `/` sigue prerenderizada sin depender de que el
- * API esté arriba en build, y las secciones aparecen al hidratar.
+ * El hero dejó de ocupar toda la primera vista para que las categorías asomen
+ * sin hacer scroll. La cinta infinita de proveedores se retiró: repetía lo
+ * que ya dice el tablero de marcas, y los proveedores siguen en los filtros
+ * de `/productos`. La cobertura ocupa ahora ese hueco entre los dos bloques
+ * de contenido.
+ *
+ * Las secciones que dependen del CATÁLOGO (`CategoriasSection`,
+ * `FeaturedProducts`) piden sus datos ellas mismas al API desde el cliente:
+ * así `/` no depende de que el API esté arriba en build, y las secciones
+ * aparecen al hidratar.
  *
  * Lo que sale del BUCKET (hero y banners de `site/*`, y el manifiesto de
  * logos `brands/manifest.json`) es la excepción: lo resuelve la RUTA en el
@@ -75,7 +78,6 @@ export function InicioView({
   return (
     <div>
       <HeroSection imagenes={hero} />
-      <ValueProps />
 
       <div className="mx-auto flex w-full max-w-[var(--container-wide)] flex-col gap-[var(--space-16)] px-6 py-[var(--space-16)] pb-24 md:pb-[var(--space-32)] lg:gap-[var(--space-32)] lg:py-[var(--space-32)]">
         <CategoriasSection />
@@ -83,7 +85,7 @@ export function InicioView({
         <PromoBanner banners={banners} />
       </div>
 
-      <ProviderMarquee />
+      <ValueProps />
 
       <div className="mx-auto flex w-full max-w-[var(--container-wide)] flex-col gap-[var(--space-16)] px-6 py-[var(--space-16)] pb-24 md:pb-[var(--space-32)] lg:gap-[var(--space-32)] lg:py-[var(--space-32)]">
         <BrandsSection marcas={marcas} />
