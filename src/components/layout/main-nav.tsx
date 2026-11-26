@@ -1,6 +1,5 @@
 "use client"
 
-import type { Route } from "next"
 import Link from "next/link"
 import { Compass, Tag } from "lucide-react"
 
@@ -92,7 +91,7 @@ export function MainNav({ className }: { className?: string }) {
             className="mx-1 hidden h-6 w-px bg-[var(--color-ink-border)] lg:block"
           />
           <Link
-            href={"/productos?promocion=1" as Route}
+            href="/promociones"
             className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-[var(--color-on-ink)] transition-colors hover:bg-transparent"
           >
             <Tag className="size-4 shrink-0" aria-hidden />

@@ -6,6 +6,7 @@ import { cuentaModule } from "@/modules/cuenta"
 import { favoritosModule } from "@/modules/favoritos"
 import { inicioModule } from "@/modules/inicio"
 import { listasModule } from "@/modules/listas"
+import { promocionesModule } from "@/modules/promociones"
 
 /**
  * El registro de módulos — el único lugar donde se registra cada módulo.
@@ -28,4 +29,5 @@ export const modules = createRegistry([
   cuentaModule,
   favoritosModule,
   carritoModule,
+  promocionesModule,
 ])

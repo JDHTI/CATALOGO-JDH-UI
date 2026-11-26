@@ -66,7 +66,7 @@ describe("accesos a categorías del header", () => {
       ).toBe("/productos")
       expect(
         screen.getByRole("link", { name: "Promociones" }).getAttribute("href")
-      ).toBe("/productos?promocion=1")
+      ).toBe("/promociones")
     }
   )
 })
